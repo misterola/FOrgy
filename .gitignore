@@ -1,3 +1,33 @@
+#exclude test books
+ubooks/
+
+#ubooks_copy
+ubooks_copy/
+
+#missing metadata
+missing_metadata/
+
+#missing_isbn
+missing_isbn/
+
+#some temp files
+*.docx
+*.tmp
+
+#exclude library database
+library.db
+
+#exclude personal api_key and browser_header
+user_requirements.py
+
+(Chemical Engineering Series) William L. Luyben - Process Modeling Simulation and Control for Chemical Engineers-McGraw-Hill (1999).txt
+
+Andersen - Business Process Improvement Toolbox-American Society for Quality (ASQ) (2007).txt
+
+Douglas L. Erwin - Industrial Chemical Process Design-McGraw-Hill Companies (2002).txt
+
+Mark Roseman - Modern Tkinter for Busy Python Dev elopers-Late Afternoon Press (2021).txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -94,11 +124,13 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+
 # UV
 #   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 #uv.lock
+
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
@@ -112,6 +144,8 @@ ipython_config.py
 #pdm.lock
 #   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
 #   in version control.
+
+
 #   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
 .pdm.toml
 .pdm-python
