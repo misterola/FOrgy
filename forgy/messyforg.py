@@ -260,13 +260,17 @@ for file in os.scandir(dst):
         #TODO: Lint code with Flake8, Pylint, and/or ruff. Configure and package
 
         #TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests,
-            #fileutils (file mgt - save, rename, delete, copy), database, single_metadata_search,
+            #file_system_utils (file mgt - save, rename, delete, copy), database, single_metadata_search,
             #header & api key, logging, cache, temp, archive, usage stats, documentation, example,
             #CLI, Tkinter GUI, tests, CI/CD, no_isbn_metadata_search, examples, database, multiprocessing
             #via asynchronous performance, threading, or concurrency in the most efficient way
 
-        #TODO: User should supply list of directories containing PDF files to be operated upon and '*.pdf'
+        #TODO: Enable user to supply list of directories containing PDF files to be operated upon and '*.pdf'
             #extension is matched to autogenerate local copy for messyforg
+
+        #TODO: Enable user to specify a folder or list of folders containing messy files to be organized and a new
+            #organized folder is created in a folder of choice. This util creates a separate folder for each unique file
+            #type. The folder containing PDF files can be used as input for FOrgy isbn_metadata utils.
 
         #TODO: Design a beautiful and intuitive GUI interface for app (commandline interface should also be embedded)
 
