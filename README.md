@@ -7,7 +7,7 @@ The name FOrgy is from its capabilities as a File(F)-Organizer-(Org)-built-using
 <br/>
     
 ## How it works
-You provide links to directories containing your ebooks and FOrgy creates its own local copy of those books, extracts ISBN from each book, retrieves metadata from Google's BookAPI or Openlibrary API, checks file for size, rename files, creates a database of books in your library which you can easily search through. FOrgy also organizes books without metadata or isbn into separate folder and further helps you local metadata for those otherwise.
+You provide links to directories containing your ebooks and FOrgy creates its own local copy of those books, extracts ISBN from each book, retrieves metadata from Google's BookAPI or Openlibrary API, checks file for size, rename files, creates a database of books in your library which you can easily search through to locate your books. FOrgy also organizes books without metadata or isbn into separate folder and further helps you locate metadata for those otherwise.
 
 
 
