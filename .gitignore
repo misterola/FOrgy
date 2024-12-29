@@ -20,8 +20,8 @@ library.db
 #exclude personal api_key and browser_header
 user_requirements.py
 
-#exclude resources
-Forgy_resources/
+#exclude project resources
+forgy_resources/
 
 (Chemical Engineering Series) William L. Luyben - Process Modeling Simulation and Control for Chemical Engineers-McGraw-Hill (1999).txt
 
