@@ -82,7 +82,7 @@ def fetch_metadata_from_file(file):
 ### extract_last pages (and fetch metadata for all unique isbns. enable
 ### user to pick a valid isbn from among the recovered
 
-pdf_path = r'C:/Users/Ola/Desktop/Forgy/ubooks/Mark Roseman - Modern Tkinter for Busy Python Dev elopers-Late Afternoon Press (2021).pdf'
+pdf_path = r'C:/Users/Ola/Documents/Python_26_12_2024/Projects/Forgy/ubooks/Mark Roseman - Modern Tkinter for Busy Python Dev elopers-Late Afternoon Press (2021).pdf'
 
 ##reader = PdfReader(str(pdf_path), strict=False)
 def extract_last_n_pages(file_path):  #needs reader object

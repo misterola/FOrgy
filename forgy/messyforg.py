@@ -1,21 +1,26 @@
-#main
+# main
 from pathlib import Path
 import shutil
 import os
 import time
-from pypdf import PdfReader
-import re
-import json
+##from pypdf import PdfReader
+##import re
+##import json
 import requests
 import time
 import sqlite3
 import random
 from isbn_regex import isbn_pattern, is_valid_isbn, format_isbn
 from text_extraction import extract_text
-from metadata_search import headers, get_metadata_google, google_api, google_metadata_dict, get_metadata_openlibrary, openlibrary_api,  openlibrary_metadata_dict
+from metadata_search import (
+    headers, get_metadata_google, google_api,
+    google_metadata_dict, get_metadata_openlibrary,
+    openlibrary_api,  openlibrary_metadata_dict
+)
 
 home = Path.home()
-#enable user to add more sources (up to 5) and make user specify location for messyforg folder
+#enable user to add more sources (up to 5) and make user specify location
+#for messyforg folder
 src = home/"Desktop"/"Forgy"/"ubooks"
 
 dst = home/"Desktop"/"Forgy"/"ubooks_copy"
@@ -66,8 +71,14 @@ for file in os.scandir(dst):
     #initialize list of valid isbns
     valid_isbn = []
   
-    values = (title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, file_size)
-##    values = (f'{title}', f'{date_of_publication}', f'{ISBN}', f'{source}')     #subtitle, publisher, authors, and page_count removed due to lack of consistency
+    values = (
+        title, subtitle, full_title,
+        date_of_publication, publisher, authors,
+        page_count, isbn_10, isbn_13,
+        ref_isbn, source, file_size
+    )
+    ##    values = (f'{title}', f'{date_of_publication}', f'{ISBN}', f'{source}')
+    #subtitle, publisher, authors, and page_count removed due to lack of consistency
     
     if not file.name.startswith('.') and file.is_file():
         pdf_path = dst/file
@@ -88,7 +99,7 @@ for file in os.scandir(dst):
         # for files with missing isbn, save extracted text into file, and move file to missing_isbn directory
         if (m_dir.exists()==True) and (valid_isbn==[]):
             shutil.move(m_src, m_dir)
-            # for files with missing isbn, generate (empty) text files to ascertain problem
+            # For files with missing isbn, generate (empty) text files to ascertain problem
             # Note on handling files in missing_isbn folder: use another set of text extractors (e.g.PyMupdf),
             # use OCR engine (e.g. tesseract) to extract text, fetch metadata from book using the current
             # pdf extractor, or generate error messages/logs if all else fails.
@@ -106,7 +117,7 @@ for file in os.scandir(dst):
         # repeat same for every isbn in list. If metadata not found, print error message.
         for isbn in valid_isbn:
             try:
-                #select api randomly to avoid overworking any of the apis
+                # Select api randomly to avoid overworking any of the apis
                 random_api = ['google', 'openlibrary']
                 api = random.choice(random_api)
                 print(f'api = {api}')
@@ -162,7 +173,10 @@ for file in os.scandir(dst):
 
                         #if metadata is recovered from googleapi, unpack tuple file_metadata into the various variables
                         if file_metadata is not None:
-                            title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, file_size = file_metadata
+                            (title, subtitle, full_title,
+                             date_of_publication, publisher, authors,
+                             page_count, isbn_10, isbn_13,
+                             ref_isbn, source, file_size) = file_metadata
                             time.sleep(5)
                         else:
                             #if metadata not recovered from both apis, extract important file data from pdf_reader extracted metadata

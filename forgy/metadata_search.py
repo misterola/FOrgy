@@ -71,7 +71,10 @@ def get_isbns(metadee):
         pairs (e.g. {'type':ISBN_10, 'identifier':'2382932220'})"""
     if "industryIdentifiers" in metadee.keys():
         #if index 0 in list is for ISBN_10 dictionary and index1 in list is for ISBN_13 dictionary
-        if metadee["industryIdentifiers"][0]["type"]=="ISBN_10" and ('ISBN_10' in metadee["industryIdentifiers"][0].values()) and metadee["industryIdentifiers"][1]["type"]=="ISBN_13" and ('ISBN_13' in metadee["industryIdentifiers"][1].values()):
+        if (metadee["industryIdentifiers"][0]["type"]=="ISBN_10" and
+                ('ISBN_10' in metadee["industryIdentifiers"][0].values()) and
+                metadee["industryIdentifiers"][1]["type"]=="ISBN_13" and
+                ('ISBN_13' in metadee["industryIdentifiers"][1].values())):
             try:
                 isbn_10 = metadee["industryIdentifiers"][0]["identifier"]
             except(UnboundLocalError, IndexError):
@@ -82,7 +85,9 @@ def get_isbns(metadee):
                 isbn_13 = "NA"
 
         #if index 0 in list if for ISBN_13 dictionary and index1 in list is for ISBN_10 dictionary
-        elif metadee["industryIdentifiers"][0]["type"]=="ISBN_13" and ('ISBN_13' in metadee["industryIdentifiers"][0].values()) and metadee["industryIdentifiers"][1]["type"]=="ISBN_10" and ('ISBN_10' in metadee["industryIdentifiers"][1].values()):
+        elif (metadee["industryIdentifiers"][0]["type"]=="ISBN_13" and ('ISBN_13' in metadee["industryIdentifiers"][0].values()) and
+              metadee["industryIdentifiers"][1]["type"]=="ISBN_10" and ('ISBN_10' in metadee["industryIdentifiers"][1].values())
+        ):
             try:
                 isbn_13 = metadee["industryIdentifiers"][0]["identifier"]
             except (UnboundLocalError, IndexError):
@@ -278,7 +283,7 @@ def get_metadata_openlibrary(isbn, file, headers={'User-Agent':'Mozilla/5.0 (Mac
     dict_of_interest = {"title":'', "subtitle":'', "publish_date":'', "publishers":'', "by_statement":'', "number_of_pages":''}  # str by_statement rep authors in openlib api
     #openlib also has "full_title" key in json
             
-##    #values are directly avvailable in json_metadata without nesting, so we assign the extracted json to metadata_dict
+##    #values are directly available in json_metadata without nesting, so we assign the extracted json to metadata_dict
     metadata_dict = openlibrary_metadata_dict(isbn)
 
     #populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)

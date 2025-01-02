@@ -58,7 +58,8 @@ for a in range(1,10):
                     str_isbn_format = str(a) + str(b)+ str(c)+ 'X'
                     isbn_x_formats.append(str_isbn_format)
 ##                    isbn_reg = r'(\d{' + f'{a}' + r'}' + '-' + r'\d{' + f'{b}' + r'}' + '-' + r'\d{' + f'{c}' + r'}' + '-' + r'\d{' + f'{d}' + r'}' + "|" + r'\d{' + f'{a}' + r'}' + r'\s' + r'\d{' + f'{b}' + r'}' + r'\s' + r'\d{' + f'{c}' + r'}' + r'\s' + r'\d{' + f'{d}' + r'}|'
-                    isbn_reg = r'\d{' + f'{a}' + r'}' + '-' + r'\d{' + f'{b}' + r'}' + '-' + r'\d{' + f'{c}' + r'}' + '-' +   r'([-xX])*' + "|" + r'\d{' + f'{a}' + r'}' + r'\s' + r'\d{' + f'{b}' + r'}' + r'\s' + r'\d{' + f'{c}' + r'}' + r'\s' +  r'([-xX])*' + r'|'
+                    isbn_reg = r'\d{' + f'{a}' + r'}' + '-' + r'\d{' + f'{b}' + r'}' + '-' + r'\d{' + f'{c}' + r'}' + '-' +   r'([-xX])*' + "|" + \
+                               r'\d{' + f'{a}' + r'}' + r'\s' + r'\d{' + f'{b}' + r'}' + r'\s' + r'\d{' + f'{c}' + r'}' + r'\s' +  r'([-xX])*' + r'|'
                     isbn_x_regx.append(isbn_reg)
 
 ##for val in isbn_x_regx:
@@ -89,7 +90,7 @@ nine_digits = r'\d{9}[xX]?)'
 ##
 ##print(nine_digits, end ='')
 
-
+#the final isbn regex (this is auto-generated. Do not modify)
 isbn_pattern = re.compile(r'''
     (\d{3}-|\d{3}\s|\d{3}:|\d{3})?
     (\d{1}-\d{1}-\d{1}-\d{7}|\d{1}\s\d{1}\s\d{1}\s\d{7}|
@@ -213,7 +214,9 @@ def is_valid_isbn(isbn):
         1. 10 digit all numbers
         2. 10 digits ending in X or x
         3. 13 digits
-        Note:check wikipedia for checksum calculation
+        Note:check  wikipedia https://en.wikipedia.org/wiki/ISBN
+            'Check digits' section for checksum calculation. I have
+            re-indexed the digits from python's zero to one
         """
     try:
         check_digit= int(isbn[-1])
@@ -329,7 +332,7 @@ if __name__=='__main__':
     print(nine_digits, end ='')
 
     #test isbn_validator
-    is_valid_isbn('0596520689')
+    print(is_valid_isbn('0596520689'))
 
 
 
