@@ -10,6 +10,7 @@ import requests
 import time
 import sqlite3
 import random
+
 from isbn_regex import isbn_pattern, is_valid_isbn, format_isbn
 from text_extraction import extract_text
 from metadata_search import (
@@ -17,34 +18,50 @@ from metadata_search import (
     google_metadata_dict, get_metadata_openlibrary,
     openlibrary_api,  openlibrary_metadata_dict
 )
+from database import (
+    create_table, create_library_db,
+    add_metadata_to_table, view_database_table,
+    delete_table
+)
 
 home = Path.home()
 #enable user to add more sources (up to 5) and make user specify location
 #for messyforg folder
-src = home/"Desktop"/"Forgy"/"ubooks"
+src = home/"Desktop"/"Projects"/"Forgy"/"ubooks"
 
-dst = home/"Desktop"/"Forgy"/"ubooks_copy"
+dst = home/"Desktop"/"Projects"/"Forgy"/"ubooks_copy"
 
 # copy source directory and rename as 'ubooks_copy'
 try:
     shutil.copytree(src, dst)
+    print('Source directory copied successfully')
 except FileExistsError:
     print("Directory copied already!")
 
-# create library database and create table "Books" in database
-with sqlite3.connect(home/'Desktop'/'Forgy'/"forgy"/'library.db') as connection:
-    cursor = connection.cursor()
-    print("Database connection established")
-    cursor.executescript(
-        """DROP TABLE IF EXISTS Books;
-            CREATE TABLE Books(Title TEXT, Subtitle TEXT, FullTitle TEXT,
-            Date_of_publication TEXT, Publisher TEXT, Authors TEXT, PageCount TEXT,
-            ISBN10 TEXT, ISBN13 TEXT, RefISBN TEXT, Source TEXT, Filesize REAL
-            );"""
-    )
-    print("Book database table created successfully")
+### create library database and create table "Books" in database
+##with sqlite3.connect(home/'Desktop'/'Forgy'/"forgy"/'library.db') as connection:
+##    cursor = connection.cursor()
+##    print("Database connection established")
+##    cursor.executescript(
+##        """DROP TABLE IF EXISTS Books;
+##            CREATE TABLE Books(Title TEXT, Subtitle TEXT, FullTitle TEXT,
+##            Date_of_publication TEXT, Publisher TEXT, Authors TEXT, PageCount TEXT,
+##            ISBN10 TEXT, ISBN13 TEXT, RefISBN TEXT, Source TEXT, Filesize REAL
+##            );"""
+##    )
+##    print("Book database table created successfully")
 
-missing_metadata = home/"Desktop"/"Forgy"/"missing_metadata"
+# Create 'library.db' or connect to it if it already exists
+create_library_db(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db')
+
+# Delete Books table if it exists in database
+delete_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books')
+
+# Create table 'Books' in library.db
+create_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books')
+
+
+missing_metadata = home/'Desktop'/'Projects'/'Forgy'/'missing_metadata'
 missing_metadata.mkdir(exist_ok=True)
 
 ##title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, filesize
@@ -91,10 +108,10 @@ for file in os.scandir(dst):
         valid_isbn = format_isbn(matched_isbn)
         print(valid_isbn)
         
-        extracted_text_list = extracted_text.split(' ')
-        m_dir = home/"Desktop"/"Forgy"/"missing_isbn"
+##        extracted_text_list = extracted_text.split(' ')
+        m_dir = home/'Desktop'/'Projects'/'Forgy'/"missing_isbn"
         m_dir.mkdir(exist_ok=True)
-        m_src = home/"Desktop"/"Forgy"/"ubooks_copy"/file
+        m_src = home/'Desktop'/'Projects'/'Forgy'/"ubooks_copy"/file
 
         # for files with missing isbn, save extracted text into file, and move file to missing_isbn directory
         if (m_dir.exists()==True) and (valid_isbn==[]):
@@ -120,9 +137,10 @@ for file in os.scandir(dst):
                 # Select api randomly to avoid overworking any of the apis
                 random_api = ['google', 'openlibrary']
                 api = random.choice(random_api)
-                print(f'api = {api}')
+##                print(f'api_1 = {api}')
 
-                if api=='google':
+                if api == 'google':
+                    print(f'api_1 = {api}')
                     # file metadata is either None or a tuple:(title, subtitle, full_title, date_of_publication, publisher, authors,\
                         #page_count, isbn_10, isbn_13, ref_isbn, source, filesize)
                     file_metadata = get_metadata_google(isbn, file, headers)
@@ -134,6 +152,7 @@ for file in os.scandir(dst):
                         time.sleep(5)
                     #if metadata not available on google api, None is returned. In this case, check openlibrary api for metadata
                     else:
+                        print(f'api_1a = {api}')
                         file_metadata = get_metadata_openlibrary(isbn, file, headers)
 ##                        time.sleep(6)
                         
@@ -146,7 +165,7 @@ for file in os.scandir(dst):
                             #print file_name not found and move file to missing_metadata directory
                             print(f'ISBN metadata not found for {pdf_path.stem}')
                             try:
-                                m_src = home/"Desktop"/"Forgy"/"ubooks_copy"/file
+                                m_src = home/'Desktop'/'Projects'/'Forgy'/"ubooks_copy"/file
                                 shutil.move(m_src, missing_metadata) 
                                 #FileNotFoundError raised if file has a missing ISBN and is already moved to
                                 #missing_isbn directory. skip this whole process for file that raises this error
@@ -158,6 +177,7 @@ for file in os.scandir(dst):
 ##                                print("Request ConnectionError. Check your internet connection")
 ##                                pass     #continue to relocate files (into missing_isbn and missing_metadata directories) if internet connection is poor
                 else:
+                    print(f'api_2 = {api}')
                     #if the randomly-selected api is openlibrary
                     file_metadata = get_metadata_openlibrary(isbn, file, headers)
 ##                    time.sleep(6)
@@ -167,6 +187,7 @@ for file in os.scandir(dst):
                         title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, file_size = get_metadata_openlibrary(isbn, file, headers)
                         time.sleep(5)
                     else:
+                        print(f'api_2a = {api}')
                         #if metadata not on openlibrary api, check google api
                         file_metadata = get_metadata_google(isbn, file, headers)
 ##                        time.sleep(5)
@@ -182,7 +203,7 @@ for file in os.scandir(dst):
                             #if metadata not recovered from both apis, extract important file data from pdf_reader extracted metadata
                             print(f'ISBN metadata not found for {pdf_path.stem}')
                             try:
-                                m_src = home/"Desktop"/"Forgy"/"ubooks_copy"/file
+                                m_src = home/'Desktop'/'Projects'/'Forgy'/"ubooks_copy"/file
                                 shutil.move(m_src, missing_metadata)
                                 #FileNotFoundError raised if file has a missing ISBN and is already moved to
                                 #missing_isbn directory. skip this whole process for file that raises this error
@@ -203,6 +224,10 @@ for file in os.scandir(dst):
             except requests.exceptions.ConnectionError:
                 print("Request ConnectionError. Check your internet connection", end='\n')
                 continue
+            except urllib3.exceptions.ReadTimeoutError:
+                print("ReadTimeoutError")
+                continue
+            
 
     #assign retrieved metadata to tuple value for easy addition to database. this updates the initialized values
     values = (f'{title}', f'{subtitle}', f'{full_title}', f'{date_of_publication}', f'{publisher}',
@@ -229,21 +254,24 @@ for file in os.scandir(dst):
             pass
         
         # add retrieved metadata to database
-        with sqlite3.connect(home/'Desktop'/'Forgy'/'forgy'/'library.db') as connection:
-            cursor = connection.cursor()
-            print('Database connection successful')
-            cursor.execute("INSERT INTO Books VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", values)
-            print('Book details added successfully')
+##        with sqlite3.connect(home/'Desktop'/'Forgy'/'forgy'/'library.db') as connection:
+##            cursor = connection.cursor()
+##            print('Database connection successful')
+##            cursor.execute("INSERT INTO Books VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", values)
+##            print('Book details added successfully')
+##
+##            #check content of database
+##            for row in cursor.execute("SELECT Title FROM Books;").fetchall():
+##                print(row)
 
-            #check content of database
-            for row in cursor.execute("SELECT Title FROM Books;").fetchall():
-                print(row)
+        add_metadata_to_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books', values)
+        view_database_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books')
 
     # for files with missing missing_metadata, move file to missing_isbn directory
     else:
         ##    missing_metadata = home/"Desktop"/"MessyFOrg"/"missing_metadata"
         ##    missing_metadata.mkdir(exist_ok=True)
-        m_src = home/"Desktop"/"Forgy"/"ubooks_copy"/file
+        m_src = home/'Desktop'/'Projects'/'Forgy'/"ubooks_copy"/file
         try:
             shutil.move(m_src, missing_metadata) 
             #FileNotFoundError raised if file has a missing ISBN and is already moved to
