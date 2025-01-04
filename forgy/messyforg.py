@@ -292,9 +292,11 @@ for file in os.scandir(dst):
                 #into the program and set .gitignore for them
                 #DONE
 
-        #TODO: Enable user to specify if to delete content of database or not
+        #TODO: Enable user to specify if to delete content of database or not DONE
 
-        #TODO: Redesign project structure, set-up GitHub repo and select license (AGPL)
+        #TODO: For every extracted isbn, check database ref_isbn to ensure that is isn't there.
+
+        #TODO: Redesign project structure, set-up GitHub repo and select license (AGPL) ONGOING
         
         #TODO: rename book using name from metadata if metadata retrieval
             #from ISBN is successful
