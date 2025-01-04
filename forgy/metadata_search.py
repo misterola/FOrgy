@@ -4,7 +4,7 @@ import requests
 import time
 import os
 import random
-from user_requirements import headers,api_key
+from user_requirements import headers, API_KEY
 
 
 
@@ -84,7 +84,7 @@ def get_isbns(metadee):
             except(UnboundLocalError, IndexError):
                 isbn_13 = "NA"
 
-        #if index 0 in list if for ISBN_13 dictionary and index1 in list is for ISBN_10 dictionary
+        #if index 0 in list is for ISBN_13 dictionary and index1 in list is for ISBN_10 dictionary
         elif (metadee["industryIdentifiers"][0]["type"]=="ISBN_13" and ('ISBN_13' in metadee["industryIdentifiers"][0].values()) and
               metadee["industryIdentifiers"][1]["type"]=="ISBN_10" and ('ISBN_10' in metadee["industryIdentifiers"][1].values())
         ):
@@ -139,9 +139,9 @@ def get_file_size(file_path):
 
 
 #for use in main script
-def google_api(isbn, api_key):
+def google_api(isbn, API_KEY):
     googleapi_metadata = 'https://www.googleapis.com/books/v1/volumes?q=isbn:'+\
-                                         isbn+'&key='+api_key
+                                         isbn+'&key='+API_KEY
     #define function load metadata for both google and openlibrary api to return json_metadata
     # check google api for book metadata
     book_metadata = requests.get(googleapi_metadata, headers=headers, timeout=60) #300 works
@@ -164,7 +164,7 @@ def openlibrary_api(isbn):
 
 ##assign dict from extracted metadata to metadata_dict
 def google_metadata_dict(isbn):
-    json_metadata = google_api(isbn, api_key)
+    json_metadata = google_api(isbn, API_KEY)
     try:
         metadata_dict = json_metadata["items"][0]["volumeInfo"]
     except KeyError:
@@ -188,8 +188,9 @@ def get_dictionary(dictionary):
     #some values in dict can be missing but not all!
     empty_dict = {}
     final_dict = {}
-    for key,value in dictionary.items():
-        if key == 'NA':
+    for key,value in dictionary.copy().items():
+##        if key == 'NA':
+        if dictionary[key] == 'NA':
             dictionary.pop(key)
         else:
             final_dict[key] = value
@@ -214,25 +215,26 @@ def get_metadata_google(isbn, file, headers={'User-Agent':'Mozilla/5.0 (Macintos
     metadata_dict = google_metadata_dict(isbn)
 
     #populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
-    dict_of_interest = get_dictionary(metadata_handler(dict_of_interest, metadata_dict))
+    available_metadata = metadata_handler(dict_of_interest, metadata_dict)
+    dict_of_interest = get_dictionary(available_metadata)
 
     if len(dict_of_interest)==0:
-        return
+        return None
     else:
         pass   
     
     #assign title to variable
-    title = dict_of_interest["title"]
+    title = dict_of_interest.get("title", "NA")
 
     #fetch sub_title and full title
 ##    full_title, subtitle = get_title_subtitle(metadata_dict, metadata_dict)
     full_title, subtitle = get_title_subtitle(metadata_dict, dict_of_interest)
 
     #assign values populated in dict_of_interest to variables (keys are: title, publishedDate, publisher, authors, pageCount)
-    date_of_publication = dict_of_interest["publishedDate"]
-    publisher = dict_of_interest["publisher"]
-    authors = dict_of_interest["authors"]
-    page_count = str(dict_of_interest["pageCount"])
+    date_of_publication = dict_of_interest.get("publishedDate", "NA")
+    publisher = dict_of_interest.get("publisher", "NA")
+    authors = dict_of_interest.get("authors", "NA")
+    page_count = str(dict_of_interest.get("pageCount", "NA"))
 
     #GET OTHER VALUES
     #get isbns from metadata
@@ -289,17 +291,24 @@ def get_metadata_openlibrary(isbn, file, headers={'User-Agent':'Mozilla/5.0 (Mac
     #populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
     dict_of_interest = metadata_handler(dict_of_interest, metadata_dict)
              
-    #assign title 
-    title = dict_of_interest["title"]
+    # Fetch title: the nested exception handles cases of inconsistencies in openlibrary json where
+    # title may be missing but full_title or subtitle only may be present in the json metadata
+    try:
+        title = dict_of_interest["title"]
+    except KeyError:
+        try:
+            title = dict_of_interest["subtitle"]
+        except KeyError:
+            title = dict_of_interest.get("full_title", "NA")
 
     #fetch sub_title and full title
     full_title, subtitle = get_title_subtitle(metadata_dict, dict_of_interest)
 
     #assign values populated in dict_of_interest to variables (keys are: title, publishedDate, publisher, authors, pageCount)
-    date_of_publication = dict_of_interest["publish_date"]
-    publisher = dict_of_interest["publishers"]
-    authors = dict_of_interest["by_statement"]
-    page_count = str(dict_of_interest["number_of_pages"])
+    date_of_publication = dict_of_interest.get("publish_date", "NA")
+    publisher = dict_of_interest.get("publishers", "NA")
+    authors = dict_of_interest.get("by_statement", "NA")
+    page_count = str(dict_of_interest.get("number_of_pages", "NA"))
 
     #GET OTHER VALUES
     #get isbns from metadata
