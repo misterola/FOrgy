@@ -25,7 +25,7 @@ def create_library_db(destination):
 
 
 # Add metadata to 'Book' table
-def add_metadata_to_table(destination, table_name, values)
+def add_metadata_to_table(destination, table_name, values):
     with sqlite3.connect(destination) as connection:
         cursor = connection.cursor()
         print('Database connection successful')
