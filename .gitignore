@@ -23,6 +23,9 @@ user_requirements.py
 #exclude project resources
 forgy_resources/
 
+#ignore flake8
+.flake8
+
 (Chemical Engineering Series) William L. Luyben - Process Modeling Simulation and Control for Chemical Engineers-McGraw-Hill (1999).txt
 
 Andersen - Business Process Improvement Toolbox-American Society for Quality (ASQ) (2007).txt
