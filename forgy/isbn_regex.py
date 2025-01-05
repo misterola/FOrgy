@@ -1,5 +1,6 @@
 #AUTOGENERATE POSSIBLE ISBN VALUES IN VERBOSE FORM
 import re
+import sqlite3
 
 
 #rules applied to isbn 10 or last 10 digits in ISBN 13:
@@ -310,9 +311,58 @@ def format_isbn(matched_isbn):
 ##        print(valid_isbn)
     return valid_isbn
 
+
+# Add isbns in valid_isbn list to a set containing isbns
+##def add_isbn_to_set(isbn_list, isbn_set):
+##    for isbn in isbn_list:
+##        isbn_set.add(isbn)
+##    return isbn_set
+
+# Check if isbn set for presence of isbns in extracted list
+def isbns_in_set(isbn_list, isbn_set):
+    outcome=[]
+    for isbn in isbn_list:   
+        if isbn in isbn_set:
+            outcome.append(True)
+        else:
+            outcome.append(False)
+    if all(outcome) and outcome: #eliminate case of empty list
+        return True
+    else:
+        return False
+
+
+# Add ref_isbn to ref_isbn_set
+def add_to_ref_isbn_set(ref_isbn, ref_isbn_set):
+    ref_isbn_set.add(ref_isbn)
+    return None
+
+
+### Check database for existence of isbn in RefISBN column
+def is_isbn_in_db(database, table, isbn_list):
+    # Extract isbn from database as a set (for better performance)
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT RefISBN FROM {table};")
+        existing_db_refisbns = cursor.fetchall() # Has the form [('9780873897365',), ('9781636940274',)]
+        ref_isbn_set = set()
+        for isbn in existing_db_refisbns:
+            add_to_ref_isbn_set(isbn[0], ref_isbn_set)
+##            ref_isbn_set.add(isbn[0])
+
+##        valid_isbn_set = set()
+
+        #  Add all valid isbn in isbn_list to valid_isbn_set
+        #add_isbn_to_set(isbn_list, valid_isbn)
+    return isbns_in_set(isbn_list, ref_isbn_set)  # Are extracted values in list present in set of db ref_isbns
+        
         
 
-        
+
+
+
+
+
                  
 
 if __name__=='__main__':
