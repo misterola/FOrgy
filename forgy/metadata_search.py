@@ -5,6 +5,7 @@ import time
 import os
 import random
 from user_requirements import headers, API_KEY
+import re
 
 
 
@@ -349,6 +350,28 @@ def get_metadata_openlibrary(isbn, file, headers={'User-Agent':'Mozilla/5.0 (Mac
 ##        )
     return (title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, file_size)
          
+
+# Function to format title to format allowed by windows os
+# Note that there are other reserved filenames e.g. "CON", "PRN"
+def modify_title(title):
+    #remove leading and trailing white spaces
+    title = title.strip()
+
+    #replace invalid characters with underscore
+    title = re.sub(r'[<>:"/\\|?*!]', '_', title)
+
+    #remove hyphen
+    title = title.replace("-", "")
+
+    #remove trailing periods (at end of filename)
+    title = title.rstrip('.')
+
+    # Keep filename within 255 character limits
+    if len(title) > 255:
+        title = title[:255]
+
+    return title
+
 
 #if api = google and json values returned, use google api,
 #else: we use openlibrary api
