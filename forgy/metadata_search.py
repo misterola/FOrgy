@@ -208,8 +208,8 @@ def get_metadata_google(isbn, file, headers={'User-Agent':'Mozilla/5.0 (Macintos
     """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
     #gets file metadata from google or openlibrary apis
 ##    json_metadata = google_api(isbn)
-
     #initialize dictionary with most important keys also present in json and values initialized to empty string
+    #keys are named according to keys in json from api source
     dict_of_interest = {"title":'', "subtitle":'', "publishedDate":'', "publisher":'', "authors":'', "pageCount":''}
 
 ##    #assign dict from extracted metadata to metadata_dict
