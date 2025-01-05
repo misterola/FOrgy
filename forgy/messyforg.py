@@ -11,23 +11,36 @@ import time
 import sqlite3
 import random
 
-from isbn_regex import isbn_pattern, is_valid_isbn, format_isbn
-from text_extraction import extract_text
-from metadata_search import (
-    headers, get_metadata_google, google_api,
-    google_metadata_dict, get_metadata_openlibrary,
-    openlibrary_api,  openlibrary_metadata_dict
+from isbn_regex import(
+    isbn_pattern,
+    is_valid_isbn,
+    format_isbn,
+    isbns_in_set,
+    is_isbn_in_db
 )
-from database import (
-    create_table, create_library_db,
-    add_metadata_to_table, view_database_table,
+from text_extraction import extract_text
+from metadata_search import(
+    headers,
+    get_metadata_google,
+    google_api,
+    google_metadata_dict,
+    get_metadata_openlibrary,
+    openlibrary_api,
+    openlibrary_metadata_dict,
+    modify_title
+)
+from database import(
+    create_table,
+    create_library_db,
+    add_metadata_to_table,
+    view_database_table,
     delete_table
 )
 
 home = Path.home()
 #enable user to add more sources (up to 5) and make user specify location
 #for messyforg folder
-src = home/"Desktop"/"Projects"/"Forgy"/"ubooks"
+src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
 
 dst = home/"Desktop"/"Projects"/"Forgy"/"ubooks_copy"
 
@@ -63,6 +76,10 @@ create_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books')
 
 missing_metadata = home/'Desktop'/'Projects'/'Forgy'/'missing_metadata'
 missing_metadata.mkdir(exist_ok=True)
+
+# Add isbn_set to ensure no isbn metadata is fetched twice
+##valid_isbn_set = set()
+####ref_isbn_set = set()
 
 ##title, subtitle, full_title, date_of_publication, publisher, authors, page_count, isbn_10, isbn_13, ref_isbn, source, filesize
 
@@ -106,6 +123,9 @@ for file in os.scandir(dst):
         matched_regex = isbn_pattern.findall(extracted_text)
         matched_isbn.append(matched_regex)
         valid_isbn = format_isbn(matched_isbn)
+
+        # Add all in valid_isbn list to a set of valid isbns
+##        add_isbn_to_set(valid_isbn, valid_isbn_set)
         print(valid_isbn)
         
 ##        extracted_text_list = extracted_text.split(' ')
@@ -126,7 +146,9 @@ for file in os.scandir(dst):
                     page_new.write(extracted_text)
                 except (FileNotFoundError,UnicodeEncodeError):
                     continue
-            
+        # Move to next book if its isbn has been previously extracted (compare with ref_isbn_set)
+        if is_isbn_in_db(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books', valid_isbn):
+             continue
 
 
 ##
@@ -243,7 +265,7 @@ for file in os.scandir(dst):
         #rename file in its original ubooks directory
         old_file_name = pdf_path
         dst_dir = dst
-        new_file_name = fr'{title}.pdf'
+        new_file_name = modify_title(f'{title}.pdf')
         new_file_path = os.path.join(dst_dir, new_file_name)
 
         try:
@@ -263,7 +285,6 @@ for file in os.scandir(dst):
 ##            #check content of database
 ##            for row in cursor.execute("SELECT Title FROM Books;").fetchall():
 ##                print(row)
-
         add_metadata_to_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books', values)
         view_database_table(home/'Desktop'/'Projects'/'Forgy'/'forgy'/'library.db', 'Books')
 
@@ -294,9 +315,9 @@ for file in os.scandir(dst):
 
         #TODO: Enable user to specify if to delete content of database or not DONE
 
-        #TODO: For every extracted isbn, check database ref_isbn to ensure that is isn't there.
+        #TODO: For every extracted isbn, check database ref_isbn to ensure that is isn't there. DONE
 
-        #TODO: Redesign project structure, set-up GitHub repo and select license (AGPL) ONGOING
+        #TODO: Redesign project structure, set-up GitHub repo and select license (AGPL) DONE
         
         #TODO: rename book using name from metadata if metadata retrieval
             #from ISBN is successful
