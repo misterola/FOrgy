@@ -54,6 +54,18 @@ def delete_table(source, table_name):
         print(f"Database table {table_name} deleted successfully")
 
 
+# Check database for existence of title in Title
+def titles_in_db(database, table):
+    # Extract title from database as a set
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT Title FROM {table};")
+        existing_db_titles = cursor.fetchall()  # Has the form [('title1',), ('title2',)]
+        ref_title_set = set()
+        for titl in existing_db_titles:
+            ref_title_set.add(titl[0])
+    return ref_title_set
+
 # Test module
 # Create_library_db(home/'Desktop'/'library.db')
 # Create_table(home/'Desktop'/'library.db', 'Trial')

@@ -380,6 +380,7 @@ def is_isbn_in_db(database, table, isbn_list):
         # add_isbn_to_set(isbn_list, valid_isbn)
     return isbns_in_set(isbn_list, ref_isbn_set)  # Are extracted values in list present in set of db ref_isbns
 
+    
 
 if __name__ == '__main__':
     # Check_isbn_regex

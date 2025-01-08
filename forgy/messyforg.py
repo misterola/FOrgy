@@ -24,6 +24,7 @@ from database import (
     add_metadata_to_table,
     view_database_table,
     delete_table,
+    titles_in_db,
 )
 
 home = Path.home()
@@ -60,13 +61,22 @@ create_table(
 missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
 missing_metadata.mkdir(exist_ok=True)
 
-# Add isbn_set to ensure no isbn metadata is fetched twice
-# valid_isbn_set = set()
-# ref_isbn_set = set()
+# Initialize raw_files_set to store path to raw files iterated over and initialize
+# renamed_files_set to store path to renamed file. This ensures that no file is
+# iterated over twice and metadata is not fetched twice.
+raw_files_set = set()
+renamed_files_set = set()
+title_set = set()
+
+
 
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
+    if (file in raw_files_set) or (file in renamed_files_set):
+        continue
+
+    # Initialize values of metadata parameters and assign to values
     title = ""
     subtitle = ""
     full_title = ""
@@ -79,9 +89,6 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     ref_isbn = ""
     source = ""
     file_size = 0.0
-
-    # Initialize list of valid isbns
-    valid_isbn = []
 
     values = (
         title,
@@ -97,6 +104,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         source,
         file_size,
     )
+
+    # Initialize list of valid isbns
+    valid_isbn = []
 
     if not file.name.startswith(".") and file.is_file():
         pdf_path = dst / file
@@ -172,6 +182,14 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                             file_size,
                         ) = file_metadata
                         time.sleep(5)
+
+                        # Add filepath to raw files set
+                        raw_files_set.add(file)
+
+                        # Skip to next iteration
+                        continue
+                        
+                        
                     # If metadata not available on google api, None is returned.
                     # In this case, check openlibrary api for metadata
                     else:
@@ -197,8 +215,15 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                                 file_size,
                             ) = get_metadata_openlibrary(isbn, file, headers)
                             time.sleep(5)
+
+                            # Add filepath to raw files set
+                            raw_files_set.add(file)
+
+                            # Skip to next iteration
+                            continue
+                            
                         else:
-                            # If metadata not recovered from both google and openlibrary apis, \
+                            # If metadata not recovered from both google and openlibrary apis,
                             # Print file_name not found and move file to missing_metadata directory
                             print(f"ISBN metadata not found for {pdf_path.stem}")
                             try:
@@ -239,6 +264,13 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                             file_size,
                         ) = get_metadata_openlibrary(isbn, file, headers)
                         time.sleep(5)
+
+                        # Add filepath to raw files set
+                        raw_files_set.add(file)
+
+                        # Skip to next iteration
+                        continue
+                        
                     else:
                         print(f"api_2a = {api}")
                         # If metadata not on openlibrary api, check google api
@@ -263,6 +295,13 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                                 file_size,
                             ) = file_metadata
                             time.sleep(5)
+
+                            # Add filepath to raw files set
+                            raw_files_set.add(file)
+
+                            # Skip to next iteration
+                            continue
+                        
                         else:
                             # If metadata not recovered from both apis, extract important file data
                             # from pdf_reader extracted metadata
@@ -302,7 +341,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                 print("ReadTimeoutError")
                 continue
 
-    # Assign retrieved metadata to tuple value for easy addition to database. this updates the initialized values
+    # Assign retrieved metadata to tuple value for easy addition to database.
+    # This updates the initialized values
     values = (
         f"{title}",
         f"{subtitle}",
@@ -319,6 +359,14 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     )
 
     print(values)
+
+    db_titles = titles_in_db (
+        home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
+    )
+
+    if modify_title(f"{title}.pdf") in db_titles:
+        continue
+            
 
     # ........#
     # For file with retrieved metadata, rename and do not move
@@ -348,9 +396,16 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             "Books",
             values,
         )
+
+        renamed_files_set.add(new_file_name)
+        title_set.add(values[0])
+
         view_database_table(
             home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
         )
+
+        # print(f'raw_files_set\n_____________________\n{raw_files_set}')
+        # print(f'renamed_files_set\n_____________________\n{raw_files_set}')
 
     # For files with missing missing_metadata, move file to missing_isbn directory
     else:
@@ -386,7 +441,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: rename book using name from metadata if metadata retrieval DONE
 # from ISBN is successful
 
-# TODO: Lint code with Flake8, Pylint, and/or ruff. Configure and package
+# TODO: Lint code with Flake8, Pylint, and/or ruff. DONE
+
+# TODO: Configure and package FOrgy
 
 # TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests,
 # file_system_utils (file mgt - save, rename, delete, copy), database, single_metadata_search,
@@ -404,6 +461,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: Design a beautiful and intuitive GUI interface for app (commandline interface should also be embedded)
 
 # TODO: Design beautiful and intuitive CLI for app
+
+# TODO: Add more metadata sources (Amazon, goodreads, worldcat, library of congress, thrift books, ebay)
 
 # TODO: Add grouping files in given directory based on format before carying out operation
 # on the pdfs of journal articles and books
@@ -432,14 +491,16 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: Add timestamp to book metadata (or database)
 
 # TODO: Check database for book ref_isbn before going online to search for it. This will ensure program can
-# continue from where it stops without cache
+# continue from where it stops without cache DONE
 
 # TODO: Create the first full-featured GUI with Tkinter
 
-# TODO: Enable user to enter title and author and automatically fetch book metadata online
+# TODO: Enable user to enter title and author and automatically fetch book metadata online 
 
 # TODO: add OCR engine e.g. pytesseract (dependency difficult to install),
 # EasyOCR, PyOCR, Textract for text extraction if empty text extracted by pypdf
+
+# TODO: release version 0.1.0 of FOrgy version (has a gui with cli but not the journal article doi search)
 
 # TODO: Add journal article DOI tools
 
