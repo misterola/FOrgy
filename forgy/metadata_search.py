@@ -121,7 +121,7 @@ def get_isbns(metadee):  # noqa: C901
 
 def get_isbns2(metadata_dict):
     """Fetches ISBNS from openlibrary sourced
-    metadata"""
+    metadata"""    
     if "isbn_10" in metadata_dict.keys():
         isbn_10 = metadata_dict["isbn_10"][0]
     else:
