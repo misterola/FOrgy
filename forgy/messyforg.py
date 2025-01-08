@@ -198,7 +198,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                             ) = get_metadata_openlibrary(isbn, file, headers)
                             time.sleep(5)
                         else:
-                            # If metadata not recovered from both google and openlibrary apis, \
+                            # If metadata not recovered from both google and openlibrary apis,
                             # Print file_name not found and move file to missing_metadata directory
                             print(f"ISBN metadata not found for {pdf_path.stem}")
                             try:
@@ -386,7 +386,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: rename book using name from metadata if metadata retrieval DONE
 # from ISBN is successful
 
-# TODO: Lint code with Flake8, Pylint, and/or ruff. Configure and package
+# TODO: Lint code with Flake8, Pylint, and/or ruff. Configure and package DONE
 
 # TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests,
 # file_system_utils (file mgt - save, rename, delete, copy), database, single_metadata_search,
@@ -404,6 +404,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: Design a beautiful and intuitive GUI interface for app (commandline interface should also be embedded)
 
 # TODO: Design beautiful and intuitive CLI for app
+
+# TODO: Add more metadata sources (Amazon, goodreads, worldcat, library of congress, thrift books, ebay)
 
 # TODO: Add grouping files in given directory based on format before carying out operation
 # on the pdfs of journal articles and books
@@ -432,14 +434,16 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 # TODO: Add timestamp to book metadata (or database)
 
 # TODO: Check database for book ref_isbn before going online to search for it. This will ensure program can
-# continue from where it stops without cache
+# continue from where it stops without cache DONE
 
 # TODO: Create the first full-featured GUI with Tkinter
 
-# TODO: Enable user to enter title and author and automatically fetch book metadata online
+# TODO: Enable user to enter title and author and automatically fetch book metadata online 
 
 # TODO: add OCR engine e.g. pytesseract (dependency difficult to install),
 # EasyOCR, PyOCR, Textract for text extraction if empty text extracted by pypdf
+
+# TODO: release version 0.1.0 of FOrgy version (has a gui with cli but not the journal article doi search)
 
 # TODO: Add journal article DOI tools
 
