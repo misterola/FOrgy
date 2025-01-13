@@ -445,7 +445,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 
 # TODO: Configure and package FOrgy
 
-# TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests,
+# TODO: Add metadata retrieval date to database columnss
+
+# TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests, stats
 # file_system_utils (file mgt - save, rename, delete, copy), database, single_metadata_search,
 # header & api key, logging, cache, temp, archive, usage stats, documentation, example,
 # CLI, Tkinter GUI, tests, CI/CD, no_isbn_metadata_search, examples, database, multiprocessing
