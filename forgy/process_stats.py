@@ -120,7 +120,7 @@ def average_time_per_file():
     """
 
 
- def total_time_remaining(foo):
+def total_time_remaining(foo):
     """Estimates how many hours left for operating on all files.
 
     Estimate using: number of file remaining*average processing time per file
