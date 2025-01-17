@@ -73,6 +73,8 @@ title_set = set()
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
+
+    # If file has been iterated over or renamed, skip to next iteration
     if (file in raw_files_set) or (file in renamed_files_set):
         continue
 
@@ -464,7 +466,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 
 # TODO: Design beautiful and intuitive CLI for app
 
-# TODO: Add more metadata sources (Amazon, goodreads, worldcat, library of congress, thrift books, ebay)
+# TODO: Add more metadata sources (Amazon, goodreads, worldcat, library of congress, librarything, thrift books, ebay)
 
 # TODO: Add grouping files in given directory based on format before carying out operation
 # on the pdfs of journal articles and books
