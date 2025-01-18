@@ -8,17 +8,18 @@ The name FOrgy is from its capabilities as a File(F)-Organizer-(Org)-built-using
     
 ## How it works
 You provide links to directories containing your ebooks and FOrgy creates its own local copy of those books, extracts ISBN from each book, retrieves metadata from Google's BookAPI or Openlibrary API, checks file for size, rename files, creates a database of books in your library which you can easily search through to locate your books. FOrgy also organizes books without metadata or isbn into separate folder and further helps you locate metadata for those otherwise.
-
 <br/>
+<br/>
+<br/>
+
 
 ## Project status
 This project is under active development. All modules work perfectly fine albeit not yet packageds.
-
+<br/>
+<br/>
 <br/>
 
 ## TODOs
-
-- TODO: rename book with format here new_dst = dst/f"{full_title}, {authors} {date_of_publication}.{publisher}.pdf"
 
 - TODO: Separate out my user key and browser header and import them into the program and set .gitignore for them. DONE
 
