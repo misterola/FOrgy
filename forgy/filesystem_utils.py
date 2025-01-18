@@ -36,7 +36,17 @@ def count_files_in_tree(directory):
 ##        {files}""")
     return n_directories, n_files
 
-# print(count_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_mod"))        
+# print(count_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_mod"))
+
+def organize_folders(source_dir, destination_dir):
+    """This program takes a source folder and moves every sub_folder into
+    another directory.
+    """
+    for dir in os.scandir(source_dir):
+        if os.isdir(source_dir):
+            shutil.move(source_dir, destination_dir)
+    return None
+            
 
 def organize_files_in_directory(src_directory, dest_directory):
     """This function takes a directory (without a subdir) and create a folder for each unique filetype.
