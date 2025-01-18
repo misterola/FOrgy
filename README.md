@@ -14,7 +14,7 @@ You provide links to directories containing your ebooks and FOrgy creates its ow
 This project is under active development. All modules work perfectly fine albeit not yet packaged.
 
 <br/>
-# TODOs
+## TODOs
 
 - TODO: rename book with format here new_dst = dst/f"{full_title}, {authors} {date_of_publication}.{publisher}.pdf"
 
