@@ -4,6 +4,7 @@ import requests
 import os
 from user_requirements import headers, API_KEY
 import re
+import shutil
 
 
 def merge_list_items(
@@ -14,14 +15,15 @@ def merge_list_items(
     list of values neatly separated
     by a comma"""
     if isinstance(given_list, list):
-        list_length = len(given_list)
-        appended_values = ""
-        given_list = [str(val) for val in given_list]
-        for i in range(list_length):
-            appended_values = appended_values + given_list[i] + "," + " "
-        f_appended_values = appended_values.rstrip(" ").rstrip(",")
-        # print(f_appended_values)
-        return f_appended_values
+##        list_length = len(given_list)
+##        appended_values = ""
+##        given_list = [str(val) for val in given_list]
+##        for i in range(list_length):
+##            appended_values = appended_values + given_list[i] + "," + " "
+##        f_appended_values = appended_values.rstrip(" ").rstrip(",")
+##        # print(f_appended_values)
+        appended_values = ", ".join(given_list)
+        return appended_values
     else:
         print(f"parameter is of type {type(given_list)}, not of type:list")
         pass
@@ -307,12 +309,12 @@ def get_metadata_google(
         date_of_publication,
         publisher,
         authors,
-        page_count,
+        f"{str(page_count)}",
         isbn_10,
         isbn_13,
         ref_isbn,
         source,
-        file_size,
+        float(file_size),
     )
 
 
@@ -408,14 +410,53 @@ def get_metadata_openlibrary(
         date_of_publication,
         publisher,
         authors,
-        page_count,
+        f"{str(page_count)}",
         isbn_10,
         isbn_13,
         ref_isbn,
         source,
-        file_size,
+        float(file_size),
     )
 
+
+# If metadata not recovered from both google and openlibrary apis,
+# Print file_name not found and move file to missing_metadata directory
+
+def move_to_missing_metadata(file_src, missing_metadata):                          
+    try:
+        shutil.move(file_src, missing_metadata)
+    # FileNotFoundError raised if file has a missing ISBN and is already moved to
+    # Missing_isbn directory. skip this whole process for file that raises this error
+    except FileNotFoundError:
+        # This is a case where file has already been moved to missing_isbn directory
+        pass
+        # continue
+
+
+def get_metadata_from_api(api1_dict, api1_dict_key, api2_dict, api2_dict_key, isbn, file, headers, file_src, missing_metadata):
+    # call get_metadata_google or get_metadata_openlibrary
+    file_metadata = api1_dict[api1_dict_key](isbn, file, headers)
+    # time.sleep(5)
+
+    # If metadata from google is not empty, unpack tuple file_metadata into the various variables
+    if file_metadata is not None:
+        return file_metadata
+        
+    else:
+        file_metadata = api2_dict[api2_dict_key](isbn, file, headers)
+        # time.sleep(5)
+
+        # If metadata from google is not empty, unpack tuple file_metadata into the various variables
+        if file_metadata is not None:
+            return file_metadata
+
+        else:
+            print(f"ISBN metadata not found for {pdf_path.stem}")
+            move_to_missing_metadata(file_src, missing_metadata)
+            return None
+
+                            
+                    
 
 # Function to format title to format allowed by windows os
 # Note that there are other reserved filenames e.g. "CON", "PRN"

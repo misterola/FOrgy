@@ -16,6 +16,7 @@ from metadata_search import (
     headers,
     get_metadata_google,
     get_metadata_openlibrary,
+    get_metadata_from_api,
     modify_title,
 )
 from database import (
@@ -61,6 +62,9 @@ create_table(
 missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
 missing_metadata.mkdir(exist_ok=True)
 
+missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
+missing_isbn_dir.mkdir(exist_ok=True)
+
 # Initialize raw_files_set to store path to raw files iterated over and initialize
 # renamed_files_set to store path to renamed file. This ensures that no file is
 # iterated over twice and metadata is not fetched twice.
@@ -68,45 +72,74 @@ raw_files_set = set()
 renamed_files_set = set()
 title_set = set()
 
+# Duration dictionary stores how long it takes for operation on each file
+# This will help in estimating total time required to complete file organizing
+# in the process_statistics module
+duration_dictionary = {}
+
+def process_duration(start_time):
+    """Function to calculate duration of operation for each file.
+
+    Start time is predefined at the start of the loop that goes through file.
+    """
+    start_time = start_time
+    end_time = time.time()
+    duration = end_time - start_time
+    return f"{duration:.3f}"
+
+def save_process_duration(file_name, process_duration, duration_dictionary):
+    """Function adds the operation time for file to dictionary.
+
+    This ie eventually used in estimating total time taken in the
+    process_statistics module."""
+    duration_dictionary[file_name] = process_duration
+    return duration_dictionary
+    
+
+def return_dict_key(dictionary):
+    """Function to get key in a dictionary of 1 item."""
+    for key, _ in dictionary.items():
+        key = key
+    return key
+
+def choose_random_api(api_list):
+    """Function to choose an api(key) and its associated calling function
+    (value) from a list of dictionaries containing two apis.
+    
+    The format of the api_list containing dictionaries is:
+    # [{"google":get_metadata_google}, {"openlibrary": get_metadata_openlibrary}]
+    """
+    # Randomly select api1_dictionary containing one item.
+    api1_dict = random.choice(api_list)
+
+    # Get the dictionary for api2
+    api_list_copy = api_list.copy()
+    api1_index = api_list.index(api1_dict)
+    del api_list_copy[api1_index]
+    api2_dict = api_list_copy[0]
+
+    # Get key of each api dictionary
+    api1_dict_key = return_dict_key(api1_dict)
+    api2_dict_key = return_dict_key(api2_dict)
+
+    return (api1_dict, api1_dict_key, api2_dict, api2_dict_key)
 
 
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
+    start_time = time.time()
+    
+    file_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
 
     # If file has been iterated over or renamed, skip to next iteration
     if (file in raw_files_set) or (file in renamed_files_set):
         continue
 
     # Initialize values of metadata parameters and assign to values
-    title = ""
-    subtitle = ""
-    full_title = ""
-    date_of_publication = ""
-    publisher = ""
-    authors = ""
-    page_count = ""
-    isbn_10 = ""
-    isbn_13 = ""
-    ref_isbn = ""
-    source = ""
-    file_size = 0.0
 
-    values = (
-        title,
-        subtitle,
-        full_title,
-        date_of_publication,
-        publisher,
-        authors,
-        page_count,
-        isbn_10,
-        isbn_13,
-        ref_isbn,
-        source,
-        file_size,
-    )
-
+    values = ""
+    
     # Initialize list of valid isbns
     valid_isbn = []
 
@@ -125,13 +158,10 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         print(valid_isbn)
 
         # Extracted_text_list = extracted_text.split(' ')
-        m_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
-        m_dir.mkdir(exist_ok=True)
-        m_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
 
         # for files with missing isbn, save extracted text into file, and move file to missing_isbn directory
-        if (m_dir.exists() and (not valid_isbn)):
-            shutil.move(m_src, m_dir)
+        if (missing_isbn_dir.exists() and (not valid_isbn)):
+            shutil.move(file_src, missing_isbn_dir)
             # For files with missing isbn, generate (empty) text files to ascertain problem
             # Note on handling files in missing_isbn folder: use another set of text extractors (e.g.PyMupdf),
             # use OCR engine (e.g. tesseract) to extract text, fetch metadata from book using the current
@@ -141,6 +171,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                 try:
                     page_new.write(extracted_text)
                 except (FileNotFoundError, UnicodeEncodeError):
+                    process_duration(start_time)
                     continue
         # Move to next book if its isbn has been previously extracted (compare with ref_isbn_set)
         if is_isbn_in_db(
@@ -148,180 +179,56 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             "Books",
             valid_isbn,
         ):
+            process_duration(start_time)
             continue
 
         # Use each isbn in int_isbn_list to search on openlibrary api and googlebookapi
         # for book metadata and download in json
         # Repeat same for every isbn in list. If metadata not found, print error message.
         for isbn in valid_isbn:
+
             try:
                 # Select api randomly to avoid overworking any of the apis
-                random_api = ["google", "openlibrary"]
-                api = random.choice(random_api)
+                api_list = [
+                    {"google":get_metadata_google},
+                    {"openlibrary": get_metadata_openlibrary},
+                ]
 
-                if api == "google":
-                    print(f"api_1 = {api}")
-                    # File metadata is either None or a tuple:(title, subtitle, full_title,\
-                    # date_of_publication, publisher, authors,\
-                    # Page_count, isbn_10, isbn_13, ref_isbn, source, filesize)
-                    file_metadata = get_metadata_google(isbn, file, headers)
-                    # time.sleep(5)
+                (api1_dict,
+                 api1_dict_key,
+                 api2_dict,
+                 api2_dict_key)  = choose_random_api(api_list)
 
-                    # If metadata from google is not empty, unpack tuple file_metadata into the various variables
-                    if file_metadata is not None:
-                        (
-                            title,
-                            subtitle,
-                            full_title,
-                            date_of_publication,
-                            publisher,
-                            authors,
-                            page_count,
-                            isbn_10,
-                            isbn_13,
-                            ref_isbn,
-                            source,
-                            file_size,
-                        ) = file_metadata
-                        time.sleep(5)
+                if api1_dict_key == "google":
+                    values = get_metadata_from_api(api1_dict,
+                                                   api1_dict_key,
+                                                   api2_dict,
+                                                   api2_dict_key,
+                                                   isbn,
+                                                   file,
+                                                   headers,
+                                                   file_src,
+                                                   missing_metadata)
+                    raw_files_set.add(file)
+                    time.sleep(5)
+                    process_duration(start_time)
+                    continue
 
-                        # Add filepath to raw files set
-                        raw_files_set.add(file)
-
-                        # Skip to next iteration
-                        continue
-                        
-                        
-                    # If metadata not available on google api, None is returned.
-                    # In this case, check openlibrary api for metadata
-                    else:
-                        print(f"api_1a = {api}")
-                        file_metadata = get_metadata_openlibrary(isbn, file, headers)
-                        # time.sleep(6)
-
-                        # if metadata from openlibrary is not empty, unpack tuple file_metadata
-                        # into the various variables
-                        if file_metadata is not None:
-                            (
-                                title,
-                                subtitle,
-                                full_title,
-                                date_of_publication,
-                                publisher,
-                                authors,
-                                page_count,
-                                isbn_10,
-                                isbn_13,
-                                ref_isbn,
-                                source,
-                                file_size,
-                            ) = get_metadata_openlibrary(isbn, file, headers)
-                            time.sleep(5)
-
-                            # Add filepath to raw files set
-                            raw_files_set.add(file)
-
-                            # Skip to next iteration
-                            continue
-                            
-                        else:
-                            # If metadata not recovered from both google and openlibrary apis,
-                            # Print file_name not found and move file to missing_metadata directory
-                            print(f"ISBN metadata not found for {pdf_path.stem}")
-                            try:
-                                m_src = (
-                                    home
-                                    / "Desktop"
-                                    / "Projects"
-                                    / "Forgy"
-                                    / "ubooks_copy"
-                                    / file
-                                )
-                                shutil.move(m_src, missing_metadata)
-                                # FileNotFoundError raised if file has a missing ISBN and is already moved to
-                                # Missing_isbn directory. skip this whole process for file that raises this error
-                            except FileNotFoundError:
-                                # This is a case where file has already been moved to missing_isbn directory
-                                continue
                 else:
-                    print(f"api_2 = {api}")
-                    # If the randomly-selected api is openlibrary
-                    file_metadata = get_metadata_openlibrary(isbn, file, headers)
-                    # time.sleep(6)
-
-                    # If metadata from openlibrary is not empty, unpack tuple file_metadata into the various variables
-                    if file_metadata is not None:
-                        (
-                            title,
-                            subtitle,
-                            full_title,
-                            date_of_publication,
-                            publisher,
-                            authors,
-                            page_count,
-                            isbn_10,
-                            isbn_13,
-                            ref_isbn,
-                            source,
-                            file_size,
-                        ) = get_metadata_openlibrary(isbn, file, headers)
-                        time.sleep(5)
-
-                        # Add filepath to raw files set
-                        raw_files_set.add(file)
-
-                        # Skip to next iteration
-                        continue
-                        
-                    else:
-                        print(f"api_2a = {api}")
-                        # If metadata not on openlibrary api, check google api
-                        file_metadata = get_metadata_google(isbn, file, headers)
-                        # time.sleep(5)
-
-                        # If metadata is recovered from googleapi, unpack tuple file_metadata
-                        # into the various variables
-                        if file_metadata is not None:
-                            (
-                                title,
-                                subtitle,
-                                full_title,
-                                date_of_publication,
-                                publisher,
-                                authors,
-                                page_count,
-                                isbn_10,
-                                isbn_13,
-                                ref_isbn,
-                                source,
-                                file_size,
-                            ) = file_metadata
-                            time.sleep(5)
-
-                            # Add filepath to raw files set
-                            raw_files_set.add(file)
-
-                            # Skip to next iteration
-                            continue
-                        
-                        else:
-                            # If metadata not recovered from both apis, extract important file data
-                            # from pdf_reader extracted metadata
-                            print(f"ISBN metadata not found for {pdf_path.stem}")
-                            try:
-                                m_src = (
-                                    home
-                                    / "Desktop"
-                                    / "Projects"
-                                    / "Forgy"
-                                    / "ubooks_copy"
-                                    / file
-                                )
-                                shutil.move(m_src, missing_metadata)
-                                # FileNotFoundError raised if file has a missing ISBN and is already moved to
-                                # missing_isbn directory. skip this whole process for file that raises this error
-                            except FileNotFoundError:
-                                continue
+                    values = get_metadata_from_api(api2_dict,
+                                                   api2_dict_key,
+                                                   api1_dict,
+                                                   api1_dict_key,
+                                                   isbn,
+                                                   file,
+                                                   headers,
+                                                   file_src,
+                                                   missing_metadata)
+                    raw_files_set.add(file)
+                    time.sleep(5)
+                    process_duration(start_time)
+                    continue
+                    
             except ConnectionError:
                 print("Connection Error")
                 continue
@@ -339,26 +246,28 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                     "Request ConnectionError. Check your internet connection", end="\n"
                 )
                 continue
-            except urllib3.exceptions.ReadTimeoutError:  # noqa: F821
+            except requests.ReadTimeout:  # noqa: F821
                 print("ReadTimeoutError")
                 continue
+            except requests.RequestException as e:
+                print(f"Error '{e}' occured")
 
     # Assign retrieved metadata to tuple value for easy addition to database.
     # This updates the initialized values
-    values = (
-        f"{title}",
-        f"{subtitle}",
-        f"{full_title}",
-        f"{date_of_publication}",
-        f"{publisher}",
-        f"{authors}",
-        f"{str(page_count)}",
-        f"{isbn_10}",
-        f"{isbn_13}",
-        f"{ref_isbn}",
-        f"{source}",
-        f"{float(file_size):.2f}",
-    )
+##    values = (
+##        f"{title}",
+##        f"{subtitle}",
+##        f"{full_title}",
+##        f"{date_of_publication}",
+##        f"{publisher}",
+##        f"{authors}",
+##        f"{str(page_count)}",
+##        f"{isbn_10}",
+##        f"{isbn_13}",
+##        f"{ref_isbn}",
+##        f"{source}",
+##        f"{float(file_size):.2f}",
+##    )
 
     print(values)
 
@@ -366,7 +275,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
     )
 
-    if modify_title(f"{title}.pdf") in db_titles:
+    if values and modify_title(f"{values[0]}.pdf") in db_titles:
+        process_duration(start_time)
         continue
             
 
@@ -375,13 +285,15 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     if (
         missing_metadata.exists()
         and valid_isbn
-        and values != ("", "", "", "", "", "", "", "", "", "", "", "0.00")
+        and values != ""
         and len(list(set(values[0:6]))) >= 2
-    ):  # Default is 4 out of 6
+    ):
+
+        # Default is 4 out of 6
         # Rename file in its original ubooks directory
         old_file_name = pdf_path
         dst_dir = dst
-        new_file_name = modify_title(f"{title}.pdf")
+        new_file_name = modify_title(f"{values[0]}.pdf")
         new_file_path = os.path.join(dst_dir, new_file_name)
 
         try:
@@ -413,9 +325,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     else:
         # missing_metadata = home/"Desktop"/"MessyFOrg"/"missing_metadata"
         # missing_metadata.mkdir(exist_ok=True)
-        m_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
+        # file_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
         try:
-            shutil.move(m_src, missing_metadata)
+            shutil.move(file_src, missing_metadata)
             # FileNotFoundError raised if file has a missing ISBN and is already moved to
             # missing_isbn directory. skip this whole process for file that raises this error
         except FileNotFoundError:
