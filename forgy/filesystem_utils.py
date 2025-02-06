@@ -41,6 +41,8 @@ def count_files_in_tree(directory):
 def organize_folders(source_dir, destination_dir):
     """This program takes a source folder and moves every sub_folder into
     another directory.
+
+    NOTE: CREATE A DIRECTORY TO KEEP FOLDERS
     """
     for dir in os.scandir(source_dir):
         if os.isdir(source_dir):
