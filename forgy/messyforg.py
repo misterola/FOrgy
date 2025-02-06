@@ -82,10 +82,10 @@ def process_duration(start_time):
 
     Start time is predefined at the start of the loop that goes through file.
     """
-    start_time = start_time
+    #start_time = start_time
     end_time = time.time()
     duration = end_time - start_time
-    return f"{duration:.3f}"
+    return f"{duration:.5f}"
 
 def save_process_duration(file_name, process_duration, duration_dictionary):
     """Function adds the operation time for file to dictionary.
@@ -171,7 +171,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                 try:
                     page_new.write(extracted_text)
                 except (FileNotFoundError, UnicodeEncodeError):
-                    process_duration(start_time)
+                    process_duration_sec = process_duration(start_time)
+                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    print(duration_dictionary)
                     continue
         # Move to next book if its isbn has been previously extracted (compare with ref_isbn_set)
         if is_isbn_in_db(
@@ -179,7 +181,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             "Books",
             valid_isbn,
         ):
-            process_duration(start_time)
+            process_duration_sec = process_duration(start_time)
+            save_process_duration(file, process_duration_sec, duration_dictionary)
+            print(duration_dictionary)
             continue
 
         # Use each isbn in int_isbn_list to search on openlibrary api and googlebookapi
@@ -211,7 +215,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                                                    missing_metadata)
                     raw_files_set.add(file)
                     time.sleep(5)
-                    process_duration(start_time)
+                    process_duration_sec = process_duration(start_time)
+                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    print(duration_dictionary)
                     continue
 
                 else:
@@ -226,7 +232,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                                                    missing_metadata)
                     raw_files_set.add(file)
                     time.sleep(5)
-                    process_duration(start_time)
+                    process_duration_sec = process_duration(start_time)
+                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    print(duration_dictionary)
                     continue
                     
             except ConnectionError:
@@ -276,7 +284,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     )
 
     if values and modify_title(f"{values[0]}.pdf") in db_titles:
-        process_duration(start_time)
+        process_duration_sec = process_duration(start_time)
+        save_process_duration(file, process_duration_sec, duration_dictionary)
+        print(duration_dictionary)
         continue
             
 
