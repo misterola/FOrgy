@@ -45,17 +45,32 @@ except FileExistsError:
 
 # Create 'library.db' or connect to it if it already exists
 create_library_db(
-    home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db"
+    home
+    / "Desktop"
+    / "Projects"
+    / "Forgy"
+    / "forgy"
+    / "library.db"
 )
 
 # Delete Books table if it exists in database
 delete_table(
-    home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
+    home
+    / "Desktop"
+    / "Projects"
+    / "Forgy"
+    / "forgy"
+    / "library.db", "Books"
 )
 
 # Create table 'Books' in library.db
 create_table(
-    home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
+    home
+    / "Desktop"
+    / "Projects"
+    / "Forgy"
+    / "forgy"
+    / "library.db", "Books"
 )
 
 
@@ -72,29 +87,35 @@ raw_files_set = set()
 renamed_files_set = set()
 title_set = set()
 
-# Duration dictionary stores how long it takes for operation on each file
-# This will help in estimating total time required to complete file organizing
-# in the process_statistics module
+# Duration dictionary stores how long it takes for operation on
+# each file.
+# This will help in estimating total time required to complete file
+# organizing in the process_statistics module
 duration_dictionary = {}
+
 
 def process_duration(start_time):
     """Function to calculate duration of operation for each file.
 
-    Start time is predefined at the start of the loop that goes through file.
+    Start time is predefined at the start of the loop that goes
+    through file.
     """
-    #start_time = start_time
+    # start_time = start_time
     end_time = time.time()
     duration = end_time - start_time
     return f"{duration:.5f}"
 
-def save_process_duration(file_name, process_duration, duration_dictionary):
+
+def save_process_duration(file_name,
+                          process_duration,
+                          duration_dictionary):
     """Function adds the operation time for file to dictionary.
 
     This ie eventually used in estimating total time taken in the
     process_statistics module."""
     duration_dictionary[file_name] = process_duration
     return duration_dictionary
-    
+
 
 def return_dict_key(dictionary):
     """Function to get key in a dictionary of 1 item."""
@@ -102,12 +123,14 @@ def return_dict_key(dictionary):
         key = key
     return key
 
+
 def choose_random_api(api_list):
-    """Function to choose an api(key) and its associated calling function
-    (value) from a list of dictionaries containing two apis.
-    
+    """Function to choose an api(key) and its associated calling
+    function (value) from a list of dictionaries containing two apis.
+
     The format of the api_list containing dictionaries is:
-    # [{"google":get_metadata_google}, {"openlibrary": get_metadata_openlibrary}]
+    # [{"google":get_metadata_google},
+       {"openlibrary": get_metadata_openlibrary}]
     """
     # Randomly select api1_dictionary containing one item.
     api1_dict = random.choice(api_list)
@@ -129,8 +152,15 @@ def choose_random_api(api_list):
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     start_time = time.time()
-    
-    file_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
+
+    file_src = (
+        home
+        / "Desktop"
+        / "Projects"
+        / "Forgy"
+        / "ubooks_copy"
+        / file
+    )
 
     # If file has been iterated over or renamed, skip to next iteration
     if (file in raw_files_set) or (file in renamed_files_set):
@@ -139,7 +169,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     # Initialize values of metadata parameters and assign to values
 
     values = ""
-    
+
     # Initialize list of valid isbns
     valid_isbn = []
 
@@ -159,51 +189,65 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 
         # Extracted_text_list = extracted_text.split(' ')
 
-        # for files with missing isbn, save extracted text into file, and move file to missing_isbn directory
+        # For files with missing isbn, save extracted text into file,
+        # and move file to missing_isbn directory
         if (missing_isbn_dir.exists() and (not valid_isbn)):
             shutil.move(file_src, missing_isbn_dir)
-            # For files with missing isbn, generate (empty) text files to ascertain problem
-            # Note on handling files in missing_isbn folder: use another set of text extractors (e.g.PyMupdf),
-            # use OCR engine (e.g. tesseract) to extract text, fetch metadata from book using the current
-            # pdf extractor, or generate error messages/logs if all else fails.
-            # with open(f"home/'Desktop'/'Forgy'/'{pdf_path.stem}.txt'", 'a') as page_new:
+            # For files with missing isbn, generate (empty) text files
+            # to ascertain problem
+            # with open(
+            # f"home/'Desktop'/'Forgy'/'{pdf_path.stem}.txt'", 'a'
+            # ) as page_new:
             with open(f"{pdf_path.stem}.txt", "a") as page_new:
                 try:
                     page_new.write(extracted_text)
                 except (FileNotFoundError, UnicodeEncodeError):
                     process_duration_sec = process_duration(start_time)
-                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    save_process_duration(file,
+                                          process_duration_sec,
+                                          duration_dictionary)
                     print(duration_dictionary)
                     continue
-        # Move to next book if its isbn has been previously extracted (compare with ref_isbn_set)
+        # Move to next book if its isbn has been previously extracted
+        # (compare with ref_isbn_set)
         if is_isbn_in_db(
-            home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db",
+            home
+            / "Desktop"
+            / "Projects"
+            / "Forgy"
+            / "forgy"
+            / "library.db",
             "Books",
             valid_isbn,
         ):
             process_duration_sec = process_duration(start_time)
-            save_process_duration(file, process_duration_sec, duration_dictionary)
+            save_process_duration(file,
+                                  process_duration_sec,
+                                  duration_dictionary)
             print(duration_dictionary)
             continue
 
-        # Use each isbn in int_isbn_list to search on openlibrary api and googlebookapi
-        # for book metadata and download in json
-        # Repeat same for every isbn in list. If metadata not found, print error message.
+        # Use each isbn in int_isbn_list to search on openlibrary api
+        # and googlebookapi for book metadata and download in json
+        # Repeat same for every isbn in list. If metadata not found,
+        # print error message.
         for isbn in valid_isbn:
 
             try:
                 # Select api randomly to avoid overworking any of the apis
                 api_list = [
-                    {"google":get_metadata_google},
+                    {"google": get_metadata_google},
                     {"openlibrary": get_metadata_openlibrary},
                 ]
 
                 (api1_dict,
                  api1_dict_key,
                  api2_dict,
-                 api2_dict_key)  = choose_random_api(api_list)
+                 api2_dict_key) = choose_random_api(api_list)
 
                 if api1_dict_key == "google":
+                    # Assign retrieved metadata to tuple value for easy
+                    # addition to database. This updates the initialized values
                     values = get_metadata_from_api(api1_dict,
                                                    api1_dict_key,
                                                    api2_dict,
@@ -216,7 +260,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                     raw_files_set.add(file)
                     time.sleep(5)
                     process_duration_sec = process_duration(start_time)
-                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    save_process_duration(file,
+                                          process_duration_sec,
+                                          duration_dictionary)
                     print(duration_dictionary)
                     continue
 
@@ -233,10 +279,12 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                     raw_files_set.add(file)
                     time.sleep(5)
                     process_duration_sec = process_duration(start_time)
-                    save_process_duration(file, process_duration_sec, duration_dictionary)
+                    save_process_duration(file,
+                                          process_duration_sec,
+                                          duration_dictionary)
                     print(duration_dictionary)
                     continue
-                    
+
             except ConnectionError:
                 print("Connection Error")
                 continue
@@ -251,7 +299,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                 continue
             except requests.exceptions.ConnectionError:
                 print(
-                    "Request ConnectionError. Check your internet connection", end="\n"
+                    "Request ConnectionError. Check your internet connection",
+                    end="\n"
                 )
                 continue
             except requests.ReadTimeout:  # noqa: F821
@@ -260,35 +309,25 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             except requests.RequestException as e:
                 print(f"Error '{e}' occured")
 
-    # Assign retrieved metadata to tuple value for easy addition to database.
-    # This updates the initialized values
-##    values = (
-##        f"{title}",
-##        f"{subtitle}",
-##        f"{full_title}",
-##        f"{date_of_publication}",
-##        f"{publisher}",
-##        f"{authors}",
-##        f"{str(page_count)}",
-##        f"{isbn_10}",
-##        f"{isbn_13}",
-##        f"{ref_isbn}",
-##        f"{source}",
-##        f"{float(file_size):.2f}",
-##    )
-
     print(values)
 
-    db_titles = titles_in_db (
-        home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
+    db_titles = titles_in_db(
+        home
+        / "Desktop"
+        / "Projects"
+        / "Forgy"
+        / "forgy"
+        / "library.db",
+        "Books"
     )
 
     if values and modify_title(f"{values[0]}.pdf") in db_titles:
         process_duration_sec = process_duration(start_time)
-        save_process_duration(file, process_duration_sec, duration_dictionary)
+        save_process_duration(file,
+                              process_duration_sec,
+                              duration_dictionary)
         print(duration_dictionary)
         continue
-            
 
     # ........#
     # For file with retrieved metadata, rename and do not move
@@ -316,7 +355,12 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 
         # Add retrieved metadata to database
         add_metadata_to_table(
-            home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db",
+            home
+            / "Desktop"
+            / "Projects"
+            / "Forgy"
+            / "forgy"
+            / "library.db",
             "Books",
             values,
         )
@@ -325,110 +369,28 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         title_set.add(values[0])
 
         view_database_table(
-            home / "Desktop" / "Projects" / "Forgy" / "forgy" / "library.db", "Books"
+            home
+            / "Desktop"
+            / "Projects"
+            / "Forgy"
+            / "forgy"
+            / "library.db", "Books"
         )
 
-        # print(f'raw_files_set\n_____________________\n{raw_files_set}')
-        # print(f'renamed_files_set\n_____________________\n{raw_files_set}')
-
-    # For files with missing missing_metadata, move file to missing_isbn directory
+    # For files with missing missing_metadata, move file to
+    # missing_isbn directory
     else:
-        # missing_metadata = home/"Desktop"/"MessyFOrg"/"missing_metadata"
-        # missing_metadata.mkdir(exist_ok=True)
-        # file_src = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy" / file
         try:
             shutil.move(file_src, missing_metadata)
-            # FileNotFoundError raised if file has a missing ISBN and is already moved to
-            # missing_isbn directory. skip this whole process for file that raises this error
+            # FileNotFoundError raised if file has a missing ISBN and is already
+            # moved to missing_isbn directory. skip this whole process for file
+            # that raises this error
         except FileNotFoundError:
             pass
         # if there is no internet connection, don't move file
         except requests.exceptions.ConnectionError:
             print("Request ConnectionError. Check your internet connection")
             pass
-
-
-# .......#
-# TODO: rename book with format here
-# new_dst = dst/f"{full_title}, {authors} {date_of_publication}.{publisher}.pdf"
-
-# TODO: Separate out my user key and browser header and import them
-# into the program and set .gitignore for them
-# DONE
-
-# TODO: Enable user to specify if to delete content of database or not DONE
-
-# TODO: For every extracted isbn, check database ref_isbn to ensure that is isn't there. DONE
-
-# TODO: Redesign project structure, set-up GitHub repo and select license (AGPL) DONE
-
-# TODO: rename book using name from metadata if metadata retrieval DONE
-# from ISBN is successful
-
-# TODO: Lint code with Flake8, Pylint, and/or ruff. DONE
-
-# TODO: Configure and package FOrgy
-
-# TODO: Add metadata retrieval date to database columnss
-
-# TODO: organize program, add more modules: isbn_api, pdf_to_text, messyforgs, regex, tests, stats
-# file_system_utils (file mgt - save, rename, delete, copy), database, single_metadata_search,
-# header & api key, logging, cache, temp, archive, usage stats, documentation, example,
-# CLI, Tkinter GUI, tests, CI/CD, no_isbn_metadata_search, examples, database, multiprocessing
-# via asynchronous performance, threading, or concurrency in the most efficient way
-
-# TODO: Enable user to supply list of directories containing PDF files to be operated upon and '*.pdf'
-# extension is matched to autogenerate local copy for messyforg
-
-# TODO: Enable user to specify a folder or list of folders containing messy files to be organized and a new
-# organized folder is created in a folder of choice. This util creates a separate folder for each unique file
-# type. The folder containing PDF files can be used as input for FOrgy isbn_metadata utils.
-
-# TODO: Design a beautiful and intuitive GUI interface for app (commandline interface should also be embedded)
-
-# TODO: Design beautiful and intuitive CLI for app
-
-# TODO: Add more metadata sources (Amazon, goodreads, worldcat, library of congress, librarything, thrift books, ebay)
-
-# TODO: Add grouping files in given directory based on format before carying out operation
-# on the pdfs of journal articles and books
-
-# TODO: For books with missing ISBN in preliminary pages, check last ten pages. This should
-# be done on individual book (publishers like pack publisher advert books in last pages
-# of their books and this means there are unrelated isbns at back of the books.
-
-# TODO: Create a directory of 10 creative commons-licensed ebooks and place in tests folder for the tests
-
-# TODO: Enable user to add book details manually or by supplying some title and isbn to aid to aid search
-# (perhaps another module named single_isbn_api)
-
-# TODO: Test the APIs and user internet connection before beginning operation, and automatically get header
-# settings for user browser from reliable source and parse into format needed by Forgy
-
-# TODO: Download 10 open source ebooks and place in a folder so users can practice with and test API with
-
-# TODO: Automatically cache .json() downloaded by API into a redis database as a first search point
-# before online API bandwith
-
-# TODO: If file already exists, ensure timestamp is added to a filename before adding to database
-
-# TODO: Extract firstpage of book, save as jpg, standardize size for thumbnail, and treat as cover image
-
-# TODO: Add timestamp to book metadata (or database)
-
-# TODO: Check database for book ref_isbn before going online to search for it. This will ensure program can
-# continue from where it stops without cache DONE
-
-# TODO: Create the first full-featured GUI with Tkinter
-
-# TODO: Enable user to enter title and author and automatically fetch book metadata online 
-
-# TODO: add OCR engine e.g. pytesseract (dependency difficult to install),
-# EasyOCR, PyOCR, Textract for text extraction if empty text extracted by pypdf
-
-# TODO: release version 0.1.0 of FOrgy version (has a gui with cli but not the journal article doi search)
-
-# TODO: Add journal article DOI tools
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT

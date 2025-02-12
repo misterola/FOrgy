@@ -56,6 +56,12 @@ def organize_files_in_directory(src_directory, dest_directory):
     A set containing unique file extensions in folder will first be created,
     and a folder with the extension name is created. The extension containing FOrgy
     files will be the source directory for FOrgy.
+
+
+    Enable user to specify a folder or list of folders containing messy files to be organized
+    and a new organized folder is created in a folder of choice. This util creates a
+    separate folder   for each unique file type. The folder
+    containing PDF files can be used as input for FOrgy   isbn_metadata utils.
     """
 
     #Confirm if the source (src_directory) and destination(dest_directory) exist

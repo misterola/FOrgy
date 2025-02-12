@@ -433,7 +433,15 @@ def move_to_missing_metadata(file_src, missing_metadata):
         # continue
 
 
-def get_metadata_from_api(api1_dict, api1_dict_key, api2_dict, api2_dict_key, isbn, file, headers, file_src, missing_metadata):
+def get_metadata_from_api(api1_dict,
+                          api1_dict_key,
+                          api2_dict,
+                          api2_dict_key,
+                          isbn,
+                          file,
+                          headers,
+                          file_src,
+                          missing_metadata):
     # call get_metadata_google or get_metadata_openlibrary
     file_metadata = api1_dict[api1_dict_key](isbn, file, headers)
     # time.sleep(5)
