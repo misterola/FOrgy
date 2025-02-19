@@ -8,6 +8,7 @@ def count_files_in_directory(directory):
     """This function takes a directory and counts the files within the directory.
 
     The counting will be done using the os.scandir method which tend to be more efficient.
+    Files contained in folders in the entered directory are not counted.
 
     """
     file_count = sum(1 for entry in os.scandir(directory) if entry.is_file())
@@ -21,7 +22,7 @@ def count_files_in_tree(directory):
     a separate function will help with transversing directory tree
 
     This function returns total number of files and directories contained in a
-    specified root directory.
+    specified directory (excluding the supplied directory).
     """
     # Initialize directory, sub_directory, and files counters
     n_directories = 0
@@ -29,28 +30,96 @@ def count_files_in_tree(directory):
     for root, directories, files in os.walk(directory):
         n_directories = n_directories + len(directories)
         n_files = n_files + len(files)
-##        print(f"""
-##        Root: {root}
-##        Dirs: {directories}
-##        Files:
-##        {files}""")
+        print(f"""
+        Root: {root}
+        Dirs: {directories}
+        Files:
+        {files}""")
     return n_directories, n_files
 
 # print(count_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_mod"))
 
-def organize_folders(source_dir, destination_dir):
+
+def move_folders(source_dir, destination_dir):
+
     """This program takes a source folder and moves every sub_folder into
     another directory.
 
-    NOTE: CREATE A DIRECTORY TO KEEP FOLDERS
+    The non_directory files in the destination_dir is not moved.
+    However, files in subdirectories are moved with their parents
     """
-    for dir in os.scandir(source_dir):
-        if os.isdir(source_dir):
-            shutil.move(source_dir, destination_dir)
+    # Check if source and destination directories exist
+    src_dir = Path(source_dir)
+    dst_dir = Path(destination_dir)
+    if not src_dir.exists():
+        print(f"Source directory '{src_dir}' does not exist.")
+        return
+
+    if not dst_dir.exists():
+        print(f"Destination directory '{dst_dir}' does not exist.")
+        return
+
+    # Loop through the source directory using os.scandir()
+    with os.scandir(src_dir) as entries:
+        for entry in entries:
+            if entry.is_dir():  # Check if the entry is a directory
+                src_path = entry.path
+                # dst_path = os.path.join(dst_dir, entry.name)
+                dst_path = dst_dir/f"{entry.name}"
+                try:
+                    # Move the directory to the destination
+                    shutil.move(src_path, dst_path)
+                    print(f"Moved directory: {src_path} to {dst_path}")
+                except shutil.Error as e:
+                    print(f"Error '{e}' occured")
+                    pass
+                except Exception as e:
+                    print(f"Error moving {src_path}: {e}")
+            else:
+                print(f"Skipped non-directory item: {entry.path}")
     return None
+
+
+def move_files_in_tree(source_directory, destination_directory):
+    """Function moves all files in a directory which containing other directories and files into another directory.
+
+    In this case, the directories are left behind with empty files as all files are moved to new destination."""
+    # Check if source and destination directories exist
+    src_dir = Path(source_directory)
+    dst_dir = Path(destination_directory)
+
+    if not src_dir.exists():
+        print(f"Source directory '{src_dir}' does not exist.")
+        return None
+
+    if not dst_dir.exists():
+        print(f"Destination directory '{dst_dir}' does not exist.")
+        return None
+
+    for root, directories, files in os.walk(src_dir):
+        root = Path(root)
+        print(f"""
+        root: {root}
+        directories: {directories}
+        files: {files}""")
+        for file in files:
+            src_file = root/file
+            dst_file = dst_dir/file
+
+            # Check destination for presence of file
+            if dst_file.exists():
+                print(f"File {file} already exists in destination directory.")
+                continue
+            try:
+                shutil.move(src_file, dst_file)
+                print(f"{file} moved from {src_file} to {dst_file}")
+            except Exception as e:
+                print(f"Encountered error {e} while moving file {file}")
+    return None
+    
             
 
-def organize_files_in_directory(src_directory, dest_directory):
+def organize_files_in_directory(source_directory, destination_directory):
     """This function takes a directory (without a subdir) and create a folder for each unique filetype.
 
     A set containing unique file extensions in folder will first be created,
@@ -62,78 +131,78 @@ def organize_files_in_directory(src_directory, dest_directory):
     and a new organized folder is created in a folder of choice. This util creates a
     separate folder   for each unique file type. The folder
     containing PDF files can be used as input for FOrgy   isbn_metadata utils.
+
+    Future modification: allow user to specify walk or scan to properly handle children files in folders.
     """
 
-    #Confirm if the source (src_directory) and destination(dest_directory) exist
-    if (
-        not os.path.exists(src_directory)
-        or (not os.path.exists(dest_directory))
-    ):
-        print("The given source or destination directories do not exist")
+    #Confirm if the source (source_directory) and destination(destination_directory) exist
+    src_dir = Path(source_directory)
+    dst_dir = Path(destination_directory)
+    
+    if not src_dir.exists():
+        print("The given source directory does not exist")
         return None
 
-    
-    # Initialize an extension set to contain all unique file extensions in directory
-    extension_set = set()
+    if not dst_dir.exists():
+        print("The given destination directory does not exist")
+        return None
 
-    # Create organized_directory folder (if it doesn't yet exist)
+    # Create organized_directory folder and its parent(if it doesn't yet exist)
     # to house all organized folders
-    organized_path = os.path.join(dest_directory, "organized_directory")
-    if not os.path.exists(organized_path):
+    organized_path = dst_dir/"organized_directory"
+    if not organized_path.exists():
         os.makedirs(organized_path)
 
+    # Initialize an extension set to contain all unique file extensions in the directory
+    extension_set = set()
+
     # Obtain all unique extensions by iterating over directory entries
-    for file in os.scandir(src_directory):
-        _, extensn = os.path.splitext(file)
-        extension_set.add(extensn)
+    for file in os.scandir(src_dir):
+        # the .name attribute accesses the file name
+        # First get file extension
+        if file.is_file():
+            _, extensn = os.path.splitext(file.name)
+            extension_set.add(extensn)
     # print(extension_set)
 
     # Create folders to contain each unique file extension
     for ext in extension_set:
-        folder_name = ext.replace(".", "")
-        folder_path = os.path.join(organized_path, folder_name)
+        # eliminate the leading dot in extension name
+        folder_name = ext.lstrip(".")
+        folder_path = organized_path / folder_name
 
         # Confirm if exension folder exist and if it doesn't, make a new one
-        if not os.path.exists(folder_path):
+        if not folder_path.exists():
             os.makedirs(folder_path)
         
 
-        # Move files with each extension to the created extension folder
-        for file in os.scandir(src_directory):
-            file_path = os.path.join(src_directory, file)
+        # Move files with each unique extension to the created extension folder
+        # Enable modification of this part using walk=False|True to touch subfolders or not
+        for file in os.scandir(src_dir):
+            #file_path = src_dir/f"{file.name}"
 
-            # Exclude directories from this operation
-            if os.path.isdir(file_path):
-                continue
+            # Only consider files in this operation
+            if file.is_file():
 
-            # Get the extension for file
-            _, extension = os.path.splitext(file)
-            
-            if extension.replace(".", "") == folder_name:
-                try:
-                    shutil.move(file_path, folder_path)
-                except OSError as e:
-                    print(f"Error {e} encountered")
-                    continue
-            
+                # Get the file extension
+                _, extension = os.path.splitext(file.name)
+
+                # Move file to directories matching file's extension name
+                if extension.lstrip(".") == folder_name:
+                    try:
+                        shutil.move(file.path, folder_path / file.name)
+                    except OSError as e:
+                        print(f"Error {e} occured on {file.name}")
+                        continue
+                    except Exception as e:
+                        print(f"Error '{e}' occured on {file.name}")
     return extension_set
 
-print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks", r"C:\Users\Ola\Desktop"))
+
+
+# To test
+# print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_keji", r"C:\Users\Ola\Desktop"))
     
-        
-##        
-##    file_set = set()
-##    for _, _, files in os.walk(dir):
-##        for file in files:
-##            file_set.append(file)
-##        
-        
-
-    # pass
-    
-
-
-
 
 if 'name' == '__main__':
     print(count_files_in_directory(r"C:\Users\Ola\Desktop\ubooks"))
