@@ -311,6 +311,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 
     print(values)
 
+    # Extract all titles contained in database as a set 'db_titles'
     db_titles = titles_in_db(
         home
         / "Desktop"
@@ -321,6 +322,9 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         "Books"
     )
 
+    # Check if the metadata tuple (i.e. values) is not empty
+    # and title is already in database. If that is the case,
+    # skip to next iteration
     if values and modify_title(f"{values[0]}.pdf") in db_titles:
         process_duration_sec = process_duration(start_time)
         save_process_duration(file,
@@ -365,6 +369,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             values,
         )
 
+        # Add the name of renamed book to renamed_files_set
+        # Add the title of book to title_set...both defined earlier
         renamed_files_set.add(new_file_name)
         title_set.add(values[0])
 
