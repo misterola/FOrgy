@@ -56,7 +56,7 @@ def delete_table(source, table_name):
 
 # Check database for existence of title in Title
 def titles_in_db(database, table):
-    # Extract title from database as a set
+    # Extract title from database as a set. Number of items in set is number of items added to database
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT Title FROM {table};")
@@ -65,6 +65,19 @@ def titles_in_db(database, table):
         for titl in existing_db_titles:
             ref_title_set.add(titl[0])
     return ref_title_set
+
+
+def api_utilization(database, table):
+        # Extract 'Source from database as a list. Sources are either openlibrary or google
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT Source FROM {table};")
+        api_sources = cursor.fetchall()  # Has the form [('api1',), ('api2',)]
+        api_sources_list = []
+        for source in api_sources:
+            api_sources_list.append(source[0])
+    return api_sources_list
+    
 
 # Test module
 # Create_library_db(home/'Desktop'/'library.db')
