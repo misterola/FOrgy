@@ -28,12 +28,25 @@ from database import (
     titles_in_db,
 )
 
+from process_stats import (
+    number_of_dir_files,
+    number_of_database_files,
+    number_of_processed_files,
+    number_of_files_remaining,
+    percent_api_utilization,
+    file_processing_efficiency,
+    percent_completion,
+    average_time_per_file,
+    total_time_remaining,   
+)
+
 home = Path.home()
 # Enable user to add more sources (up to 5) and make user specify location
 # for messyforg folder
 src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
 
 dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
+
 
 # Copy source directory and rename as 'ubooks_copy'
 try:
