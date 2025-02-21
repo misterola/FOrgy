@@ -28,6 +28,17 @@ from database import (
     titles_in_db,
 )
 
+from process_stats import (
+    number_of_dir_files,
+    number_of_processed_files,
+    total_time_remaining,
+    number_of_database_files,
+    percent_api_utilization,
+    file_processing_efficiency,
+)
+
+from filesystem_utils import count_files_in_directory
+
 home = Path.home()
 # Enable user to add more sources (up to 5) and make user specify location
 # for messyforg folder
@@ -44,7 +55,8 @@ except FileExistsError:
 
 
 # Create 'library.db' or connect to it if it already exists
-create_library_db(
+
+database = (
     home
     / "Desktop"
     / "Projects"
@@ -52,27 +64,13 @@ create_library_db(
     / "forgy"
     / "library.db"
 )
+create_library_db(database)
 
 # Delete Books table if it exists in database
-delete_table(
-    home
-    / "Desktop"
-    / "Projects"
-    / "Forgy"
-    / "forgy"
-    / "library.db", "Books"
-)
+delete_table(database, "Books")
 
 # Create table 'Books' in library.db
-create_table(
-    home
-    / "Desktop"
-    / "Projects"
-    / "Forgy"
-    / "forgy"
-    / "library.db", "Books"
-)
-
+create_table(database, "Books")
 
 missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
 missing_metadata.mkdir(exist_ok=True)
@@ -113,7 +111,7 @@ def save_process_duration(file_name,
 
     This ie eventually used in estimating total time taken in the
     process_statistics module."""
-    duration_dictionary[file_name] = process_duration
+    duration_dictionary[file_name.name] = process_duration
     return duration_dictionary
 
 
@@ -151,6 +149,54 @@ def choose_random_api(api_list):
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
+
+    # Take process statistics
+    current_file = modify_title(file.name)
+    print(f"Current file: {current_file}")
+
+    total_no_of_files = count_files_in_directory(src)
+
+    no_of_processed = number_of_processed_files(
+        src,
+        database,
+        "Books",
+        missing_isbn_dir,
+        missing_metadata
+    )
+    print(f"Progress: file {no_of_processed} of {total_no_of_files}")
+
+    percentage_completion = no_of_processed/total_no_of_files*100
+    print(f"Percentage completion: {percentage_completion:.2f}% DONE")
+
+    no_of_database_files = number_of_database_files(database, "Books")
+
+    time_remaining = total_time_remaining(
+        duration_dictionary,
+        src,
+        database,
+        "Books",
+        no_of_database_files,
+        missing_isbn_dir,
+        missing_metadata
+    )
+    if time_remaining < 60:
+        print(f"Total time remaining: {time_remaining:.2f} minutes")
+    else:
+        print(f"Total time remaining: {time_remaining:.2f} hours")
+    (percent_google_api,
+     percent_openlibrary_api) = percent_api_utilization(database, "Books")
+    print(f"API utilization: {percent_google_api:.2f}% Google, {percent_openlibrary_api:.2f}% Openlibrary")
+
+    process_efficiency = file_processing_efficiency(src, database, "Books", missing_isbn_dir)
+    print(f"Process efficiency: {process_efficiency:.2f}%")
+
+    n_missing_isbn = number_of_dir_files(missing_isbn_dir)
+    n_missing_metadata = number_of_dir_files(missing_metadata)
+    print(
+        f"""Process summary: {no_of_database_files} files renamed or added to DB, \
+{n_missing_isbn} files with missing ISBN, {n_missing_metadata} files with missing metadata"""
+    )
+
     start_time = time.time()
 
     file_src = (
