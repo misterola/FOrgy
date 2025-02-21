@@ -149,7 +149,11 @@ def choose_random_api(api_list):
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
-
+    print(f"""
+=====================================================
+            FOrgy Process Statistics
+=====================================================
+""", end='')
     # Take process statistics
     current_file = modify_title(file.name)
     print(f"Current file: {current_file}")
@@ -193,9 +197,14 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     n_missing_isbn = number_of_dir_files(missing_isbn_dir)
     n_missing_metadata = number_of_dir_files(missing_metadata)
     print(
-        f"""Process summary: {no_of_database_files} files renamed or added to DB, \
-{n_missing_isbn} files with missing ISBN, {n_missing_metadata} files with missing metadata"""
+        f"""Process summary: {no_of_database_files} files renamed or added to DB,
+                 {n_missing_isbn} files with missing ISBN,
+                 {n_missing_metadata} files with missing metadata"""
     )
+
+    print(f"""
+=====================================================
+""")
 
     start_time = time.time()
 
