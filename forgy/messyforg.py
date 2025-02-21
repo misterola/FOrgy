@@ -5,6 +5,7 @@ import os
 import time
 import requests
 import random
+import textwrap
 
 from isbn_regex import (
     isbn_pattern,
@@ -155,8 +156,16 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
 =====================================================
 """, end='')
     # Take process statistics
-    current_file = modify_title(file.name)
-    print(f"Current file: {current_file}")
+    filename = file.name
+    width = 39
+    wraped_filename = textwrap.fill(filename, width)
+    lines = wraped_filename.split('\n')
+    
+    # current_file = modify_title(file.name)
+    # print(f"Current file: {current_file}")
+    print(f"Current file: {lines[0]}")
+    for line in lines[1:]:
+        print(f"                {line}")
 
     total_no_of_files = count_files_in_directory(src)
 
@@ -199,7 +208,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     print(
         f"""Process summary: {no_of_database_files} files renamed or added to DB,
                  {n_missing_isbn} files with missing ISBN,
-                 {n_missing_metadata} files with missing metadata"""
+                 {n_missing_metadata} files with missing metadata""", end=''
     )
 
     print(f"""
