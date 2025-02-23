@@ -159,7 +159,7 @@ def format_filename(filename):
     subsequent_lines = '\n'.join([f"                   {line}" for line in lines[1:]])
 
     return f'{first_line}\n{subsequent_lines}'.rstrip('\n')
-    
+
 
 def format_time_remaining(time):
     if time < 60:
@@ -169,14 +169,14 @@ def format_time_remaining(time):
     return time
 
 
-    
-def show_statistics(filename,
-                    src,
-                    database,
-                    table,
-                    missing_isbn_dir,
-                    missing_metadata,
-                    duration_dictionary):
+def show_statistics(
+        filename,
+        src,
+        database,
+        table,
+        missing_isbn_dir,
+        missing_metadata,
+        duration_dictionary):
     # Define header and footer for table
     table_header = """
 =========================================================
@@ -189,13 +189,13 @@ def show_statistics(filename,
 """
     # Get and format filename
     filename = format_filename(filename)
-    
+
     total_no_of_files = count_files_in_directory(src)
 
     no_of_processed = number_of_processed_files(
         src,
         database,
-        table, #'Books'
+        table,
         missing_isbn_dir,
         missing_metadata
     )
@@ -212,13 +212,13 @@ def show_statistics(filename,
         missing_metadata
     )
     time_remaining = format_time_remaining(time_remaining)
-    
+
     (percent_google_api,
      percent_openlibrary_api) = percent_api_utilization(database, table)
 
     process_efficiency = file_processing_efficiency(src, database, table, missing_isbn_dir)
     n_missing_isbn = number_of_dir_files(missing_isbn_dir)
-    n_missing_metadata = number_of_dir_files(missing_metadata)   
+    n_missing_metadata = number_of_dir_files(missing_metadata)
 
     updated_stats = f"""
     Progress: file {no_of_processed} of {total_no_of_files}
@@ -237,13 +237,22 @@ def show_statistics(filename,
     print(updated_stats)
     print(footer)
 
+
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
-    
+
     # Get and format filename
-    filename = file.name   # call it as format_filename(filename)
-    show_statistics(filename, src, database, "Books", missing_isbn_dir, missing_metadata, duration_dictionary)
+    filename = file.name
+    show_statistics(
+        filename,
+        src,
+        database,
+        "Books",
+        missing_isbn_dir,
+        missing_metadata,
+        duration_dictionary
+    )
     start_time = time.time()
 
     file_src = (
