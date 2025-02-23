@@ -147,74 +147,103 @@ def choose_random_api(api_list):
     return (api1_dict, api1_dict_key, api2_dict, api2_dict_key)
 
 
-# Iterate through each file in the new 'ubooks_copy' directory
-# and extract text in first 20 pages of each file
-for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
-    print(f"""
-=====================================================
-            FOrgy Process Statistics
-=====================================================
-""", end='')
-    # Take process statistics
-    filename = file.name
-    width = 39
+def format_filename(filename):
+    width = 36
     wraped_filename = textwrap.fill(filename, width)
     lines = wraped_filename.split('\n')
-    
-    # current_file = modify_title(file.name)
     # print(f"Current file: {current_file}")
-    print(f"Current file: {lines[0]}")
-    for line in lines[1:]:
-        print(f"                {line}")
+    first_line = f"{lines[0]}"
 
+    # print subsequent lines
+    # subsequent_lines = f"'                {line}' for line in lines[1:]"
+    subsequent_lines = '\n'.join([f"                   {line}" for line in lines[1:]])
+
+    return f'{first_line}\n{subsequent_lines}'.rstrip('\n')
+    
+
+def format_time_remaining(time):
+    if time < 60:
+        time = f"{time:.2f} minutes"
+    else:
+        time = f"{time:.2f} hours"
+    return time
+
+
+    
+def show_statistics(filename,
+                    src,
+                    database,
+                    table,
+                    missing_isbn_dir,
+                    missing_metadata,
+                    duration_dictionary):
+    # Define header and footer for table
+    table_header = """
+=========================================================
+                FOrgy Process Statistics
+=========================================================
+"""
+
+    footer = """
+=========================================================
+"""
+    # Get and format filename
+    filename = format_filename(filename)
+    
     total_no_of_files = count_files_in_directory(src)
 
     no_of_processed = number_of_processed_files(
         src,
         database,
-        "Books",
+        table, #'Books'
         missing_isbn_dir,
         missing_metadata
     )
-    print(f"Progress: file {no_of_processed} of {total_no_of_files}")
-
     percentage_completion = no_of_processed/total_no_of_files*100
-    print(f"Percentage completion: {percentage_completion:.2f}% DONE")
-
-    no_of_database_files = number_of_database_files(database, "Books")
+    no_of_database_files = number_of_database_files(database, table)
 
     time_remaining = total_time_remaining(
         duration_dictionary,
         src,
         database,
-        "Books",
+        table,
         no_of_database_files,
         missing_isbn_dir,
         missing_metadata
     )
-    if time_remaining < 60:
-        print(f"Total time remaining: {time_remaining:.2f} minutes")
-    else:
-        print(f"Total time remaining: {time_remaining:.2f} hours")
+    time_remaining = format_time_remaining(time_remaining)
+    
     (percent_google_api,
-     percent_openlibrary_api) = percent_api_utilization(database, "Books")
-    print(f"API utilization: {percent_google_api:.2f}% Google, {percent_openlibrary_api:.2f}% Openlibrary")
+     percent_openlibrary_api) = percent_api_utilization(database, table)
 
-    process_efficiency = file_processing_efficiency(src, database, "Books", missing_isbn_dir)
-    print(f"Process efficiency: {process_efficiency:.2f}%")
-
+    process_efficiency = file_processing_efficiency(src, database, table, missing_isbn_dir)
     n_missing_isbn = number_of_dir_files(missing_isbn_dir)
-    n_missing_metadata = number_of_dir_files(missing_metadata)
-    print(
-        f"""Process summary: {no_of_database_files} files renamed or added to DB,
-                 {n_missing_isbn} files with missing ISBN,
-                 {n_missing_metadata} files with missing metadata""", end=''
-    )
+    n_missing_metadata = number_of_dir_files(missing_metadata)   
 
-    print(f"""
-=====================================================
-""")
+    updated_stats = f"""
+    Progress: file {no_of_processed} of {total_no_of_files}
+    Current file: {format_filename(filename)}
+    Percentage completion: {percentage_completion:.1f}% DONE
+    Time remaining: {time_remaining}
+    API utilization: {percent_google_api:.1f}% Google, {percent_openlibrary_api:.1f}% Openlibrary
+    Process efficiency: {process_efficiency:.1f}%"
+    Process summary: {no_of_database_files} files renamed or added to DB,
+                     {n_missing_isbn} files with missing ISBN,
+                     {n_missing_metadata} files with missing metadata"""
 
+    # Clear screen (gives the values changing effect)
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(table_header, end='')
+    print(updated_stats)
+    print(footer)
+
+# Iterate through each file in the new 'ubooks_copy' directory
+# and extract text in first 20 pages of each file
+for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
+    
+    # Get and format filename
+    filename = file.name   # call it as format_filename(filename)
+    show_statistics(filename, src, database, "Books", missing_isbn_dir, missing_metadata, duration_dictionary)
     start_time = time.time()
 
     file_src = (
