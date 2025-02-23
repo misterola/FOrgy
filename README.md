@@ -14,7 +14,7 @@ You provide links to directories containing your ebooks and FOrgy creates its ow
 
 
 ## Project status
-This project is under active development. All modules work perfectly fine albeit not yet packageds.
+This project is under active development. All modules work perfectly fine albeit not yet packaged.
 <br/>
 <br/>
 <br/>
