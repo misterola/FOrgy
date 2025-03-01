@@ -199,6 +199,7 @@ def organize_files_in_directory(source_directory, destination_directory):
     return extension_set
 
 
+# tests: all functions
 
 # To test
 # print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_keji", r"C:\Users\Ola\Desktop"))

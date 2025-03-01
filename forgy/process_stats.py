@@ -5,18 +5,20 @@
 # number of files renamed or added to database(metadata found),
 # number of files remaining,
 # api utilization (%google, %openlibrary),
-# efficiency of process (successful operations as % of total no of files, excl. those files with missing ISBN)
+# efficiency of process (successful operations as % of total no of files,
+# excl. those files with missing ISBN)
 # time remaining estmated base on average time per file so far
 # format to have a pretty display
 
-from filesystem_utils import(
+from filesystem_utils import (
     count_files_in_directory,
 )
 
-from database import(
+from database import (
     titles_in_db,
     api_utilization,
 )
+
 
 def number_of_dir_files(directory):
     """Function to count the number of files  in a directory.
@@ -25,7 +27,7 @@ def number_of_dir_files(directory):
     no of files with missing isbn, number of files with missing
     metadata, number of files renamed (metadata found)
     """
-    
+
     return count_files_in_directory(directory)
 
 
@@ -38,8 +40,12 @@ def number_of_database_files(database, table):
     return len(titles_in_db(database, table))
 
 
-def number_of_processed_files (source_dir, database, table, missing_isbn_dir, missing_metadata_dir):
-    initial_file_count = number_of_dir_files(source_dir)
+def number_of_processed_files(source_dir,
+                              database,
+                              table,
+                              missing_isbn_dir,
+                              missing_metadata_dir):
+    # initial_file_count = number_of_dir_files(source_dir)
 
     no_of_files_in_database = number_of_database_files(database, table)
 
@@ -47,13 +53,19 @@ def number_of_processed_files (source_dir, database, table, missing_isbn_dir, mi
 
     no_of_missing_metadata = number_of_dir_files(missing_metadata_dir)
 
-    no_of_processed_files = no_of_files_in_database + no_of_missing_isbn + no_of_missing_metadata
+    no_of_processed_files = (no_of_files_in_database
+                             + no_of_missing_isbn
+                             + no_of_missing_metadata)
 
     return no_of_processed_files
-    
 
 
-def _number_of_files_remaining(source_dir, database, table, no_of_database_files, missing_isbn_dir, missing_metadata_dir):
+def _number_of_files_remaining(source_dir,
+                               database,
+                               table,
+                               no_of_database_files,
+                               missing_isbn_dir,
+                               missing_metadata_dir):
     """"Function to count the number of unprocessed files in directory.
 
     This equals (Initial total no of ubooks files - no of files processed)
@@ -61,7 +73,11 @@ def _number_of_files_remaining(source_dir, database, table, no_of_database_files
     """
     initial_file_count = number_of_dir_files(source_dir)
 
-    no_of_processed_files = number_of_processed_files(source_dir, database, table, missing_isbn_dir, missing_metadata_dir)
+    no_of_processed_files = number_of_processed_files(source_dir,
+                                                      database,
+                                                      table,
+                                                      missing_isbn_dir,
+                                                      missing_metadata_dir)
 
     no_of_files_remaining = initial_file_count - no_of_processed_files
 
@@ -77,7 +93,7 @@ def percent_api_utilization(database, table):
     """
     api_list = api_utilization(database, table)
 
-    n_successful_api_calls = len(api_list)
+    # n_successful_api_calls = len(api_list)
 
     google_list = []
 
@@ -99,9 +115,11 @@ def percent_api_utilization(database, table):
         percent_openlibrary_api = 0
 
     return (percent_google_api, percent_openlibrary_api)
-    
 
-def file_processing_efficiency(source_dir, database, table, missing_isbn_dir):
+
+def file_processing_efficiency(source_dir,
+                               database,
+                               table, missing_isbn_dir):
     """Estimates what percentage of total number of books, excluding those with missing ISBN,
     whose metadata have been added to the Books table in database.
 
@@ -112,7 +130,7 @@ def file_processing_efficiency(source_dir, database, table, missing_isbn_dir):
     initial_file_count = number_of_dir_files(source_dir)
 
     no_of_missing_isbn = number_of_dir_files(missing_isbn_dir)
-    
+
     try:
         process_efficiency = no_of_database_files/(initial_file_count - no_of_missing_isbn)*100
     except ZeroDivisionError:
@@ -143,7 +161,13 @@ def _average_time_per_file(duration_dict):
     return avg_time_per_file
 
 
-def total_time_remaining(duration_dict, source_dir, database, table, no_of_database_files, missing_isbn_dir, missing_metadata_dir):
+def total_time_remaining(duration_dict,
+                         source_dir,
+                         database,
+                         table,
+                         no_of_database_files,
+                         missing_isbn_dir,
+                         missing_metadata_dir):
     """Estimates how many hours left for operating on all files.
 
     Estimate using: number of file remaining*average processing time per file
@@ -153,7 +177,12 @@ def total_time_remaining(duration_dict, source_dir, database, table, no_of_datab
     """
     avg_time_per_file = _average_time_per_file(duration_dict)
 
-    no_of_files_remaining = _number_of_files_remaining(source_dir, database, table, no_of_database_files, missing_isbn_dir, missing_metadata_dir)
+    no_of_files_remaining = _number_of_files_remaining(source_dir,
+                                                       database,
+                                                       table,
+                                                       no_of_database_files,
+                                                       missing_isbn_dir,
+                                                       missing_metadata_dir)
 
     time_remaining = avg_time_per_file * no_of_files_remaining/60
 
@@ -164,6 +193,7 @@ def total_time_remaining(duration_dict, source_dir, database, table, no_of_datab
         return time_remaining/60
 
 # Preferred format of process stats
+
 """
 =====================================================
                 FOrgy Process Statistics

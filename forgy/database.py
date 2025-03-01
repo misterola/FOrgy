@@ -77,7 +77,7 @@ def api_utilization(database, table):
         for source in api_sources:
             api_sources_list.append(source[0])
     return api_sources_list
-    
+# tests: all_funcs    
 
 # Test module
 # Create_library_db(home/'Desktop'/'library.db')

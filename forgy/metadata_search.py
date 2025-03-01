@@ -15,13 +15,6 @@ def merge_list_items(
     list of values neatly separated
     by a comma"""
     if isinstance(given_list, list):
-##        list_length = len(given_list)
-##        appended_values = ""
-##        given_list = [str(val) for val in given_list]
-##        for i in range(list_length):
-##            appended_values = appended_values + given_list[i] + "," + " "
-##        f_appended_values = appended_values.rstrip(" ").rstrip(",")
-##        # print(f_appended_values)
         appended_values = ", ".join(given_list)
         return appended_values
     else:
@@ -123,7 +116,7 @@ def get_isbns(metadee):  # noqa: C901
 
 def get_isbns2(metadata_dict):
     """Fetches ISBNS from openlibrary sourced
-    metadata"""    
+    metadata"""
     if "isbn_10" in metadata_dict.keys():
         isbn_10 = metadata_dict["isbn_10"][0]
     else:
@@ -422,7 +415,7 @@ def get_metadata_openlibrary(
 # If metadata not recovered from both google and openlibrary apis,
 # Print file_name not found and move file to missing_metadata directory
 
-def move_to_missing_metadata(file_src, missing_metadata):                          
+def move_to_missing_metadata(file_src, missing_metadata):
     try:
         shutil.move(file_src, missing_metadata)
     # FileNotFoundError raised if file has a missing ISBN and is already moved to

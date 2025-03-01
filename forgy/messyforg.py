@@ -237,7 +237,6 @@ def show_statistics(
     print(updated_stats)
     print(footer)
 
-
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
