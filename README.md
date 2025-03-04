@@ -32,9 +32,6 @@ This project is under active development. All modules work perfectly fine albeit
 - Enable user to supply list of directories containing PDF files to be operated upon and '*.pdf'
   extension is matched to autogenerate local copy for messyforg
 
-- Enable user to enter book details (isbn, isbn_list, title, author, content) manually and automatically fetch book metadata
-  from api (perhaps another module named single_isbn_api)
-
 - Enable metadata extraction from book using the current pdf text extractor
 
 - Enable metadata download as a dictionary for all books
