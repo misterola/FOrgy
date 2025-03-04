@@ -144,18 +144,28 @@ def get_file_size(file_path):
 
 
 # for use in main script
-def google_api(isbn, API_KEY):
-    googleapi_metadata = (
-        "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn + "&key=" + API_KEY
-    )
+def google_api(API_KEY, isbn=None, title=None):
+    print(f"For google_api, Title:{title} and ISBN={isbn}")
+    if isbn:
+        googleapi_metadata = (
+            "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn + "&key=" + API_KEY
+        )
+    else:
+        googleapi_metadata = (
+            'https://www.googleapis.com/books/v1/volumes?q=intitle:'+ title
+        )
+    print(f"GoogleAPI metadata url: {googleapi_metadata}, ISBN: {isbn}, Title: {title}")
     # define function load metadata for both google and openlibrary api to return json_metadata
     # check google api for book metadata
     book_metadata = requests.get(
-        googleapi_metadata, headers=headers, timeout=60
+    googleapi_metadata, headers=headers, timeout=60
     )  # 300 works
     book_metadata.raise_for_status()
     json_metadata = json.loads(book_metadata.text)
     return json_metadata
+
+    
+        
 
 
 # For use in main script
@@ -168,8 +178,13 @@ def openlibrary_api(isbn):
 
 
 # Assign dict from extracted metadata to metadata_dict
-def google_metadata_dict(isbn):
-    json_metadata = google_api(isbn, API_KEY)
+def google_metadata_dict(isbn=None, title=None):
+    print(f"google_metadata_dict, Title:{title}, ISBN: {isbn}")
+    if isbn:
+        json_metadata = google_api(API_KEY, isbn=isbn)
+    else:
+        json_metadata = google_api(API_KEY, title=title)
+
     try:
         metadata_dict = json_metadata["items"][0]["volumeInfo"]
     except KeyError:
@@ -212,13 +227,15 @@ def get_dictionary(dictionary):
 
 # prev: isbn, api, headers as input
 def get_metadata_google(
-    isbn,
     file,
+    isbn=None,
+    title=None,
     headers={
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     },
 ):
+    print(f"For get_metadata_google, title={title}, isbn={isbn}")
     """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
     # gets file metadata from google or openlibrary apis
     # json_metadata = google_api(isbn)
@@ -234,7 +251,11 @@ def get_metadata_google(
     }
 
     # Assign dict from extracted metadata to metadata_dict
-    metadata_dict = google_metadata_dict(isbn)
+    if isbn:
+        metadata_dict = google_metadata_dict(isbn=isbn)
+    else:
+        metadata_dict = google_metadata_dict(title=title)
+    
 
     # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
     available_metadata = metadata_handler(dict_of_interest, metadata_dict)
@@ -312,8 +333,8 @@ def get_metadata_google(
 
 
 def get_metadata_openlibrary(
-    isbn,
     file,
+    isbn,
     headers={
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
@@ -436,7 +457,7 @@ def get_metadata_from_api(api1_dict,
                           file_src,
                           missing_metadata):
     # call get_metadata_google or get_metadata_openlibrary
-    file_metadata = api1_dict[api1_dict_key](isbn, file, headers)
+    file_metadata = api1_dict[api1_dict_key](file, isbn, headers=headers)
     # time.sleep(5)
 
     # If metadata from google is not empty, unpack tuple file_metadata into the various variables
@@ -444,7 +465,7 @@ def get_metadata_from_api(api1_dict,
         return file_metadata
         
     else:
-        file_metadata = api2_dict[api2_dict_key](isbn, file, headers)
+        file_metadata = api2_dict[api2_dict_key](file, isbn, headers=headers)
         # time.sleep(5)
 
         # If metadata from google is not empty, unpack tuple file_metadata into the various variables
@@ -454,9 +475,7 @@ def get_metadata_from_api(api1_dict,
         else:
             print(f"ISBN metadata not found for {pdf_path.stem}")
             move_to_missing_metadata(file_src, missing_metadata)
-            return None
-
-                            
+            return None                            
                     
 
 # Function to format title to format allowed by windows os
@@ -479,6 +498,56 @@ def modify_title(title):
         title = title[:255]
 
     return title
+
+
+def get_single_book_metadata(file, isbn=None, title=None):
+    """Function to fetch metadata of one book by title or isbn from google bookapi."""
+
+    values=""
+    # If title is supplied, in all function calls, title is assigned to supplied title
+    # while isbn is None. The converse is also true.
+    if title:
+            values = get_metadata_google(
+                        file,
+                        title=title,
+                     )
+    else:
+        values = get_metadata_google(
+                    file,
+                    isbn=isbn,
+                 )
+    print(f"""
+            Title: {title}
+            ISBN: {isbn}"""
+    )
+        
+    return values
+
+    
+
+##def get_single_book_metadata(
+##    search_parameter=isbn,
+##    headers={
+##        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
+##        AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+##    },
+##):
+##    """A function to retrieve metadata from a single book based on ISBN(default), title, or inside text.
+##
+##    You can use isbn, title, and inside_text to locate book metadata."""
+##
+##    if isbn:
+##        metadata_dict = google_metadata_dict(isbn)
+
+# www.openlibrary.org/search/inside.json?q="what is life"
+
+# Search with title
+# https://www.googleapis.com/books/v1/volumes?q=intitle:"To Kill a Mockingbird"
+
+        
+        
+
+
 
 
 # if api = google and json values returned, use google api,
