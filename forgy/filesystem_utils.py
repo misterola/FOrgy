@@ -117,6 +117,48 @@ def move_files_in_tree(source_directory, destination_directory):
                 print(f"Encountered error {e} while moving file {file}")
     return None
     
+
+
+def move_files_from_directories(directory_list, destination, extension='pdf'):
+    """Function to move .pdf files in a list of directories to a destination"""
+    # Check if every directory in list is valid
+    for directory in directory_list:
+        if not Path(directory).is_dir():
+            print(f"{directory} in directory_list is not a directory")
+            return None
+
+    # Check if the provided destination is a valid directory
+    if not Path(destination).is_dir():
+        print(f"{destination} is not a directory")
+        return None
+    
+    # Iterate through directories in list
+    for directory in directory_list:    
+        dir_path = Path(directory)
+        files_moved = False
+
+        # Iterate through files inside directory
+        for file in dir_path.iterdir():
+            extension_match = extension.lower()
+            # Ensure file is a valid file and it ends with extension name
+            if file.is_file() and file.name.lower().endswith(f".{extension_match}"):
+                src = dir_path/file.name
+                dst = Path(destination)/file.name
+                try:
+                    shutil.move(src, dst)
+                    print(f"File '{src}' moved to '{dst}'")
+                    files_moved = True
+                except OSError as e:
+                    print(f"Error {e} encountered when {src} was being moved")
+        # Print success message whenever all files in one directory have been moved to destination
+        if files_moved:
+            print(f"All files in {directory} moved to {destination} successfully.")
+        else:
+            print(f"No .{extension} files in directory {directory}.")
+
+    return None
+    
+    
             
 
 def organize_files_in_directory(source_directory, destination_directory):
@@ -199,7 +241,19 @@ def organize_files_in_directory(source_directory, destination_directory):
     return extension_set
 
 
-# tests: all functions
+def delete_files_in_directory(directory):
+    """Delete only files from directory.
+
+    shutil.rmtree(directory) deletes all content of directory which is not needed here
+    """
+    try:
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                if entry.is_file():
+                    os.unlink(entry.path)
+        print(f"Files in {directory} deleted successfully")
+    except OSError as e:
+        print(f"Error {e} occured")
 
 # To test
 # print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_keji", r"C:\Users\Ola\Desktop"))
