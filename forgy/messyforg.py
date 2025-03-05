@@ -28,7 +28,6 @@ from database import (
     delete_table,
     titles_in_db,
 )
-
 from process_stats import (
     number_of_dir_files,
     number_of_processed_files,
@@ -37,8 +36,11 @@ from process_stats import (
     percent_api_utilization,
     file_processing_efficiency,
 )
+from filesystem_utils import (
+    count_files_in_directory,
+    delete_files_in_directory,
+)
 
-from filesystem_utils import count_files_in_directory
 
 home = Path.home()
 # Enable user to add more sources (up to 5) and make user specify location
@@ -47,12 +49,45 @@ src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
 
 dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
 
+if dst.exists():
+    """Delete directory"""
+    shutil.rmtree(dst)
+    print(f"Existing {dst} directory deleted")
+
+
 # Copy source directory and rename as 'ubooks_copy'
 try:
-    shutil.copytree(src, dst)
+    # Copy directory even if it exists. FileExistsError will not be raised
+    shutil.copytree(src, dst, dirs_exist_ok=True)
     print("Source directory copied successfully")
+except Exception as e:
+    print(f"Exception {e} raised")
+    pass
+
+# Create missing metadata directory. If it exists clear content
+# Another will be generated from source
+missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
+missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
+
+if missing_metadata.exists():
+    """Clean-up directory"""
+    delete_files_in_directory(missing_metadata)
+    print(f"Existing {missing_metadata} directory deleted")
+
+if missing_isbn_dir.exists():
+    """Clean-up directory"""
+    delete_files_in_directory(missing_isbn_dir)
+    print(f"Existing {missing_isbn_dir} directory deleted")
+
+try:
+    missing_metadata.mkdir(exist_ok=True)
+    print("missing_metadata directory created")
+    missing_isbn_dir.mkdir(exist_ok=True)
+    print("missing_isbn directory created")
 except FileExistsError:
-    print("Directory copied already!")
+    # Delete all files inside directory
+    delete_files_in_directory(missing_metadata)
+    print(f"Content of {missing_metadata} directory cleared")
 
 
 # Create 'library.db' or connect to it if it already exists
@@ -73,11 +108,7 @@ delete_table(database, "Books")
 # Create table 'Books' in library.db
 create_table(database, "Books")
 
-missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
-missing_metadata.mkdir(exist_ok=True)
 
-missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
-missing_isbn_dir.mkdir(exist_ok=True)
 
 # Initialize raw_files_set to store path to raw files iterated over and initialize
 # renamed_files_set to store path to renamed file. This ensures that no file is
@@ -293,7 +324,13 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         # For files with missing isbn, save extracted text into file,
         # and move file to missing_isbn directory
         if (missing_isbn_dir.exists() and (not valid_isbn)):
-            shutil.move(file_src, missing_isbn_dir)
+            try:
+                shutil.move(file_src, missing_isbn_dir)
+            except FileExistsError:
+                print(f"File {file.name} already exists in destination {dst}")
+            except Exception as e:
+                print(f"Exception {e} raised")
+                pass
             # For files with missing isbn, generate (empty) text files
             # to ascertain problem
             # with open(
