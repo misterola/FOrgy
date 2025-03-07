@@ -21,12 +21,8 @@ This project is under active development. All modules work perfectly fine albeit
 
 ## TODOs
 
-- Add timestamps to book metadata (or database)
-
 - Add modules: tests, header & api key, logging, cache/temp, archive, usage   stats, documentation, examples,
   CLI, Tkinter GUI, tests, CI/CD, parallel operation (threading/concurrency/multiprocessing/async)
-
-- Enable metadata download as a dictionary for all books
 
 - Test the APIs and user internet connection before beginning operation, and automatically get header
   settings for user browser from reliable source and parse into format needed by Forgy
