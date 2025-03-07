@@ -51,7 +51,8 @@ dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
 
 if dst.exists():
     """Delete directory"""
-    shutil.rmtree(dst)
+    #shutil.rmtree(dst)
+    delete_files_in_directory(dst)
     print(f"Existing {dst} directory deleted")
 
 
@@ -97,7 +98,6 @@ database = (
     / "Desktop"
     / "Projects"
     / "Forgy"
-    / "forgy"
     / "library.db"
 )
 create_library_db(database)
@@ -336,7 +336,8 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             # with open(
             # f"home/'Desktop'/'Forgy'/'{pdf_path.stem}.txt'", 'a'
             # ) as page_new:
-            with open(f"{pdf_path.stem}.txt", "a") as page_new:
+            # with open(f"{pdf_path.stem}.txt", "a") as page_new:
+            with open(f"{dst.parent}/{pdf_path.stem}.txt", "a") as page_new:
                 try:
                     page_new.write(extracted_text)
                 except (FileNotFoundError, UnicodeEncodeError):
@@ -353,7 +354,6 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             / "Desktop"
             / "Projects"
             / "Forgy"
-            / "forgy"
             / "library.db",
             "Books",
             valid_isbn,
@@ -386,15 +386,17 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                 if api1_dict_key == "google":
                     # Assign retrieved metadata to tuple value for easy
                     # addition to database. This updates the initialized values
-                    values = get_metadata_from_api(api1_dict,
-                                                   api1_dict_key,
-                                                   api2_dict,
-                                                   api2_dict_key,
-                                                   isbn,
-                                                   file,
-                                                   headers,
-                                                   file_src,
-                                                   missing_metadata)
+                    values = get_metadata_from_api(
+                        api1_dict,
+                        api1_dict_key,
+                        api2_dict,
+                        api2_dict_key,
+                        isbn,
+                        file,
+                        headers,
+                        file_src,
+                        missing_metadata
+                    )
                     raw_files_set.add(file)
                     time.sleep(5)
                     process_duration_sec = process_duration(start_time)
@@ -405,15 +407,17 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
                     continue
 
                 else:
-                    values = get_metadata_from_api(api2_dict,
-                                                   api2_dict_key,
-                                                   api1_dict,
-                                                   api1_dict_key,
-                                                   isbn,
-                                                   file,
-                                                   headers,
-                                                   file_src,
-                                                   missing_metadata)
+                    values = get_metadata_from_api(
+                        api2_dict,
+                        api2_dict_key,
+                        api1_dict,
+                        api1_dict_key,
+                        isbn,
+                        file,
+                        headers,
+                        file_src,
+                        missing_metadata
+                    )
                     raw_files_set.add(file)
                     time.sleep(5)
                     process_duration_sec = process_duration(start_time)
@@ -455,7 +459,6 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         / "Desktop"
         / "Projects"
         / "Forgy"
-        / "forgy"
         / "library.db",
         "Books"
     )
@@ -463,7 +466,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
     # Check if the metadata tuple (i.e. values) is not empty
     # and title is already in database. If that is the case,
     # skip to next iteration
-    if values and modify_title(f"{values[0]}.pdf") in db_titles:
+    if values and f"{values[0]}.pdf" in db_titles:
         process_duration_sec = process_duration(start_time)
         save_process_duration(file,
                               process_duration_sec,
@@ -484,7 +487,7 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
         # Rename file in its original ubooks directory
         old_file_name = pdf_path
         dst_dir = dst
-        new_file_name = modify_title(f"{values[0]}.pdf")
+        new_file_name = f"{values[0]}.pdf"
         new_file_path = os.path.join(dst_dir, new_file_name)
 
         try:
@@ -501,7 +504,6 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             / "Desktop"
             / "Projects"
             / "Forgy"
-            / "forgy"
             / "library.db",
             "Books",
             values,
@@ -517,7 +519,6 @@ for file in os.scandir(dst):    # noqa: C901 # A complex loop_McCabe 30
             / "Desktop"
             / "Projects"
             / "Forgy"
-            / "forgy"
             / "library.db", "Books"
         )
 
