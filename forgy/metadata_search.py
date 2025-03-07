@@ -2,9 +2,11 @@
 import json
 import requests
 import os
-from user_requirements import headers, API_KEY
 import re
 import shutil
+from datetime import datetime
+
+from user_requirements import headers, API_KEY
 
 
 def merge_list_items(
@@ -314,6 +316,9 @@ def get_metadata_google(
     # get file size
     file_size = get_file_size(file)
 
+    # get date created
+    date_created = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # update dict_of_interest
     dict_of_interest["full_title"] = full_title
     dict_of_interest["isbn_10"] = isbn_10
@@ -350,6 +355,7 @@ def get_metadata_google(
         ref_isbn,
         source,
         float(file_size),
+        date_created,
     )
 
 
@@ -414,6 +420,9 @@ def get_metadata_openlibrary(
     # get file size
     file_size = get_file_size(file)
 
+    # get creation date
+    date_created = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # update dict_of_interest
     dict_of_interest["full_title"] = full_title
     dict_of_interest["isbn_10"] = isbn_10
@@ -451,6 +460,7 @@ def get_metadata_openlibrary(
         ref_isbn,
         source,
         float(file_size),
+        date_created,
     )
 
 
