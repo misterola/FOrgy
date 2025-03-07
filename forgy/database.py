@@ -77,6 +77,22 @@ def api_utilization(database, table):
         for source in api_sources:
             api_sources_list.append(source[0])
     return api_sources_list
+
+def get_all_metadata(database, table):
+    """Function makes book title key and book metadata value in all_metadata dictionary"""
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM {table};")
+        book_metadata = cursor.fetchall()
+        all_metadata = {}
+        for entry in book_metadata:
+            all_metadata[entry[0]] = entry
+    return all_metadata
+
+
+
+
+
 # tests: all_funcs    
 
 # Test module
