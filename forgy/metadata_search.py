@@ -224,6 +224,27 @@ def get_dictionary(dictionary):
     else:
         return final_dict
 
+# Function to format title to format allowed by windows os
+# Note that there are other reserved filenames e.g. "CON", "PRN"
+def modify_title(title):
+    # remove leading and trailing white spaces
+    title = title.strip()
+
+    # replace invalid characters with underscore
+    title = re.sub(r'[<>:"/\\|?*!]', "_", title)
+
+    # remove hyphen
+    title = title.replace("-", "_")
+
+    # remove trailing periods (at end of filename)
+    title = title.rstrip(".")
+
+    # Keep filename within 255 character limits
+    if len(title) > 255:
+        title = title[:255]
+
+    return title
+
 
 # prev: isbn, api, headers as input
 def get_metadata_google(
@@ -317,7 +338,7 @@ def get_metadata_google(
     # source = {source},
     # filesize = {filesize:.2f} MB""")
     return (
-        title,
+        modify_title(title),
         subtitle,
         full_title,
         date_of_publication,
@@ -418,7 +439,7 @@ def get_metadata_openlibrary(
     # file_size = {file_size:.2f} MB"""
     #       )
     return (
-        title,
+        modify_title(title),
         subtitle,
         full_title,
         date_of_publication,
@@ -478,26 +499,7 @@ def get_metadata_from_api(api1_dict,
             return None                            
                     
 
-# Function to format title to format allowed by windows os
-# Note that there are other reserved filenames e.g. "CON", "PRN"
-def modify_title(title):
-    # remove leading and trailing white spaces
-    title = title.strip()
 
-    # replace invalid characters with underscore
-    title = re.sub(r'[<>:"/\\|?*!]', "_", title)
-
-    # remove hyphen
-    title = title.replace("-", "")
-
-    # remove trailing periods (at end of filename)
-    title = title.rstrip(".")
-
-    # Keep filename within 255 character limits
-    if len(title) > 255:
-        title = title[:255]
-
-    return title
 
 
 def get_single_book_metadata(file, isbn=None, title=None):
