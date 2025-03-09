@@ -10,7 +10,7 @@ from pathlib import Path
 import time
 
 from user_requirements import headers, API_KEY
-from database import get_database_columns  #(database, table, columns=[])
+from database import get_database_columns
 
 
 def merge_list_items(
@@ -27,6 +27,7 @@ def merge_list_items(
         print(f"parameter is of type {type(given_list)}, not of type:list")
         pass
 
+    
 def get_cover_url(dictionary):
     """Function to get book cover thumbnail (medium-sized) from googlebooks api.
 
@@ -216,9 +217,6 @@ def google_api(API_KEY, isbn=None, title=None):
     book_metadata.raise_for_status()
     json_metadata = json.loads(book_metadata.text)
     return json_metadata
-
-    
-        
 
 
 # For use in main script
@@ -587,7 +585,6 @@ def download_book_covers(isbns):
     pass
 
 
-
 def get_single_book_metadata(file, isbn=None, title=None):
     """Function to fetch metadata of one book by title or isbn from google bookapi."""
 
@@ -701,30 +698,12 @@ def get_book_covers(cover_dir, database, table):
 
     print()
     return None
-        
-##with open(Path(f"{cover_dir}/{title}.jpg"), 'wb') as handle:
-##    response = requests.get(f"{image_url}", stream=True)
-##
-##    if not response.ok:
-##        print(response)
-##
-##    for block in response.iter_content(1024):
-##        if not block:
-##            break
-##        handle.write(block)
-
    
 
 # www.openlibrary.org/search/inside.json?q="what is life"
 
 # Search with title
 # https://www.googleapis.com/books/v1/volumes?q=intitle:"To Kill a Mockingbird"
-
-        
-        
-
-
-
 
 # if api = google and json values returned, use google api,
 # else: we use openlibrary api
