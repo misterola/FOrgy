@@ -35,7 +35,7 @@ def create_library_db(destination):
     with sqlite3.connect(destination) as connection:
         cursor = connection.cursor()  # noqa: F841  # no use for cursor variable
         print("Database connection established")
-
+        
 
 # Add metadata to 'Book' table
 def add_metadata_to_table(destination, table_name, values):
@@ -101,6 +101,22 @@ def get_all_metadata(database, table):
     return all_metadata
 
 
+def get_database_columns(database, table, columns=["Title", "ImageLink"]):
+    """Function to get values of columns in database table.
+
+    This is used to retrieve book titles/isbns and correspoding image_url
+    """
+    database_columns = ", ".join(columns)
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT {database_columns} FROM {table};")
+        # Get book metadata. The format is [(title, image_url),...(title, image_url)]
+        book_metadata = cursor.fetchall()
+##        for val in book_metadata:
+##            title = val[0]
+##            image_url = val[1]
+##            print(f"Title: {title}\nImage_url: {image_url}")
+    return book_metadata
 
 
 
