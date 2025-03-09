@@ -23,6 +23,7 @@ def create_table(destination, table_name):
                     RefISBN TEXT,
                     Source TEXT,
                     Filesize REAL,
+                    ImageLink TEXT,
                     Date_created TEXT
             );"""
         )
@@ -42,7 +43,7 @@ def add_metadata_to_table(destination, table_name, values):
         cursor = connection.cursor()
         print("Database connection successful")
         cursor.execute(
-            f"INSERT INTO {table_name} VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);",
+            f"INSERT INTO {table_name} VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             values,
         )
         print("Book details added successfully")
