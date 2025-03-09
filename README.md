@@ -22,12 +22,9 @@ This project is under active development. All modules work perfectly fine albeit
 ## TODOs
 
 - Add modules: tests, header & api key, logging, cache/temp, archive, usage   stats, documentation, examples,
-  CLI, Tkinter GUI, tests, CI/CD, parallel operation (threading/concurrency/multiprocessing/async)
+  CLI, Tkinter GUI, tests, CI/CD, parallel operation (threading/concurrency/multiprocessing/async decision and implementation)
 
 - Test the APIs and user internet connection before beginning operation, and automatically get header
   settings for user browser from reliable source and parse into format needed by Forgy
-
-- Get book cover image from API and standardize size. If that fails, extract firstpage of book,
-  save as jpg, standardize size for use as cover image
 
 - Package and release version 0.1.0 of FOrgy version (with a CLI/GUI)
