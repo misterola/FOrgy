@@ -5,8 +5,12 @@ import os
 import re
 import shutil
 from datetime import datetime
+import sqlite3
+from pathlib import Path
+import time
 
 from user_requirements import headers, API_KEY
+from database import get_database_columns  #(database, table, columns=[])
 
 
 def merge_list_items(
@@ -49,7 +53,7 @@ def get_cover_url2(cover_id, isbn):
 
     Cover API documentation can be found here:
     https://openlibrary.org/dev/docs/api/covers
-    Rate-limit for openlib = 100 covers per hour
+    Rate-limit for openlib = 100 covers per 5 minutes per user IP
 
     Modify function later to have thumbnail-size parameter
     """
@@ -607,7 +611,109 @@ def get_single_book_metadata(file, isbn=None, title=None):
         
     return values
 
+
+def get_book_covers(cover_dir, database, table):
+    """Function to extract cover page for all books in library.db(those with successfully obtained metadata."""
     
+    # Confirm if cover_dir is a valid directory
+    if not Path(cover_dir).is_dir():
+        print(f"Cover directory {cover_dir} is not a directory")
+        return None
+
+    cover_dir_path = Path(cover_dir)
+
+    # get book_metadata from database. The format is [(title, image_url),...(title, image_url)]
+    book_metadata = get_database_columns(database, table)
+
+    # Iterate through "title, image_url" in book_metadata and download file
+     
+    for val in book_metadata:
+        #enable matching of order of columns
+        title, image_url = val
+        # print(f"Title: {title}\nImage_url: {image_url}")
+
+        # enable skipping already downloaded cover pages
+        
+        with open(f"{cover_dir_path}/{title}.jpg", 'wb') as image_file:
+            # set number of api call requests before skipping iteration
+            retries = 3
+            delay_before_retries = 1.5
+            
+            try:
+                for trial in range(retries):
+                    # get image bytes object (in streams for memory efficiency downloading large files or many files) and handle errors
+                    # Send get request to image url
+                    response = requests.get(image_url, timeout=30, stream=True)
+
+                    #Check if request is successful. raise HTTPError if any
+                    response.raise_for_status()
+            except requests.exceptions.Timeout:
+                print("The request timed out.")
+                print(f"Attempt {trial + 1}")
+                continue
+            #handle raised exception/HTTPError by raise_for_status
+            except requests.exceptions.HTTPError as error:
+                print(f"HTTP error occurred: {error}")
+                print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
+                print(f"Status code: {response.status_code}")
+                continue
+            except requests.RequestException as e:
+                print(f"Error '{e}' occured")
+                print(f"Attempt {trial + 1}: An error occurred: {e}")
+                continue
+            else:
+                # if no exception is raised
+                print("Request was successful")
+                print(f"Status code: {response.status_code}")
+            time.sleep(delay_before_retries)
+            delay_before_retries *= 1.5
+
+            # Check if the response was successful. response.ok returns True if success status code (2xx) or False otherwise(4xx, 5xx)
+            if not response.ok:
+                print(response)
+            else:
+                #retrieve Content-Length header from HTTP request
+                content_length = response.headers.get('content-length')
+                #print(response.headers)
+                #print(content_length)
+
+                # if server does not provide content length (size of content in bytes),
+                # download the tne entire image at once. Load the entire image into memory and write to file at once without monitoring progress
+                if content_length is None:
+                    image_file.write(response.content)    # response.content is the raw binary content of response body (image)
+                    print(f"{title} downloaded successfully")
+                else:
+                    # if server provides content length, download file size in 1kilobyte chunks.
+                    downloaded_bytes = 0
+                    content_length = int(content_length)
+                    print(f"{title}")
+                    for chunk in response.iter_content(chunk_size=1024):
+                        # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
+                        if not chunk:
+                            break
+                        #write each chunk to file as it is downloaded
+                        image_file.write(chunk)
+                        #update total length of downloaded chunks
+                        downloaded_bytes += len(chunk)
+                        print(f"Download Progress: {downloaded_bytes}/{content_length} bytes, ({(downloaded_bytes / content_length) * 100:.2f}% DONE)")
+        # sleep for 3 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
+        time.sleep(3)
+
+    print()
+    return None
+        
+##with open(Path(f"{cover_dir}/{title}.jpg"), 'wb') as handle:
+##    response = requests.get(f"{image_url}", stream=True)
+##
+##    if not response.ok:
+##        print(response)
+##
+##    for block in response.iter_content(1024):
+##        if not block:
+##            break
+##        handle.write(block)
+
+   
 
 # www.openlibrary.org/search/inside.json?q="what is life"
 
