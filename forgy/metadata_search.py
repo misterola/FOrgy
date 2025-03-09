@@ -23,11 +23,48 @@ def merge_list_items(
         print(f"parameter is of type {type(given_list)}, not of type:list")
         pass
 
+def get_cover_url(dictionary):
+    """Function to get book cover thumbnail (medium-sized) from googlebooks api.
+
+    The format of imageLinks dictionary retrieved from json metadata
+
+    "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=mC-4CwAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=mC-4CwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+    }
+    """
+    #cover_info = dictionary["items"][0]["volumeInfo"]["imageLinks"]
+    print(f"SUPPLIED DICT: {dictionary}")
+    if "thumbnail" in dictionary.copy().keys():
+        cover_url = dictionary["thumbnail"]
+    elif "smallThumbnail" in dictionary.copy().keys():
+        cover_url = dictionary["smallThumbnail"]
+    else:
+        cover_url = "NA"
+    return cover_url
+
+
+def get_cover_url2(cover_id, isbn):
+    """Funtion to get cover image from openlibrary api.
+
+    Cover API documentation can be found here:
+    https://openlibrary.org/dev/docs/api/covers
+    Rate-limit for openlib = 100 covers per hour
+
+    Modify function later to have thumbnail-size parameter
+    """
+    if cover_id != "NA":
+        image_link = 'https://covers.openlibrary.org/b/id/' + cover_id + '-M.jpg'
+    else:
+        image_link = 'https://covers.openlibrary.org/b/isbn/' + isbn + '-M.jpg'
+    return image_link
+        
 
 # a function to handle keys and values of different types, including missing keys and values of type str, list
 # dict of interest is populated with available values whose keys match those in API
 def metadata_handler(dict_of_interest, metadata_dict):
     """dict of interest is empty_valued while metadata_dict is from json data from api"""
+    print(f"dict_of_interest: {dict_of_interest}, metadata_dict: {metadata_dict}")
     for key in dict_of_interest.keys():
         # if key in defined empty-valued book dictionary also exist
         # in metadata keys from api (this means data is available)
@@ -35,7 +72,13 @@ def metadata_handler(dict_of_interest, metadata_dict):
             # if value in retrieved dict is a list containing single element, extract that element using zero index
             # and update the defined empty_valued dictionary (dict_of_interest)
             if isinstance(metadata_dict[key], list) and len(metadata_dict[key]) == 1:
-                dict_of_interest[key] = dict_of_interest[key] + metadata_dict[key][0]
+                try:
+                    dict_of_interest[key] = dict_of_interest[key] + metadata_dict[key][0]
+                except TypeError:
+                    #this can occur in the case of cover_id in openlib api which is a list containing one integer
+                    print(f"{metadata_dict[key][0]} is of type {type(metadata_dict[key][0])}")
+                    dict_of_interest[key] = dict_of_interest[key] + str(metadata_dict[key][0])
+                    
 
             # if value in retrieved dict is a list containing multiple elements, extract that element using zero index
             # and update the defined empty_valued dictionary (dict_of_interest)
@@ -43,6 +86,10 @@ def metadata_handler(dict_of_interest, metadata_dict):
                 dict_of_interest[key] = dict_of_interest[key] + merge_list_items(
                     metadata_dict[key]
                 )
+            # if a dictionary if returned (containing two elements like the case of book thumbnail urls in googleapi)
+            elif isinstance(metadata_dict[key], dict) and len(metadata_dict[key]) >= 1:
+                dict_of_interest[key] = get_cover_url(metadata_dict[key])
+                print(f"DICT OF INTEREST: {dict_of_interest[key]}")
             else:
                 # If value is a single value (string), simply assign the value to
                 # corresponding key in empty-valued dictionary
@@ -271,8 +318,10 @@ def get_metadata_google(
         "publisher": "",
         "authors": "",
         "pageCount": "",
+        "imageLinks": ""   
     }
 
+    # dictionary["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
     # Assign dict from extracted metadata to metadata_dict
     if isbn:
         metadata_dict = google_metadata_dict(isbn=isbn)
@@ -302,6 +351,8 @@ def get_metadata_google(
     publisher = dict_of_interest.get("publisher", "NA")
     authors = dict_of_interest.get("authors", "NA")
     page_count = str(dict_of_interest.get("pageCount", "NA"))
+
+    image_link = dict_of_interest.get("imageLinks", "NA")
 
     # GET OTHER VALUES
     # get isbns from metadata
@@ -355,6 +406,7 @@ def get_metadata_google(
         ref_isbn,
         source,
         float(file_size),
+        image_link,
         date_created,
     )
 
@@ -377,6 +429,7 @@ def get_metadata_openlibrary(
         "publishers": "",
         "by_statement": "",
         "number_of_pages": "",
+        "covers": "", # cover ID expected and function converts this to image link
     }  # str by_statement rep authors in openlib api
     # openlib also has "full_title" key in json
 
@@ -407,6 +460,11 @@ def get_metadata_openlibrary(
     authors = dict_of_interest.get("by_statement", "NA")
     page_count = str(dict_of_interest.get("number_of_pages", "NA"))
 
+    # image link
+    image_id = dict_of_interest.get("covers", "NA")
+    image_link = get_cover_url2(image_id, isbn)
+
+    
     # GET OTHER VALUES
     # get isbns from metadata
 
@@ -460,6 +518,7 @@ def get_metadata_openlibrary(
         ref_isbn,
         source,
         float(file_size),
+        image_link,
         date_created,
     )
 
@@ -507,8 +566,21 @@ def get_metadata_from_api(api1_dict,
             print(f"ISBN metadata not found for {pdf_path.stem}")
             move_to_missing_metadata(file_src, missing_metadata)
             return None                            
-                    
 
+
+def download_book_covers(isbns):
+    """use ref isbn to fetch thumbnail cover image or medium cover image from google or openlibrary respectively.
+
+    Getting cover_page is only to be applied to books with successfully extracted metadata (those in database).
+    Search details in google api followed by openlibrary_api.
+
+    Openlib has covers api while google returns cover with metadata json.
+    1. If metadata found, download cover image using image link, save to book_covers folder and rename to book title
+    
+
+    In both cases, update database to include link to coverpage on pc
+    """
+    pass
 
 
 
@@ -536,20 +608,6 @@ def get_single_book_metadata(file, isbn=None, title=None):
     return values
 
     
-
-##def get_single_book_metadata(
-##    search_parameter=isbn,
-##    headers={
-##        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
-##        AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
-##    },
-##):
-##    """A function to retrieve metadata from a single book based on ISBN(default), title, or inside text.
-##
-##    You can use isbn, title, and inside_text to locate book metadata."""
-##
-##    if isbn:
-##        metadata_dict = google_metadata_dict(isbn)
 
 # www.openlibrary.org/search/inside.json?q="what is life"
 
