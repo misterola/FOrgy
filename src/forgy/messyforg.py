@@ -82,9 +82,6 @@ def create_directories(
     # Path to data directory
     data_path = data_parent_directory/data
 
-##    # Path to logs directory (logs path is on same level as data directory)
-##    logs_path = data_parent_directory/logs
-
     # Create the paths to all directories in data/
     pdfs_path = data_path/pdfs
     missing_isbn_path = data_path/missing_isbn
@@ -123,26 +120,6 @@ def create_directories(
     return directories
 
 
-
-
-# SOP:
-# Take source directory(-ies) and destination directory, copy all relevant files to destination directory,
-# Create a copy of this destination directory
-# Create logs and data directories
-# Create missing metadata and missing isbn directories, and book_metadata directories in data directories,
-# Initialize raw_files, renamed_files, and title sets to prevent duplications
-# Initialize duration dictionary to track the time it takes to operate on each file
-# Scan files in destination directory, get book metadata and store in db
-# If user wants cover images and metadata dictionary in file, retrieve those also
-
-# home = Path.home()
-# Enable user to add more sources (up to 5) and make user specify location
-# for messyforg folder
-##src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
-##
-##dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
-
-
 def get_src_and_dst(src, dst, directory_list_src=False, directory_tree_src=False):
     """Function to properly get sources and destinaton folder. dst destination directory must be empty"""
     
@@ -171,48 +148,12 @@ def get_src_and_dst(src, dst, directory_list_src=False, directory_tree_src=False
     return None
         
 
-
-    
-
-### Create missing metadata directory. If it exists clear content
-### Another will be generated from source
-##missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
-##missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
-
-##if missing_metadata.exists():
-##    """Clean-up directory"""
-##    delete_files_in_directory(missing_metadata)
-##    print(f"Existing {directory} directory deleted")
-##            
-##
-##if missing_isbn_dir.exists():
-##    """Clean-up directory"""
-##    delete_files_in_directory(missing_isbn_dir)
-##    print(f"Existing {missing_isbn_dir} directory deleted")
-
-
-
-# Create library.db and table
-# Create metadata_dict_file
-
-# Create 'library.db' or connect to it if it already exists
-
-##database = (
-##    home
-##    / "Desktop"
-##    / "Projects"
-##    / "Forgy"
-##    / "library.db"
-##)
-
 def create_db_and_table(database, table_name="Books", library_db_name="library.db", delete_db_table=True):
     """Create database and Books table in database. Existing table delete in database by default.
        Same is the case in underlying functions.
 
     Database can be a directory or .db file path.
     """
-##    # Create library.db database. Figure out path from create_directories function
-##    create_library_db(database, library_name=library_db_name)
 
     # Create Books table in database and specify all metadata columns
     create_table(database, table_name="Books", library_name='library.db', delete_table=delete_db_table)
@@ -391,7 +332,14 @@ def show_statistics(
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 
-def fetch_book_metadata(pdfs_source, original_source, database,  missing_isbn_dir, missing_metadata_dir, extracted_texts_path, table_name="Books"): #remove duration_directory
+def fetch_book_metadata(pdfs_source,
+                        original_source,
+                        database,
+                        missing_isbn_dir,
+                        missing_metadata_dir,
+                        extracted_texts_path,
+                        table_name="Books"):
+    
     """Database here is the path to the .db file"""
     # Initialize raw_files_set to store path to raw files iterated over and initialize
     # renamed_files_set to store path to renamed file. This ensures that no file is
@@ -489,15 +437,6 @@ def fetch_book_metadata(pdfs_source, original_source, database,  missing_isbn_di
                             continue
                 # Move to next book if its isbn has been previously extracted
                 # (compare with ref_isbn_set)
-##                if is_isbn_in_db(
-##                    home
-##                    / "Desktop"
-##                    / "Projects"
-##                    / "Forgy"
-##                    / "library.db",
-##                    "Books",
-##                    valid_isbn,
-##                ):
                 if is_isbn_in_db(database, table_name, valid_isbn):
                     process_duration_sec = process_duration(start_time)
                     save_process_duration(file_name,
@@ -595,14 +534,6 @@ def fetch_book_metadata(pdfs_source, original_source, database,  missing_isbn_di
             print(values)
 
             # Extract all titles contained in database as a set 'db_titles'
-##            db_titles = titles_in_db(
-##                home
-##                / "Desktop"
-##                / "Projects"
-##                / "Forgy"
-##                / "library.db",
-##                "Books"
-##            )
             db_titles = titles_in_db(database, table_name)
 
             # Check if the metadata tuple (i.e. values) is not empty
@@ -643,15 +574,6 @@ def fetch_book_metadata(pdfs_source, original_source, database,  missing_isbn_di
                     pass
 
                 # Add retrieved metadata to database
-##                add_metadata_to_table(
-##                    home
-##                    / "Desktop"
-##                    / "Projects"
-##                    / "Forgy"
-##                    / "library.db",
-##                    "Books",
-##                    values,
-##                )
                 add_metadata_to_table(database, table_name, values)
 
                 # Add the name of renamed book to renamed_files_set
@@ -659,13 +581,6 @@ def fetch_book_metadata(pdfs_source, original_source, database,  missing_isbn_di
                 renamed_files_set.add(new_file_name)
                 title_set.add(values[0])
 
-##                view_database_table(
-##                    home
-##                    / "Desktop"
-##                    / "Projects"
-##                    / "Forgy"
-##                    / "library.db", "Books"
-##                )
                 view_database_table(database, table_name)
 
             # For files with missing missing_metadata, move file to
