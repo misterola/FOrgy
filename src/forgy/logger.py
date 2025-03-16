@@ -4,14 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-### create logs directory if nonexistent
-##logs_parent = Path(os.getcwd()).parent.parent
-##print(logs_parent)
-##logs_path = logs_parent/"logs"
-##print(logs_path)
-##
-##os.makedirs(logs_path, exist_ok=True)
-##print("LOG CREATED")
 
 # Create and configure custom logger
 def configure_logger(name=None):
