@@ -32,9 +32,10 @@ Douglas L. Erwin - Industrial Chemical Process Design-McGraw-Hill Companies (200
 Mark Roseman - Modern Tkinter for Busy Python Dev elopers-Late Afternoon Press (2021).txt
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__/*
 *.py[cod]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
