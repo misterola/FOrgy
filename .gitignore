@@ -4,6 +4,12 @@ ubooks/
 #ubooks_copy
 ubooks_copy/
 
+#data directory
+data/
+
+#logs
+logs/
+
 #missing metadata
 missing_metadata/
 
