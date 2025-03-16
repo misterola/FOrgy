@@ -376,15 +376,6 @@ def fetch_book_metadata(pdfs_source,
             # get file path
             file_src = Path(file.path)
 
-##            file_src = (
-##                home
-##                / "Desktop"
-##                / "Projects"
-##                / "Forgy"
-##                / "ubooks_copy"
-##                / file
-##            )
-
             # If file has been iterated over or renamed, skip to next iteration
             if (file_name in raw_files_set) or (file_name in renamed_files_set):
                 continue
