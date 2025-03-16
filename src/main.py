@@ -15,9 +15,6 @@ logger = configure_logger('main')
 logger.info("This is the initial")
 
 
-#database = book_metadata_path/"library.db"
-# db_path = book_metadata_path/"library.db"
-
 def main():  # specify how to get sources
     [data_path,
     pdfs_path,
