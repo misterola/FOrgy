@@ -6,6 +6,7 @@ import time
 import requests
 import random
 import textwrap
+import os
 
 from isbn_regex import (
     isbn_pattern,
@@ -39,75 +40,182 @@ from process_stats import (
 from filesystem_utils import (
     count_files_in_directory,
     delete_files_in_directory,
+    get_files_from_directories,
+    get_files_from_tree,
 )
+from logger import configure_logger
 
+logger = configure_logger('forgy')
 
-home = Path.home()
+# SOP:
+# Take source directory(-ies) and destination directory, copy all relevant files to destination directory,
+# Create a copy of this destination directory
+# Create logs and data directories
+# Create missing metadata and missing isbn directories, and book_metadata directories in data directories,
+# Initialize raw_files, renamed_files, and title sets to prevent duplications
+# Initialize duration dictionary to track the time it takes to operate on each file
+# Scan files in destination directory, get book metadata and store in db
+# If user wants cover images and metadata dictionary in file, retrieve those also
+
+# home = Path.home()
 # Enable user to add more sources (up to 5) and make user specify location
 # for messyforg folder
-src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
+##src = home / "Desktop" / "Projects" / "Forgy" / "ubooks"
+##
+##dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
 
-dst = home / "Desktop" / "Projects" / "Forgy" / "ubooks_copy"
+def get_src_and_dst(src, dst, directory_list_src=False, directory_tree_src=False):
+    """Function to properly get sources and destinaton folder. dst destination directory must be empty"""
 
-if dst.exists():
-    """Delete directory"""
-    #shutil.rmtree(dst)
-    delete_files_in_directory(dst)
-    print(f"Existing {dst} directory deleted")
+    # clear content of destination directory if it exists
+    if dst.exists():
+        """Delete directory"""
+        #shutil.rmtree(dst)
+        delete_files_in_directory(dst)
+        logger.info(f"Existing '{dst}' directory deleted") 
+        # print(f"Existing '{dst}' directory deleted")
+
+    # Copy pdf files from source directories
+    if directory_list_src and isinstance(src, list):
+        get_files_from_directories(src, dst)
+        print(f"Files in {src} directories moved to {dst}")
+        return
+    else:
+        print(f"Validate directory paths in {src} and ensure that it is a list")
+        return
+
+    # Copy pdf files from a source directory tree
+    if directory_tree_src:
+        get_files_from_tree(src, dst)
+        print(f"Files in {src} tree moved to {dst}")
+        return
+    return None
+        
+
+# Create data directory and subdirectories
+def create_directories(
+    data="data",
+    pdfs="pdfs",
+    missing_isbn="missing_isbn",
+    missing_metadata="missing_metadata",
+    book_metadata="book_metadata",
+    extracted_texts="extracted_texts",
+    book_covers="book_covers"):
+    """Create data directory and its subdirectories"""
+
+    # get the parent directory for data/
+    current_directory = Path(os.getcwd())
+    data_parent_directory = current_directory.parent.parent
+
+    # Path to data directory
+    data_path = data_parent_directory/data
+
+    # Path to logs directory (logs path is on same level as data directory)
+    logs_path = data_parent_directory/logs
+
+    # Create the paths to all directories in data/
+    pdfs_path = data_path/pdfs
+    missing_isbn_path = data_path/missing_isbn
+    missing_metadata_path = data_path/missing_metadata
+    book_metadata_path = data_path/book_metadata
+
+    # Create paths to subdirectories (missing_isbn/extracted_texts and book_metadata/covers) in data/
+    extracted_texts_path = missing_isbn/extracted_texts
+    cover_pics_path = book_metadata_path/book_covers
+
+    directories = [
+        logs_path,
+        data_path,
+        pdfs_path,
+        missing_isbn_path,
+        missing_metadata_path,
+        book_metadata_path,
+        extracted_texts_path,
+        cover_pics_path,
+    ]
+
+    for directory in directories:
+##        if directory.exists():
+##            delete_files_in_directory(directory)
+##            print(f"Files in existing {directory} directory deleted")
+
+        try:
+            directory.mkdir(exist_ok=True)
+            print(f"{directory} directory created")
+        except FileExistsError:
+            # Delete all files inside directory
+            delete_files_in_directory(directory)
+            print(f"Content of {directory} directory cleared")
+            continue
+    # unpack all links to those paths        
+    return directories  
+    
+
+### Create missing metadata directory. If it exists clear content
+### Another will be generated from source
+##missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
+##missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
+
+##if missing_metadata.exists():
+##    """Clean-up directory"""
+##    delete_files_in_directory(missing_metadata)
+##    print(f"Existing {directory} directory deleted")
+##            
+##
+##if missing_isbn_dir.exists():
+##    """Clean-up directory"""
+##    delete_files_in_directory(missing_isbn_dir)
+##    print(f"Existing {missing_isbn_dir} directory deleted")
 
 
-# Copy source directory and rename as 'ubooks_copy'
-try:
-    # Copy directory even if it exists. FileExistsError will not be raised
-    shutil.copytree(src, dst, dirs_exist_ok=True)
-    print("Source directory copied successfully")
-except Exception as e:
-    print(f"Exception {e} raised")
-    pass
 
-# Create missing metadata directory. If it exists clear content
-# Another will be generated from source
-missing_metadata = home / "Desktop" / "Projects" / "Forgy" / "missing_metadata"
-missing_isbn_dir = home / "Desktop" / "Projects" / "Forgy" / "missing_isbn"
-
-if missing_metadata.exists():
-    """Clean-up directory"""
-    delete_files_in_directory(missing_metadata)
-    print(f"Existing {missing_metadata} directory deleted")
-
-if missing_isbn_dir.exists():
-    """Clean-up directory"""
-    delete_files_in_directory(missing_isbn_dir)
-    print(f"Existing {missing_isbn_dir} directory deleted")
-
-try:
-    missing_metadata.mkdir(exist_ok=True)
-    print("missing_metadata directory created")
-    missing_isbn_dir.mkdir(exist_ok=True)
-    print("missing_isbn directory created")
-except FileExistsError:
-    # Delete all files inside directory
-    delete_files_in_directory(missing_metadata)
-    print(f"Content of {missing_metadata} directory cleared")
-
+# Create library.db and table
+# Create metadata_dict_file
 
 # Create 'library.db' or connect to it if it already exists
 
-database = (
-    home
-    / "Desktop"
-    / "Projects"
-    / "Forgy"
-    / "library.db"
-)
-create_library_db(database)
+##database = (
+##    home
+##    / "Desktop"
+##    / "Projects"
+##    / "Forgy"
+##    / "library.db"
+##)
 
-# Delete Books table if it exists in database
-delete_table(database, "Books")
+def create_db_and_table(database, table_name="Books", delete_table=False):
+    
+    if Path(database).exists() and delete_table::
+        # Delete Books table if it exists in database and delete_table=True 
+        delete_table(database, table_name)
 
-# Create table 'Books' in library.db
-create_table(database, "Books")
+    # Create database library.db
+    create_library_db(database)
 
+    # Create table 'Books' in library.db
+    create_table(database, table_name)
+
+    return None
+
+
+
+
+# Copy destination directory into forgy pdfs_path
+# START HERE
+def copy_destination_directory(dst, pdfs_path, messy_folder_name):
+    dst_path = Path(dst)
+    messy_folder_path = dst_path/messy_folder
+    if not dst_path.is_dir():
+        print(f"{dst} is not a directory")
+        return
+    try:
+        # Copy directory even if it exists. FileExistsError will not be raised
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+        logger.info("Source directory copied successfully")
+        #print("Source directory copied successfully")
+    except Exception as e:
+        logger.exception(f"Exception {e} raised")
+        # print(f"Exception {e} raised")
+        pass
 
 
 # Initialize raw_files_set to store path to raw files iterated over and initialize
@@ -267,6 +375,8 @@ def show_statistics(
     print(table_header, end='')
     print(updated_stats)
     print(footer)
+
+
 
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file

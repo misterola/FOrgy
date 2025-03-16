@@ -80,10 +80,13 @@ def move_folders(source_dir, destination_dir):
     return None
 
 
-def move_files_in_tree(source_directory, destination_directory):
+def get_files_from_tree(source_directory, destination_directory, extension='pdf', move=False):
     """Function moves all files in a directory which containing other directories and files into another directory.
 
-    In this case, the directories are left behind with empty files as all files are moved to new destination."""
+    In this case, the directories are left behind with empty files as all files are moved to new destination.
+
+    If move=False, files are copied from sources to destination, else files are moved. copy is the default behavior
+    """
     # Check if source and destination directories exist
     src_dir = Path(source_directory)
     dst_dir = Path(destination_directory)
@@ -102,25 +105,34 @@ def move_files_in_tree(source_directory, destination_directory):
         root: {root}
         directories: {directories}
         files: {files}""")
+
         for file in files:
-            src_file = root/file
-            dst_file = dst_dir/file
+            file_path = root/file
+            if file_path.suffix == f".{extension}":
+                src_file = root/file
+                dst_file = dst_dir/file
 
-            # Check destination for presence of file
-            if dst_file.exists():
-                print(f"File {file} already exists in destination directory.")
+                # Check destination for presence of file
+                if dst_file.exists():
+                    print(f"File {file} already exists in destination directory.")
+                    continue
+                try:
+                    if not move:
+                        shutil.copy(src_file, dst_file)
+                    else:
+                        shutil.move(src_file, dst_file)
+                    print(f"{file} moved from {src_file} to {dst_file}")
+                except Exception as e:
+                    print(f"Encountered error {e} while moving file {file}")
+                    continue
+            else:
+                print(f"File '{file_path.name}' is not a .{extension} file")
                 continue
-            try:
-                shutil.move(src_file, dst_file)
-                print(f"{file} moved from {src_file} to {dst_file}")
-            except Exception as e:
-                print(f"Encountered error {e} while moving file {file}")
     return None
-    
 
 
-def move_files_from_directories(directory_list, destination, extension='pdf'):
-    """Function to move .pdf files in a list of directories to a destination"""
+def get_files_from_directories(directory_list, destination, extension='pdf', move=False):
+    """Function to copy or move .pdf files in a list of directories to a destination. copy is the default"""
     # Check if every directory in list is valid
     for directory in directory_list:
         if not Path(directory).is_dir():
@@ -136,6 +148,7 @@ def move_files_from_directories(directory_list, destination, extension='pdf'):
     for directory in directory_list:    
         dir_path = Path(directory)
         files_moved = False
+        files_copied = False
 
         # Iterate through files inside directory
         for file in dir_path.iterdir():
@@ -145,14 +158,22 @@ def move_files_from_directories(directory_list, destination, extension='pdf'):
                 src = dir_path/file.name
                 dst = Path(destination)/file.name
                 try:
-                    shutil.move(src, dst)
-                    print(f"File '{src}' moved to '{dst}'")
-                    files_moved = True
+                    if not move:
+                        shutil.copy(src, dst)
+                        print(f"File '{src}' copied to '{dst}'")
+                        files_copied = True
+                    else:    
+                        shutil.move(src, dst)
+                        print(f"File '{src}' moved to '{dst}'")
+                        files_moved = True
                 except OSError as e:
                     print(f"Error {e} encountered when {src} was being moved")
-        # Print success message whenever all files in one directory have been moved to destination
+                    continue
+        # Print success message whenever all files in one directory have been moved/copied to destination
         if files_moved:
             print(f"All files in {directory} moved to {destination} successfully.")
+        elif files_copied:
+            print(f"All files in {directory} copied to {destination} successfully.")
         else:
             print(f"No .{extension} files in directory {directory}.")
 
@@ -238,6 +259,7 @@ def organize_files_in_directory(source_directory, destination_directory):
                         continue
                     except Exception as e:
                         print(f"Error '{e}' occured on {file.name}")
+                        continue
     return extension_set
 
 
