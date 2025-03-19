@@ -3,10 +3,11 @@ from pathlib import Path
 import shutil
 import os
 import time
-import requests
 import random
 import textwrap
 import os
+
+import requests
 
 from .isbn_regex import (
     isbn_pattern,
