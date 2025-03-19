@@ -290,24 +290,44 @@ def organize_files_in_directory(source_directory, destination_directory, move=Fa
     return extension_set
 
 
-                
+def get_files_from_dir(directory, copy=True, move=False):
+    """Function to copy or move files from directory."""
+    pass
 
 
 
 
-def delete_files_in_directory(directory):
-    """Delete only files from directory.
+def delete_files_in_directory(directory, files=True, directories=False):
+    """Delete only files, directories or both from directory.
+
+    Delete is expected to be permanent. So use this carefully.
 
     shutil.rmtree(directory) deletes all content of directory which is not needed here
     """
     try:
         with os.scandir(directory) as entries:
             for entry in entries:
-                if entry.is_file():
-                    os.unlink(entry.path)
-        print(f"Files in {directory} deleted successfully")
+                if files:
+                    if entry.is_file():
+                        os.unlink(entry.path)
+                        print(f"File {entry.name} in {entry.path} deleted successfully")
+                if directories:
+                    if entry.is_dir():
+                        shutil.rmtree(entry.path)
+                        print(f"Directory {entry.name} in {entry.path} deleted successfully")
+        # print(f"Files in {directory} deleted successfully")
     except OSError as e:
         print(f"Error {e} occured")
+    
+##    try:
+##        with os.scandir(directory) as entries:
+##            for entry in entries:
+##                if entry.is_file():
+##                    os.unlink(entry.path)
+##        print(f"Files in {directory} deleted successfully")
+##    except OSError as e:
+##        print(f"Error {e} occured")
+    
 
 # To test
 # print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_keji", r"C:\Users\Ola\Desktop"))
