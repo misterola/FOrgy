@@ -30,7 +30,7 @@ dir_operations_parser.add_argument(
 )
 
 # add all options to cover for each operation under organize files
-
+# organize_files_in_directory(source_directory, destination_directory)--organizes files according to extension
 
 
 

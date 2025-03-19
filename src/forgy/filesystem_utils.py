@@ -182,7 +182,7 @@ def get_files_from_directories(directory_list, destination, extension='pdf', mov
     
             
 
-def organize_files_in_directory(source_directory, destination_directory):
+def organize_files_in_directory(source_directory, destination_directory, move=False):
     """This function takes a directory (without a subdir) and create a folder for each unique filetype.
 
     A set containing unique file extensions in folder will first be created,
@@ -243,6 +243,8 @@ def organize_files_in_directory(source_directory, destination_directory):
         # Enable modification of this part using walk=False|True to touch subfolders or not
         for file in os.scandir(src_dir):
             #file_path = src_dir/f"{file.name}"
+            files_moved = False
+            files_copied = False
 
             # Only consider files in this operation
             if file.is_file():
@@ -253,14 +255,44 @@ def organize_files_in_directory(source_directory, destination_directory):
                 # Move file to directories matching file's extension name
                 if extension.lstrip(".") == folder_name:
                     try:
-                        shutil.move(file.path, folder_path / file.name)
+                        if not move:
+                            shutil.copy(file.path, folder_path/file.name)
+                            print(f"File '{file.path}' copied to '{folder_path/file.name}'")
+                            files_copied = True
+                        else:    
+                            shutil.move(file.path, folder_path/file.name)
+                            print(f"File '{file.path}' moved to '{folder_path/file.name}'")
+                            files_moved = True
                     except OSError as e:
-                        print(f"Error {e} occured on {file.name}")
+                        print(f"Error {e} encountered when {file.name} was being moved")
                         continue
                     except Exception as e:
                         print(f"Error '{e}' occured on {file.name}")
                         continue
+        # Print success message whenever all files in one directory have been moved/copied to destination
+        if files_moved:
+            print(f"All {ext} files in {src_dir.name} moved to {dst_dir.absolute()} successfully.")
+        elif files_copied:
+            print(f"All {ext} files in {src_dir.name} copied to {dst_dir.absolute()} successfully.")
+        else:
+            print(f"No {ext} files in directory {src_dir.name}.")
+
+
+    
+##                    try:
+##                        shutil.move(file.path, folder_path / file.name)
+##                    except OSError as e:
+##                        print(f"Error {e} occured on {file.name}")
+##                        continue
+##                    except Exception as e:
+##                        print(f"Error '{e}' occured on {file.name}")
+##                        continue
     return extension_set
+
+
+                
+
+
 
 
 def delete_files_in_directory(directory):
