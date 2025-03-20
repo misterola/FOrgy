@@ -65,7 +65,7 @@ def check_internet_connection():
 # Create data directory and subdirectories. Create directories before the first instance of calling logger
 def create_directories(
     data="data",
-    pdfs="pdfs",
+    forgy_pdfs_copy="pdfs",
     missing_isbn="missing_isbn",
     missing_metadata="missing_metadata",
     book_metadata="book_metadata",
@@ -84,7 +84,7 @@ def create_directories(
     data_path = data_parent_directory/data
 
     # Create the paths to all directories in data/
-    pdfs_path = data_path/pdfs
+    forgy_pdfs_copy_path = data_path/forgy_pdfs_copy
     missing_isbn_path = data_path/missing_isbn
     missing_metadata_path = data_path/missing_metadata
     book_metadata_path = data_path/book_metadata
@@ -94,9 +94,8 @@ def create_directories(
     cover_pics_path = book_metadata_path/book_covers
 
     directories = [
-##        logs_path,
         data_path,
-        pdfs_path,
+        forgy_pdfs_copy_path,
         missing_isbn_path,
         missing_metadata_path,
         book_metadata_path,
@@ -161,20 +160,20 @@ def create_db_and_table(database, table_name="Books", library_db_name="library.d
     return None
 
 
-# Copy destination directory into forgy pdfs_path
-def copy_destination_directory(pdfs_source, new_pdfs_path):
-    pdfs_source = Path(pdfs_source)
-    new_pdfs_path = Path(new_pdfs_path)
+# Copy content of user_pdfs_source directory into forgy_pdfs_copy
+def copy_destination_directory(user_pdfs_source, forgy_pdfs_copy):
+    user_pdfs_source = Path(user_pdfs_source)
+    forgy_pdfs_copy = Path(forgy_pdfs_copy)
 
-    if not pdfs_source.is_dir():
-        print(f"{dst} is not a directory")
+    if not user_pdfs_source.is_dir():
+        print(f"{user_pdfs_source} is not a directory")
         return
-    if not new_pdfs_path.is_dir():
-        print(f"{new_pdfs_path} is not a directory")
+    if not forgy_pdfs_copy.is_dir():
+        print(f"{forgy_pdfs_copy} is not a directory")
         return
     try:
         # Copy directory even if it exists. FileExistsError will not be raised
-        shutil.copytree(pdfs_source, new_pdfs_path, dirs_exist_ok=True)
+        shutil.copytree(user_pdfs_source, forgy_pdfs_copy, dirs_exist_ok=True)
         logger.info("Source directory copied successfully")
         #print("Source directory copied successfully")
     except Exception as e:
@@ -262,8 +261,8 @@ def format_time_remaining(time):
 
 def show_statistics(
         filename,
-        original_source,
-        src,
+        user_pdfs_source,
+        forgy_pdfs_copy,
         database,
         table,
         missing_isbn_dir,
@@ -282,10 +281,10 @@ def show_statistics(
     # Get and format filename
     filename = format_filename(filename)
 
-    total_no_of_files = count_files_in_directory(original_source)
+    total_no_of_files = count_files_in_directory(user_pdfs_source)
 
     no_of_processed = number_of_processed_files(
-        src,
+        user_pdfs_source,
         database,
         table,
         missing_isbn_dir,
@@ -296,7 +295,7 @@ def show_statistics(
 
     time_remaining = total_time_remaining(
         duration_dictionary,
-        original_source,
+        user_pdfs_source,
         database,
         table,
         no_of_database_files,
@@ -308,7 +307,7 @@ def show_statistics(
     (percent_google_api,
      percent_openlibrary_api) = percent_api_utilization(database, table)
 
-    process_efficiency = file_processing_efficiency(src, database, table, missing_isbn_dir)
+    process_efficiency = file_processing_efficiency(user_pdfs_source, database, table, missing_isbn_dir)
     n_missing_isbn = number_of_dir_files(missing_isbn_dir)
     n_missing_metadata = number_of_dir_files(missing_metadata)
 
@@ -333,13 +332,14 @@ def show_statistics(
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
 
-def fetch_book_metadata(pdfs_source,
-                        original_source,
+def fetch_book_metadata(user_pdfs_source,
+                        forgy_pdfs_copy,
+                        user_pdfs_destination, #NEW where to copy or move data directory to
                         database,
                         missing_isbn_dir,
                         missing_metadata_dir,
                         extracted_texts_path,
-                        table_name="Books"):
+                        table_name="Books"):  # default copies extracted metadata to specified user_pdfs_destination, or move the entire data tree to user_pdfs_destination
     
     """Database here is the path to the .db file"""
     # Initialize raw_files_set to store path to raw files iterated over and initialize
@@ -349,7 +349,7 @@ def fetch_book_metadata(pdfs_source,
     renamed_files_set = set()
     title_set = set()
 
-    print(f"pdfs_source: {pdfs_source}")
+    print(f"forgy_pdfs_source: {forgy_pdfs_copy}")
 
     # Duration dictionary stores how long it takes for operation on
     # each file.
@@ -358,14 +358,14 @@ def fetch_book_metadata(pdfs_source,
     duration_dictionary = {}
 
     
-    with os.scandir(pdfs_source) as entries:    
+    with os.scandir(forgy_pdfs_copy) as entries:    
         for file in entries:    # noqa: C901 # A complex loop_McCabe 30
             # Get and format filename
             file_name = file.name
             show_statistics(
                 file_name,
-                original_source,
-                pdfs_source,
+                user_pdfs_source,
+                forgy_pdfs_copy,
                 database,
                 "Books",
                 missing_isbn_dir,
@@ -552,7 +552,7 @@ def fetch_book_metadata(pdfs_source,
                 # Default is 4 out of 6
                 # Rename file in its original ubooks directory
                 old_file_name = file_src
-                dst_dir = pdfs_source
+                dst_dir = forgy_pdfs_copy
                 new_file_name = f"{values[0]}.pdf"
                 # new_file_path = os.path.join(dst_dir, new_file_name)
                 new_file_path = Path(dst_dir)/new_file_name
@@ -595,7 +595,8 @@ def fetch_book_metadata(pdfs_source,
                     pass
                 except requests.exceptions.ConnectionError:
                     print("Request ConnectionError. Check your internet connection")
-                    pass
+                    pass       
+
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
