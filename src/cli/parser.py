@@ -1,9 +1,8 @@
 # The CLI parser
 # Commands (positional_arguments, --optional_argument, choices, default_values, type:
-#Get book metadata or organize your files",
 
-#NOTE: Add sufficient help messages
 import argparse
+from pathlib import Path
 
  
 parser = argparse.ArgumentParser(
@@ -25,7 +24,7 @@ subparsers = parser.add_subparsers(
 # delete_files_in_directory(directory, files=True, directories=False) for delete_files. delete is permanent
 # copy_destination_directory(pdfs_source, new_pdfs_path) copy_dir
 # move_folders(source_dir, destination_dir)  # function move directories in a path to another directory
-dir_operations_parser = subparsers.add_parser("dir_operation")
+dir_operations_parser = subparsers.add_parser("dir_operation", help="organize your files")
 dir_operations_parser.add_argument(
     "operation",
     choices=[
@@ -34,13 +33,14 @@ dir_operations_parser.add_argument(
         "copy_dir",
         "move_dirs",  
     ],
+    help="specify directory operation to perform"
 )
 # If only one directory is provided, it's the source directory
-dir_operations_parser.add_argument('--source_directory')
-dir_operations_parser.add_argument('--destination_directory')
-dir_operations_parser.add_argument('--move', action='store_true')
-dir_operations_parser.add_argument('--files', action='store_true')
-dir_operations_parser.add_argument('--directories', action='store_true')
+dir_operations_parser.add_argument('--source_directory', help="provide source directory")
+dir_operations_parser.add_argument('--destination_directory', help="provide destination directory(does not apply to delete_files)")
+dir_operations_parser.add_argument('--move', action='store_true', help="move or copy file from source directory(default copy)")
+dir_operations_parser.add_argument('--files', action='store_true', help="delete files in source directory(only apply to delete_files)")
+dir_operations_parser.add_argument('--directories', action='store_true', help="delete directories in source directory(only apply to delete_files")
 
 
 # 2. get_files_parser
@@ -48,41 +48,52 @@ dir_operations_parser.add_argument('--directories', action='store_true')
 # get_files_from_dir(directory, copy=True, move=False)  get_files_from_dir
 # get_files_from_directories(directory_list, destination, extension='pdf', move=False) for get_files_from directory_list
 # get_files_from_tree(source_directory, destination_directory, extension='pdf', move=False) for get_files_from_tree
-get_files_parser = subparsers.add_parser("get_files")
+get_files_parser = subparsers.add_parser("get_files",help="aggregate pdf files from various directories")
 get_files_parser.add_argument(
     "source",
     choices=[
-        "from_dir",
+        "from_dir", # leave default as copy
         "from_dir_list",
         "from_tree",
     ],                                   
     default="from_dir",
+    help="provide source to fetch pdfs from"
 )
-# add get files arguments for all functions
+get_files_parser.add_argument("--source_directory", help="provide source directory containing pdf files")
+get_files_parser.add_argument("--directory_list", help="provide list of directories(paths) containing pdf files")
+get_files_parser.add_argument("--move", help="move or copy files") #only use this on 'from_dir_list' and 'from_tree'
+get_files_parser.add_argument("--destination_directory", help="provide destination directory for copied or moved files")
+
 
 
 
 # 3. get_book_metadata parser
 # functions:
 # pdfs_source is also compiled_source
-# fetch_book_metadata(pdfs_source,
-                        # original_source,
+# fetch_book_metadata(user_pdfs_source,
+                        # forgy_pdfs_copy,
+                        # user_pdfs_destination, #NEW where to copy or move data directory to
                         # database,
                         # missing_isbn_dir,
                         # missing_metadata_dir,
                         # extracted_texts_path,
-                        # table_name="Books")  get_metadata
+                        # table_name="Books")
 # get_book_covers(cover_dir, database, table) --covers
 # get_all_metadata(database, table) --metadata_dict
-get_metadata_parser = subparsers.add_parser("get_metadata") # and rename
-get_metadata_parser.add_argument("source", type=str)
-get_metadata_parser.add_argument("--book_covers", action="store_true")
-get_metadata_parser.add_argument("--metadata_dict", action="store_true")
+get_metadata_parser = subparsers.add_parser("get_metadata", help="get pdf metadata and rename file")
+get_metadata_parser.add_argument("user_pdfs_source", type=str, help="provide source of pdf files to operate upon")
+get_metadata_parser.add_argument("user_pdfs_destination", type=str, help="provide destination for extracted book metadata")
+get_metadata_parser.add_argument("--book_covers", action="store_true", help="get book covers or not")
+get_metadata_parser.add_argument("--metadata_dict", action="store_true", help="save extracted metadata dictionary as text file")
 # add other arguments
-# --googlebooks api key
+get_metadata_parser.add_argument("--move_metadata", action="store_true", help="move metadata from FOrgy to user_pdfs_destination. It's copied by default") # don't specify for now
+get_metadata_parser.add_argument("--GOOGLE_API_KEY", help="provide Google BooksAPI KEY")
+get_metadata_parser.add_argument("--file", help="enable user to supply arguments as a text file one line for each")
+get_metadata_parser.add_argument("--database", help="provide link to .db file")
+get_metadata_parser.add_argument("--db_table", help="provide name of book table in .db file")
+
 # --file to enable user to supply arguments as a text file
 # --data (folder to store all forgy files) the internal directory is the default if not provided
-
 
 
 # 4. single file_metadata parser (has no cover)
@@ -90,42 +101,21 @@ get_metadata_parser.add_argument("--metadata_dict", action="store_true")
 # get_single_book_metadata(file, isbn=None, title=None) from_api
 # fetch_metadata_from_file(file) from_file
 
-single_metadata_parser = subparsers.add_parser("get_single_metadata")
-single_metadata_parser.add_argument("operation", choices=["from_api", "from_file"])
-# add other arguments
+single_metadata_parser = subparsers.add_parser("get_single_metadata", help="get metatada for a single file only (from either file or api)")
+single_metadata_parser.add_argument("operation", choices=["from_api", "from_file", "from_title"], help="provide source you want to fetch metadata from")
+single_metadata_parser.add_argument("--file", help="provide path to pdf file")
+single_metadata_parser.add_argument("--isbn", help="provide book isbn")
+single_metadata_parser.add_argument("--title", help="provide book title")
 
-# parser tests
-args = parser.parse_args(['dir_operation', 'organize_files_ext'])
-print(args)
-args = parser.parse_args(['dir_operation', 'delete_files'])
-print(args)
-args = parser.parse_args(['get_files', 'from_dir'])
-print(args)
-args = parser.parse_args(['get_files', 'from_dir_list'])
-print(args)
-args = parser.parse_args(['get_files', 'from_tree'])
-print(args)
-args = parser.parse_args(['get_metadata', 'www.google.com'])
-print(args)
-args = parser.parse_args(['get_metadata', 'www.openlibrary.org', '--book_covers'])
-print(args)
-args = parser.parse_args(['get_metadata', 'www.ab.org', '--metadata_dict'])
-print(args)
-args = parser.parse_args(['get_metadata', 'www.zzz.org', '--book_covers', '--metadata_dict'])
-print(args)
 
-args = parser.parse_args(['-h'])
-print(args)
-
-args = parser.parse_args(['--quit'])
-print(args)
-
-if args.quit:
-    # print("Exiting...")
-    parser.exit(0, "Quit command entered...Goodbye!")
-
-args = parser.parse_args(['--version'])
-print(args)
+##
+##args = parser.parse_args(['--quit'])
+##print(args)
+##
+##if args.quit:
+##    # print("Exiting...")
+##    parser.exit(0, "Quit command entered...Goodbye!")
+##
 
 
 
