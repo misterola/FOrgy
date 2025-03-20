@@ -1,5 +1,6 @@
 from pathlib import Path
-
+import os
+import shutil
 from forgy.messyforg import(
     check_internet_connection,
     create_directories,
@@ -8,12 +9,17 @@ from forgy.messyforg import(
     copy_destination_directory,
     fetch_book_metadata
 )
+from forgy.metadata_search import get_book_covers
+from forgy.database import get_all_metadata
 from forgy.logger import configure_logger
 
 logger = configure_logger('main')
 
 logger.info("This is the initial")
 
+move_metadata = False
+get_cover_pics=True
+get_metadata_dict=True
 
 def main():  # specify how to get sources
     [data_path,
@@ -24,7 +30,7 @@ def main():  # specify how to get sources
     extracted_texts_path,
     cover_pics_path] = create_directories(
                             data="data",
-                            pdfs="pdfs",
+                            forgy_pdfs_copy="pdfs",
                             missing_isbn="missing_isbn",
                             missing_metadata="missing_metadata",
                             book_metadata="book_metadata",
@@ -35,16 +41,53 @@ def main():  # specify how to get sources
 
     db_path = f"{book_metadata_path}/library.db"
 
-    src= Path(r'C:\Users\Ola\Desktop\forgy_test_folder\ubooks')
+    user_pdfs_src= Path(r'C:\Users\Ola\Desktop\forgy_test_folder\ubooks')
 
-    dst= pdfs_path    # book_metadata_path # r"C:\Users\Ola\Desktop\newer"
+    forgy_pdfs_copy= pdfs_path    # book_metadata_path # r"C:\Users\Ola\Desktop\newer"
 
+    user_pdfs_destination = Path(r'C:\Users\Ola\Desktop\data')
     #get_src_and_dst(src, dst, directory_list_src=True, directory_tree_src=False)
 
-    copy_destination_directory(src, pdfs_path)
+    copy_destination_directory(user_pdfs_src, forgy_pdfs_copy)
 
-    fetch_book_metadata(pdfs_path, src, db_path,  missing_isbn_path, missing_metadata_path, extracted_texts_path, table_name="Books")
 
+    fetch_book_metadata(user_pdfs_src, forgy_pdfs_copy, user_pdfs_destination, db_path,  missing_isbn_path, missing_metadata_path, extracted_texts_path, table_name="Books")
+
+
+
+    if get_cover_pics:
+        get_book_covers(cover_pics_path, db_path, "Books")
+
+
+    if get_metadata_dict:
+        # metadata_dictionary coverted to str to enable .write() work on it
+        metadata_dictionary = str(get_all_metadata(db_path, "Books"))
+        with open(f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w') as metadata_dict_text:
+            metadata_dict_text.write(metadata_dictionary)
+            print("metadata_dictionary text created successfully")
+
+
+    if not move_metadata:
+        try:
+            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
+            logger.info(f"Source directory {data_path} copied to {user_pdfs_destination} successfully")
+        except Exception as e:
+            logger.exception(f"Exception {e} raised")
+            # print(f"Exception {e} raised")
+            pass
+    else:
+        # TODO: debug: move_metadata=True
+        try:
+            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
+            os.rmdir(data_path)
+            logger.info(f"Source directory {data_path} moved to {user_pdfs_destination} successfully")
+        except Exception as e:
+            logger.exception(f"Exception {e} raised")
+            pass
+
+    
+        
+        
 if __name__=='__main__':
     if check_internet_connection():
         main()
