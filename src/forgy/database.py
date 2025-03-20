@@ -124,9 +124,11 @@ def add_metadata_to_table(destination, table_name, values):
 # Check content of database
 def view_database_table(source, table_name):
     with sqlite3.connect(source) as connection:
+        # connection.isolation_level = None
         cursor = connection.cursor()
         for row in cursor.execute("SELECT Title FROM Books;").fetchall():
             print(row)
+        
 
 
 # Delete table from database
