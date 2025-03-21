@@ -80,10 +80,77 @@ def move_folders(source_dir, destination_dir):
     return None
 
 
+# Copy content of user_pdfs_source directory into forgy_pdfs_copy
+def copy_destination_directory(user_pdfs_source, forgy_pdfs_copy):
+    user_pdfs_source = Path(user_pdfs_source)
+    forgy_pdfs_copy = Path(forgy_pdfs_copy)
+
+    if not user_pdfs_source.is_dir():
+        print(f"{user_pdfs_source} is not a directory")
+        return
+    if not forgy_pdfs_copy.is_dir():
+        print(f"{forgy_pdfs_copy} is not a directory")
+        return
+    try:
+        # Copy directory even if it exists. FileExistsError will not be raised
+        shutil.copytree(user_pdfs_source, forgy_pdfs_copy, dirs_exist_ok=True)
+        logger.info("Source directory copied successfully")
+        #print("Source directory copied successfully")
+    except Exception as e:
+        logger.exception(f"Exception {e} raised")
+        # print(f"Exception {e} raised")
+        pass
+
+
+def get_files_from_directory(source_directory, destination_directory, move=False, extension='pdf'):
+    """Function to copy or move files from source directory to destination directory. Does not copy or move if file already exists in destination"""
+
+    if not Path(source_directory).is_dir():
+        print(f"{source_directory} is not a valid directory")
+        return None
+
+    if not Path(destination_directory).is_dir():
+        print(f"{destination_directory} is not a valid directory")
+        return None
+
+    source_directory = Path(source_directory)
+    destination_directory = Path(destination_directory)
+    
+    with os.scandir(source_directory) as entries:
+        for entry in entries:
+            entry_name = entry.name
+            source_path = entry.path
+            # destination_path = destination_directory/entry_name
+            if entry_name.endswith(f".{extension}"):
+                if not move:
+                    destination_path = destination_directory/entry_name
+                    if destination_path.exists():
+                        print(f"File {entry_name} already exists in destination {destination_directory}")
+                        continue
+                    try:
+                        shutil.copy(source_path, destination_path)
+                    except Exception as e:
+                        print(f"Exception {e} encountered")
+                        continue
+                else:
+                    destination_path = destination_directory/entry_name
+                    if destination_path.exists():
+                        print(f"File {entry_name} already exists in destination {destination_directory}")
+                        continue
+                    try:
+                        shutil.move(source_path, destination_path)
+                    except Exception as e:
+                        print(f"Exception {e} encountered")
+                        continue
+            else:
+                continue
+    return None
+
 def get_files_from_tree(source_directory, destination_directory, extension='pdf', move=False):
     """Function moves all files in a directory which containing other directories and files into another directory.
 
     In this case, the directories are left behind with empty files as all files are moved to new destination.
+    Existing files in destination not copied
 
     If move=False, files are copied from sources to destination, else files are moved. copy is the default behavior
     """
@@ -114,7 +181,7 @@ def get_files_from_tree(source_directory, destination_directory, extension='pdf'
 
                 # Check destination for presence of file
                 if dst_file.exists():
-                    print(f"File {file} already exists in destination directory.")
+                    print(f"File {file} already exists in destination {dst_dir}.")
                     continue
                 try:
                     if not move:
@@ -159,28 +226,66 @@ def get_files_from_directories(directory_list, destination, extension='pdf', mov
                 dst = Path(destination)/file.name
                 try:
                     if not move:
+                        if dst.exists():
+                            print(f"File {src} already exists in destination {Path(destination)}")
+                            continue
                         shutil.copy(src, dst)
                         print(f"File '{src}' copied to '{dst}'")
                         files_copied = True
-                    else:    
+                    else:
+                        if dst.exists():
+                            print(f"File {src} already exists in destination {Path(destination)}")
+                            continue
                         shutil.move(src, dst)
                         print(f"File '{src}' moved to '{dst}'")
                         files_moved = True
-                except OSError as e:
+                except Exception as e:
                     print(f"Error {e} encountered when {src} was being moved")
                     continue
-        # Print success message whenever all files in one directory have been moved/copied to destination
+##        # Print success message whenever all files in one directory have been moved/copied to destination
         if files_moved:
-            print(f"All files in {directory} moved to {destination} successfully.")
+            print(f"All .{extension} files in {directory} moved to {destination} successfully.")
         elif files_copied:
-            print(f"All files in {directory} copied to {destination} successfully.")
+            print(f"All .{extension} files in {directory} copied to {destination} successfully.")
         else:
             print(f"No .{extension} files in directory {directory}.")
 
     return None
     
-    
-            
+
+def log_copy_or_move(source=None, destination=None, move=False):
+    if not move:
+        print(f"Files in {source} directory copied into {destination}")
+    else:
+        print(f"Files in {source} directory moved to {destination}")
+
+def get_files_from_sources(src, dst, directory_src=False, directory_list_src=False, directory_tree_src=False, move_file=False):
+    """Function to properly fetch pdf files from various source to destination.
+
+    Default operation is copy (when move_file=False). Files not copied or moved if in destination.
+    """
+
+    # necessary directory existence checks are in the three underlying function
+    # conversion of src and dst to path objects is done by the underlying funtions
+
+    # default: copy pdfs from a single source directory
+    if directory_src and isinstance(src, str):
+        get_files_from_directory(src, dst, move=move_file)
+        log_copy_or_move(source=src, destination=dst, move=move_file)
+
+    # Copy pdf files from source directories in a list
+    elif directory_list_src and isinstance(src, list):
+        get_files_from_directories(src, dst, move=move_file)
+        return None
+
+    # Copy pdf files from a source directory tree. # case of directory_tree_src:
+    # Also executes if source is a windows path
+    else:
+        get_files_from_tree(src, dst, move=move_file)
+        return None
+
+    return None
+           
 
 def organize_files_in_directory(source_directory, destination_directory, move=False):
     """This function takes a directory (without a subdir) and create a folder for each unique filetype.
@@ -288,12 +393,6 @@ def organize_files_in_directory(source_directory, destination_directory, move=Fa
 ##                        print(f"Error '{e}' occured on {file.name}")
 ##                        continue
     return extension_set
-
-
-def get_files_from_dir(directory, copy=True, move=False):
-    """Function to copy or move files from directory."""
-    pass
-
 
 
 
