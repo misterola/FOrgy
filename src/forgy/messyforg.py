@@ -118,70 +118,7 @@ def create_directories(
             continue
     # unpack all links to those paths when this function is called      
     return directories
-
-
-def get_src_and_dst(src, dst, directory_list_src=False, directory_tree_src=False):
-    """Function to properly get sources and destinaton folder. dst destination directory must be empty"""
-    
-    # clear content of destination directory if it exists
-    if Path(dst).exists():
-        """Delete directory"""
-        #shutil.rmtree(dst)
-        delete_files_in_directory(dst)
-        logger.info(f"Existing '{dst}' directory deleted") 
-        # print(f"Existing '{dst}' directory deleted")
-
-    # Copy pdf files from source directories
-    if directory_list_src and isinstance(src, list):
-        get_files_from_directories(src, dst)
-        print(f"Files in {src} directories moved to {dst}")
-        return
-    else:
-        print(f"Validate directory paths in {src} and ensure that it is a list")
-        return
-
-    # Copy pdf files from a source directory tree
-    if directory_tree_src:
-        get_files_from_tree(src, dst)
-        print(f"Files in {src} tree moved to {dst}")
-        return
-    return None
-        
-
-def create_db_and_table(database, table_name="Books", library_db_name="library.db", delete_db_table=True):
-    """Create database and Books table in database. Existing table delete in database by default.
-       Same is the case in underlying functions.
-
-    Database can be a directory or .db file path.
-    """
-
-    # Create Books table in database and specify all metadata columns
-    create_table(database, table_name="Books", library_name='library.db', delete_table=delete_db_table)
-    return None
-
-
-# Copy content of user_pdfs_source directory into forgy_pdfs_copy
-def copy_destination_directory(user_pdfs_source, forgy_pdfs_copy):
-    user_pdfs_source = Path(user_pdfs_source)
-    forgy_pdfs_copy = Path(forgy_pdfs_copy)
-
-    if not user_pdfs_source.is_dir():
-        print(f"{user_pdfs_source} is not a directory")
-        return
-    if not forgy_pdfs_copy.is_dir():
-        print(f"{forgy_pdfs_copy} is not a directory")
-        return
-    try:
-        # Copy directory even if it exists. FileExistsError will not be raised
-        shutil.copytree(user_pdfs_source, forgy_pdfs_copy, dirs_exist_ok=True)
-        logger.info("Source directory copied successfully")
-        #print("Source directory copied successfully")
-    except Exception as e:
-        logger.exception(f"Exception {e} raised")
-        # print(f"Exception {e} raised")
-        pass
-
-
+      
 
 def process_duration(start_time):
     """Function to calculate duration of operation for each file.
@@ -596,7 +533,6 @@ def fetch_book_metadata(user_pdfs_source,
                 except requests.exceptions.ConnectionError:
                     print("Request ConnectionError. Check your internet connection")
                     pass       
-
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
