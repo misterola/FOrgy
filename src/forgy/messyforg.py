@@ -23,7 +23,7 @@ from .metadata_search import (
     modify_title,
 )
 from .database import (
-    create_table,
+    create_db_and_table,
     create_library_db,
     add_metadata_to_table,
     view_database_table,
