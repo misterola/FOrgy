@@ -43,7 +43,7 @@ def create_library_db(destination, library_name = 'library.db'):
 
 
 # Create 'Books' table in 'library.db' database
-def create_db_and_table(destination, table_name="Books", library_name='library.db', delete_table=True):  # deletes table if it exists
+def create_db_and_table(destination, table_name="Books", db_name='library.db', delete_table=True):  # deletes table if it exists
     """.db file must first be created by just establishing connection once. call create_library_db once with the correct path
 
     Create database and Books table in database. Existing table delete in database by default.
@@ -64,7 +64,7 @@ def create_db_and_table(destination, table_name="Books", library_name='library.d
     if Path(destination).is_dir() and not Path(destination).name.endswith('.db'):
         create_library_db(destination)
 
-    db_path = Path(destination)/f"{library_name}"
+    db_path = Path(destination)/f"{db_name}"
     print(db_path)
     
     if Path(destination).exists() and db_path.name.endswith('.db'):
