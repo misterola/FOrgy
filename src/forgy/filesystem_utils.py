@@ -81,7 +81,7 @@ def move_folders(source_dir, destination_dir):
 
 
 # Copy content of user_pdfs_source directory into forgy_pdfs_copy
-def copy_destination_directory(user_pdfs_source, forgy_pdfs_copy):
+def copy_directory_files(user_pdfs_source, forgy_pdfs_copy):
     user_pdfs_source = Path(user_pdfs_source)
     forgy_pdfs_copy = Path(forgy_pdfs_copy)
 
@@ -97,10 +97,9 @@ def copy_destination_directory(user_pdfs_source, forgy_pdfs_copy):
         logger.info("Source directory copied successfully")
         #print("Source directory copied successfully")
     except Exception as e:
-        logger.exception(f"Exception {e} raised")
+        #logger.exception(f"Exception {e} raised")
         # print(f"Exception {e} raised")
         pass
-
 
 def get_files_from_directory(source_directory, destination_directory, move=False, extension='pdf'):
     """Function to copy or move files from source directory to destination directory. Does not copy or move if file already exists in destination"""
@@ -258,6 +257,7 @@ def log_copy_or_move(source=None, destination=None, move=False):
         print(f"Files in {source} directory copied into {destination}")
     else:
         print(f"Files in {source} directory moved to {destination}")
+
 
 def get_files_from_sources(src, dst, directory_src=False, directory_list_src=False, directory_tree_src=False, move_file=False):
     """Function to properly fetch pdf files from various source to destination.
