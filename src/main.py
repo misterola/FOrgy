@@ -4,13 +4,11 @@ import shutil
 from forgy.messyforg import(
     check_internet_connection,
     create_directories,
-    create_db_and_table,
-    get_src_and_dst,
-    copy_destination_directory,
-    fetch_book_metadata
+    fetch_book_metadata,
 )
+from forgy.filesystem_utils import copy_directory_files, get_files_from_sources
 from forgy.metadata_search import get_book_covers
-from forgy.database import get_all_metadata
+from forgy.database import get_all_metadata, create_db_and_table
 from forgy.logger import configure_logger
 
 logger = configure_logger('main')
@@ -37,7 +35,7 @@ def main():  # specify how to get sources
                             extracted_texts="extracted_texts",
                             book_covers="book_covers"
                         )
-    create_db_and_table(book_metadata_path, table_name="Books", library_db_name="library.db", delete_db_table=True)
+    create_db_and_table(book_metadata_path, table_name="Books", db_name="library.db", delete_table=True)
 
     db_path = f"{book_metadata_path}/library.db"
 
@@ -48,7 +46,7 @@ def main():  # specify how to get sources
     user_pdfs_destination = Path(r'C:\Users\Ola\Desktop\data')
     #get_src_and_dst(src, dst, directory_list_src=True, directory_tree_src=False)
 
-    copy_destination_directory(user_pdfs_src, forgy_pdfs_copy)
+    copy_directory_files(user_pdfs_src, forgy_pdfs_copy)
 
 
     fetch_book_metadata(user_pdfs_src, forgy_pdfs_copy, user_pdfs_destination, db_path,  missing_isbn_path, missing_metadata_path, extracted_texts_path, table_name="Books")
