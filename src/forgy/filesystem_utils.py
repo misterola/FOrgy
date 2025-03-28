@@ -81,7 +81,7 @@ def move_folders(source_dir, destination_dir):
 
 
 # Copy content of user_pdfs_source directory into forgy_pdfs_copy
-def copy_directory_files(user_pdfs_source, forgy_pdfs_copy):
+def copy_directory_contents(user_pdfs_source, forgy_pdfs_copy):
     user_pdfs_source = Path(user_pdfs_source)
     forgy_pdfs_copy = Path(forgy_pdfs_copy)
 
@@ -199,6 +199,9 @@ def get_files_from_tree(source_directory, destination_directory, extension='pdf'
 
 def get_files_from_directories(directory_list, destination, extension='pdf', move=False):
     """Function to copy or move .pdf files in a list of directories to a destination. copy is the default"""
+    directory_list = [Path(directory) for directory in directory_list]
+    print(f"DIRECTORY_LIST: {directory_list}")
+    
     # Check if every directory in list is valid
     for directory in directory_list:
         if not Path(directory).is_dir():
