@@ -45,7 +45,7 @@ from .filesystem_utils import (
     delete_files_in_directory,
     get_files_from_directories,
     get_files_from_tree,
-    copy_directory_files,
+    copy_directory_contents,
 )
 from .logger import configure_logger
 
@@ -271,7 +271,6 @@ def show_statistics(
 
 # Iterate through each file in the new 'ubooks_copy' directory
 # and extract text in first 20 pages of each file
-
 def fetch_book_metadata(user_pdfs_source,
                         pdfs_path, #pdfs_path
                         user_pdfs_destination, #NEW where to copy or move data directory to
@@ -280,46 +279,7 @@ def fetch_book_metadata(user_pdfs_source,
                         missing_metadata_path,
                         extracted_texts_path,
                         table_name, # ="Books",
-                        database_name): # ="library.db",
-                        #get_cover_pics, # =True,
-                        #get_metadata_dict, # =True,
-                        #move_metadata): # =False):
-    # default copies extracted metadata to specified user_pdfs_destination, or move the entire data tree to user_pdfs_destination
-
-##    # Set-up internal directories
-##    [data_path,
-##    pdfs_path,
-##    missing_isbn_path,
-##    missing_metadata_path,
-##    book_metadata_path,
-##    extracted_texts_path,
-##    cover_pics_path] = create_directories(
-##                            data="data",
-##                            forgy_pdfs_copy="pdfs",
-##                            missing_isbn="missing_isbn",
-##                            missing_metadata="missing_metadata",
-##                            book_metadata="book_metadata",
-##                            extracted_texts="extracted_texts",
-##                            book_covers="book_covers",
-##                        )
-##
-##    print(f"BOOK METADATA PATH: {book_metadata_path}")
-##
-##    db_path = f"{book_metadata_path}/{database_name}"
-##
-##    print(f"DB_PATH: {db_path}")
-##    
-##    create_db_and_table(
-##        book_metadata_path,
-##        table_name=table_name,
-##        db_name=database_name,
-##        delete_table=True,
-##    ) 
-
-    # db_path = f"{book_metadata_path}/{database_name}"
-
-    # copy_directory_files(user_pdfs_source, pdfs_path)
-
+                        database_name): # ="library.db"
     
     """Database here is the path to the .db file"""
     # Initialize raw_files_set to store path to raw files iterated over and initialize
@@ -328,8 +288,6 @@ def fetch_book_metadata(user_pdfs_source,
     raw_files_set = set()
     renamed_files_set = set()
     title_set = set()
-
-    # print(f"forgy_pdfs_source: {pdfs_path}")
 
     # Duration dictionary stores how long it takes for operation on
     # each file.
@@ -576,39 +534,7 @@ def fetch_book_metadata(user_pdfs_source,
                     pass
                 except requests.exceptions.ConnectionError:
                     print("Request ConnectionError. Check your internet connection")
-                    pass       
-
-
-##    if get_cover_pics:
-##        get_book_covers(cover_pics_path, db_path, table_name)
-
-
-##    if get_metadata_dict:
-##        # metadata_dictionary coverted to str to enable .write() work on it
-##        metadata_dictionary = str(get_all_metadata(db_path, table_name))
-##        with open(f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w') as metadata_dict_text:
-##            metadata_dict_text.write(metadata_dictionary)
-##            print("metadata_dictionary text created successfully")
-##
-##
-##    if not move_metadata:
-##        try:
-##            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
-##            logger.info(f"Source directory {data_path} copied to {user_pdfs_destination} successfully")
-##        except Exception as e:
-##            logger.exception(f"Exception {e} raised")
-##            # print(f"Exception {e} raised")
-##            pass
-##    else:
-##        # TODO: debug: move_metadata=True
-##        try:
-##            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
-##            os.rmdir(data_path)
-##            logger.info(f"Source directory {data_path} moved to {user_pdfs_destination} successfully")
-##        except Exception as e:
-##            logger.exception(f"Exception {e} raised")
-##            pass  
-
+                    pass
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
