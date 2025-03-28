@@ -13,6 +13,7 @@ import requests
 from dotenv import load_dotenv
 
 from .database import get_database_columns
+from .isbn_regex import is_valid_isbn
 
 # Load BookAPI key from dotenv file
 load_dotenv()
@@ -611,10 +612,13 @@ def get_single_book_metadata(file, isbn=None, title=None):
                         title=title,
                      )
     elif isbn:
-        values = get_metadata_google(
-                    file,
-                    isbn=isbn,
-                 )
+        if is_valid_isbn(isbn):
+            values = get_metadata_google(
+                        file,
+                        isbn=isbn,
+                     )
+        else:
+            print(f"Invalid ISBN: {isbn}")
     else:
         print("Please provide a valid title or isbn")
 
@@ -622,6 +626,7 @@ def get_single_book_metadata(file, isbn=None, title=None):
             Title: {title}
             ISBN: {isbn}"""
     )
+    print(f"VALUES: {values}")
         
     return values
 
