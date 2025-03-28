@@ -15,9 +15,11 @@ from cli.parser import get_parser
 from forgy.filesystem_utils import (
     delete_files_in_directory,
     organize_files_in_directory,
-    copy_directory_files,
+    copy_directory_contents,
+    get_files_from_sources,
+    move_folders,
 )
-from forgy.metadata_search import get_book_covers
+from forgy.metadata_search import get_book_covers, get_single_book_metadata
 
 print(f"GETCWD: {os.getcwd()}")
 
@@ -26,18 +28,8 @@ logger = configure_logger('main')
 logger.info("This is the initial")
 
 
-##def fetch_arguments_from_file(file_path):
-##    with open(file_path, 'r') as arguments:
-##        # an alternative is to split by line into a list of arguments
-##        # and then connect list items with a space
-##        # arguments = ' '.join(arguments.read().splitlines())
-##        # see: https://stackoverflow.com/questions/8369219/how-can-i-read-a-text-file-into-a-string-variable-and-strip-newlines#
-##        arguments = arguments.read().replace('\n', ' ')
-##        print(arguments)
-##        return arguments
-
-
 def fetch_arguments_from_file(file_path):
+    # see: https://stackoverflow.com/questions/8369219/how-can-i-read-a-text-file-into-a-string-variable-and-strip-newlines#
     with open(file_path, 'r') as arguments:
         argument_list = arguments.read().splitlines()
         print(argument_list)
@@ -71,6 +63,7 @@ def main():
     # {organize_extension,delete_files,copy_directory,move_directories,get_files_from_dir,get_metadata,get_single_metadata}
 
     if args.subcommands == 'organize_extension':
+        # it creates an 'organized_directory' itself at the specified --destionation_directory
         source_directory = args.source_directory
         destination_directory = args.destination_directory
         move_files = args.move
@@ -90,10 +83,10 @@ def main():
             directories=directories
         )
 
-    elif args.subcommands == 'copy_directory':
+    elif args.subcommands == 'copy_directory_contents':
         source_directory = args.source_directory
         destination_directory = args.destination_directory
-        copy_directory_files(source_directory, destination_directory)
+        copy_directory_contents(source_directory, destination_directory)
 
     elif args.subcommands == 'move_directories':
         source_directory = args.source_directory
@@ -116,14 +109,15 @@ def main():
             )
             
         elif args.directory_list_src:
-            source_directory=args.source_directory
+            # Enter source directories separated by a space
+            source_directory2=args.source_directory2
             destination_directory=args.destination_directory
             directory_list_src = args.directory_list_src
             move = args.move
 
             # directory_src=False, directory_tree_src=False,
             get_files_from_sources(
-                source_directory,
+                source_directory2,
                 destination_directory,
                 directory_list_src=directory_list_src,
                 move_file=move,
@@ -164,18 +158,12 @@ def main():
                                 extracted_texts="extracted_texts",
                                 book_covers="book_covers",
                             )
-        
-
        
         # check internet here
         cli_options_in_file = [
-##            args.book_covers,
-##            args.metadata_dict,
-##            args.move_metadata,
             args.GOOGLE_API_KEY,
             args.database,
             args.db_table,
-
             args.user_pdfs_source,
             args.user_pdfs_destination,
         ]
@@ -187,28 +175,17 @@ def main():
             args.file,
         ]
 
-##        get_metadata [-h] [--book_covers] [--metadata_dict]
-##                                  [--move_metadata] [--file FILE]
-##                                  [--GOOGLE_API_KEY GOOGLE_API_KEY]
-##                                  [--database DATABASE] [--db_table DB_TABLE]
-##                                  user_pdfs_source user_pdfs_destination
-
         # Specify options supplied from cli
         book_covers = args.book_covers
         metadata_dict = args.metadata_dict
         move_metadata = args.move_metadata
         file = args.file
         
-        if file:   # and any(book_covers, metadata_dict, move_metadata):  # (cli_options_in_file):
+        if file:
             print(f"Processing arguments in {args.file}")
-            # get arguments from file as a list with index 0 and 1 representing '--file' and r'filepath' respectively
-            # here argument list should be of form
-            # argument_list = [
-                # '--GOOGLE_API_KEY', 'Google_api_key_value'
-                # '--database', 'database_value/default', '--db_table', 'db_table_value',
-                # 'user_pdfs_source', 'user_pdfs_source_path', 'user_pdfs_destination', 'user_pdfs_destination_path'
-            # ]
-            # using the argument list, we can unpack arguments from list into the needed arguments for the commandline
+
+            # Each element in argument_list represents an item on each line in .txt file containing argument
+            # using the argument_list, we can unpack arguments from file into variables for use in get_metadata execution
             # NOTE: each member of the argument_list must be specified on one line each in the file.txt
             argument_list = fetch_arguments_from_file(file)
 
@@ -219,23 +196,6 @@ def main():
                 print("Please add all arguments, excluding --book_covers, --metadata_dict, move_metadata, and --file FILEPATH")
                 pass
 
-##            # for some arguments, user doesn't provide argument in file, in that case, we adopt the default from parser\
-##            target_arguments = [
-##                '--book_covers',
-##                '--metadata_dict',
-##                '--move_metadata',
-##                '--GOOGLE_API_KEY',
-##                '--database',
-##                '--db_table',
-##                'user_pdfs_source',
-##                'user_pdfs_destination'
-##            ]
-##
-##            
-##            for arg in target_arguments:
-##                if arg not in argument_list:
-##                    arg_variable = arg.lstrip('--')
-##                    arg_variable = args.arg_variable
 
             # specify options from file
                 
@@ -264,8 +224,7 @@ def main():
             # copy pdf files into FOrgy's pdfs_path
             copy_directory_files(user_pdfs_source, pdfs_path)
 
-            # get metadata func
-#------------------
+            # get metadata function
             fetch_book_metadata(
                 user_pdfs_source,
                 pdfs_path,
@@ -276,9 +235,6 @@ def main():
                 extracted_texts_path,
                 db_table,
                 database,
-##                book_covers,
-##                metadata_dict,
-##                move_metadata,
             )
 
             if book_covers:
@@ -309,8 +265,7 @@ def main():
                     logger.info(f"Source directory {data_path} moved to {user_pdfs_destination} successfully")
                 except Exception as e:
                     logger.exception(f"Exception {e} raised")
-                    pass  
-            #-------------
+                    pass
 
         elif not file and any(cli_options_in_file):
             print("THE CASE OF CLI ARGS")
@@ -349,9 +304,6 @@ def main():
                 extracted_texts_path,
                 db_table,
                 database,
-##                book_covers,
-##                metadata_dict,
-##                move_metadata,
             )
 
             if book_covers:
@@ -394,16 +346,19 @@ def main():
 
 
     elif args.subcommands == 'get_single_metadata':
-        if title:
-            title_query=args.title
-            # isbn=None, 
+        title_query=args.title
+        isbn_query = args.isbn
+        file = args.file
+        if title_query:
+            # title_query=args.title
+            isbn=None, 
             get_single_book_metadata(
                 file,
                 title=title_query
             )
-        elif isbn:
-            isbn_query = args.isbn
-            # title=None
+        elif isbn_query:
+            #isbn_query = args.isbn
+            title=None
             get_single_book_metadata(
                 file,
                 isbn=isbn_query,
