@@ -21,6 +21,7 @@ from .metadata_search import (
     get_metadata_openlibrary,
     get_metadata_from_api,
     modify_title,
+    get_book_covers,
 )
 from .database import (
     create_db_and_table,
@@ -29,6 +30,7 @@ from .database import (
     view_database_table,
     # delete_table,
     titles_in_db,
+    get_all_metadata,
 )
 from .process_stats import (
     number_of_dir_files,
@@ -43,6 +45,7 @@ from .filesystem_utils import (
     delete_files_in_directory,
     get_files_from_directories,
     get_files_from_tree,
+    copy_directory_files,
 )
 from .logger import configure_logger
 
@@ -202,7 +205,7 @@ def show_statistics(
         forgy_pdfs_copy,
         database,
         table,
-        missing_isbn_dir,
+        missing_isbn_path,
         missing_metadata,
         duration_dictionary):
     # Define header and footer for table
@@ -224,7 +227,7 @@ def show_statistics(
         user_pdfs_source,
         database,
         table,
-        missing_isbn_dir,
+        missing_isbn_path,
         missing_metadata
     )
     percentage_completion = no_of_processed/total_no_of_files*100
@@ -236,16 +239,16 @@ def show_statistics(
         database,
         table,
         no_of_database_files,
-        missing_isbn_dir,
+        missing_isbn_path,
         missing_metadata
     )
     time_remaining = format_time_remaining(time_remaining)
-
+    print(f"DB_TABLEEE: {table}")
     (percent_google_api,
      percent_openlibrary_api) = percent_api_utilization(database, table)
 
-    process_efficiency = file_processing_efficiency(user_pdfs_source, database, table, missing_isbn_dir)
-    n_missing_isbn = number_of_dir_files(missing_isbn_dir)
+    process_efficiency = file_processing_efficiency(user_pdfs_source, database, table, missing_isbn_path)
+    n_missing_isbn = number_of_dir_files(missing_isbn_path)
     n_missing_metadata = number_of_dir_files(missing_metadata)
 
     updated_stats = f"""
@@ -270,13 +273,53 @@ def show_statistics(
 # and extract text in first 20 pages of each file
 
 def fetch_book_metadata(user_pdfs_source,
-                        forgy_pdfs_copy,
+                        pdfs_path, #pdfs_path
                         user_pdfs_destination, #NEW where to copy or move data directory to
-                        database,
-                        missing_isbn_dir,
-                        missing_metadata_dir,
+                        database, #db_path
+                        missing_isbn_path,
+                        missing_metadata_path,
                         extracted_texts_path,
-                        table_name="Books"):  # default copies extracted metadata to specified user_pdfs_destination, or move the entire data tree to user_pdfs_destination
+                        table_name, # ="Books",
+                        database_name): # ="library.db",
+                        #get_cover_pics, # =True,
+                        #get_metadata_dict, # =True,
+                        #move_metadata): # =False):
+    # default copies extracted metadata to specified user_pdfs_destination, or move the entire data tree to user_pdfs_destination
+
+##    # Set-up internal directories
+##    [data_path,
+##    pdfs_path,
+##    missing_isbn_path,
+##    missing_metadata_path,
+##    book_metadata_path,
+##    extracted_texts_path,
+##    cover_pics_path] = create_directories(
+##                            data="data",
+##                            forgy_pdfs_copy="pdfs",
+##                            missing_isbn="missing_isbn",
+##                            missing_metadata="missing_metadata",
+##                            book_metadata="book_metadata",
+##                            extracted_texts="extracted_texts",
+##                            book_covers="book_covers",
+##                        )
+##
+##    print(f"BOOK METADATA PATH: {book_metadata_path}")
+##
+##    db_path = f"{book_metadata_path}/{database_name}"
+##
+##    print(f"DB_PATH: {db_path}")
+##    
+##    create_db_and_table(
+##        book_metadata_path,
+##        table_name=table_name,
+##        db_name=database_name,
+##        delete_table=True,
+##    ) 
+
+    # db_path = f"{book_metadata_path}/{database_name}"
+
+    # copy_directory_files(user_pdfs_source, pdfs_path)
+
     
     """Database here is the path to the .db file"""
     # Initialize raw_files_set to store path to raw files iterated over and initialize
@@ -286,7 +329,7 @@ def fetch_book_metadata(user_pdfs_source,
     renamed_files_set = set()
     title_set = set()
 
-    print(f"forgy_pdfs_source: {forgy_pdfs_copy}")
+    # print(f"forgy_pdfs_source: {pdfs_path}")
 
     # Duration dictionary stores how long it takes for operation on
     # each file.
@@ -295,18 +338,19 @@ def fetch_book_metadata(user_pdfs_source,
     duration_dictionary = {}
 
     
-    with os.scandir(forgy_pdfs_copy) as entries:    
+    with os.scandir(pdfs_path) as entries:    
         for file in entries:    # noqa: C901 # A complex loop_McCabe 30
             # Get and format filename
             file_name = file.name
+            print(f"DB_TABLEE: {table_name}")
             show_statistics(
                 file_name,
                 user_pdfs_source,
-                forgy_pdfs_copy,
+                pdfs_path,
                 database,
-                "Books",
-                missing_isbn_dir,
-                missing_metadata_dir,
+                table_name,
+                missing_isbn_path,
+                missing_metadata_path,
                 duration_dictionary
             )
             start_time = time.time()
@@ -343,18 +387,18 @@ def fetch_book_metadata(user_pdfs_source,
 
                 # For files with missing isbn, save extracted text into file,
                 # and move file to missing_isbn directory
-                if (missing_isbn_dir.exists() and (not valid_isbn)):
+                if (missing_isbn_path.exists() and (not valid_isbn)):
                     try:
-                        shutil.move(file_src, missing_isbn_dir)
-                        print(f"File {file_name} moved to {missing_isbn_dir} directory")
+                        shutil.move(file_src, missing_isbn_path)
+                        print(f"File {file_name} moved to {missing_isbn_path} directory")
                     except FileExistsError:
-                        print(f"File {file_name} already exists in destination {missing_isbn_dir}")
+                        print(f"File {file_name} already exists in destination {missing_isbn_path}")
                     except Exception as e:
                         print(f"Exception {e} raised")
                         pass
                     # For files with missing isbn, generate (empty) text files
                     # to ascertain problem
-                    with open(f"{missing_isbn_dir}/{extracted_texts_path.name}/{file_src.stem}.txt", "a") as page_new:
+                    with open(f"{missing_isbn_path}/{extracted_texts_path.name}/{file_src.stem}.txt", "a") as page_new:
                         try:
                             page_new.write(extracted_text)
                         except (FileNotFoundError, UnicodeEncodeError):
@@ -404,7 +448,7 @@ def fetch_book_metadata(user_pdfs_source,
                                 file,
                                 headers,
                                 file_src,
-                                missing_metadata_dir
+                                missing_metadata_path
                             )
                             raw_files_set.add(file)
                             time.sleep(5)
@@ -425,7 +469,7 @@ def fetch_book_metadata(user_pdfs_source,
                                 file,
                                 headers,
                                 file_src,
-                                missing_metadata_dir
+                                missing_metadata_path
                             )
                             raw_files_set.add(file)
                             time.sleep(5)
@@ -480,7 +524,7 @@ def fetch_book_metadata(user_pdfs_source,
             # ........#
             # For file with retrieved metadata, rename and do not move
             if (
-                missing_metadata_dir.exists()
+                missing_metadata_path.exists()
                 and valid_isbn
                 and values != ""
                 and len(list(set(values[0:6]))) >= 2
@@ -489,7 +533,7 @@ def fetch_book_metadata(user_pdfs_source,
                 # Default is 4 out of 6
                 # Rename file in its original ubooks directory
                 old_file_name = file_src
-                dst_dir = forgy_pdfs_copy
+                dst_dir = pdfs_path
                 new_file_name = f"{values[0]}.pdf"
                 # new_file_path = os.path.join(dst_dir, new_file_name)
                 new_file_path = Path(dst_dir)/new_file_name
@@ -516,7 +560,7 @@ def fetch_book_metadata(user_pdfs_source,
             # missing_isbn directory
             else:
                 try:
-                    shutil.move(file_src, missing_metadata_dir)
+                    shutil.move(file_src, missing_metadata_path)
                     # FileNotFoundError raised if file has a missing ISBN and is already
                     # moved to missing_isbn directory. skip this whole process for file
                     # that raises this error
@@ -533,6 +577,38 @@ def fetch_book_metadata(user_pdfs_source,
                 except requests.exceptions.ConnectionError:
                     print("Request ConnectionError. Check your internet connection")
                     pass       
+
+
+##    if get_cover_pics:
+##        get_book_covers(cover_pics_path, db_path, table_name)
+
+
+##    if get_metadata_dict:
+##        # metadata_dictionary coverted to str to enable .write() work on it
+##        metadata_dictionary = str(get_all_metadata(db_path, table_name))
+##        with open(f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w') as metadata_dict_text:
+##            metadata_dict_text.write(metadata_dictionary)
+##            print("metadata_dictionary text created successfully")
+##
+##
+##    if not move_metadata:
+##        try:
+##            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
+##            logger.info(f"Source directory {data_path} copied to {user_pdfs_destination} successfully")
+##        except Exception as e:
+##            logger.exception(f"Exception {e} raised")
+##            # print(f"Exception {e} raised")
+##            pass
+##    else:
+##        # TODO: debug: move_metadata=True
+##        try:
+##            shutil.copytree(data_path, user_pdfs_destination, dirs_exist_ok=True)
+##            os.rmdir(data_path)
+##            logger.info(f"Source directory {data_path} moved to {user_pdfs_destination} successfully")
+##        except Exception as e:
+##            logger.exception(f"Exception {e} raised")
+##            pass  
+
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
