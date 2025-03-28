@@ -66,8 +66,8 @@ def get_parser():
 
     # 3. copy_directory
     copy_directory_parser = subparsers.add_parser(
-                                "copy_directory",
-                                help="copy contents of source directory into destination directory",
+                                "copy_directory_contents",
+                                help="copy contents of source directory into destination directory (files and directories included)",
                             )
     copy_directory_parser.add_argument(
         'source_directory',
@@ -125,15 +125,28 @@ def get_parser():
     )
 
     get_files_from_dir_parser.add_argument(
-        "source_directory",
+        "--source_directory",
         help="provide source directory. The source can be a list of paths to different directories,\
 a directory containing only files, or a directory containing other directories any or all of which\
 contain pdf files",
+        type=str,
     )
 
     get_files_from_dir_parser.add_argument(
-        "destination_directory",
-        help="provide destination directory for copied or moved files"
+        "--source_directory2",
+        help="provide source directory. The source can be a list of paths to different directories,\
+a directory containing only files, or a directory containing other directories any or all of which\
+contain pdf files",
+        # action='append',
+        nargs='+',
+        type=Path,
+    )
+
+    get_files_from_dir_parser.add_argument(
+        "--destination_directory",
+        help="provide destination directory for copied or moved files",
+        required=True,
+        type=Path,
     )
     get_files_from_dir_parser.add_argument(
         "--move",
@@ -213,7 +226,8 @@ contain pdf files",
     single_metadata_mutually_excl = single_metadata_group.add_mutually_exclusive_group(required=True)
     single_metadata_mutually_excl.add_argument(
         "--isbn",
-        help="provide book isbn",
+        type=str,
+        help="provide book isbn as int",
     )
     single_metadata_mutually_excl.add_argument(
         "--title",
