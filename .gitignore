@@ -26,6 +26,9 @@ library.db
 #exclude personal api_key and browser_header
 user_requirements.py
 
+#exclude .env file
+*.env
+
 #exclude project resources
 forgy_resources/
 
