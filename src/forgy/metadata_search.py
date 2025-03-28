@@ -1,6 +1,5 @@
 # metadata search on google and openlib apis
 import json
-import requests
 import os
 import re
 import shutil
@@ -9,8 +8,23 @@ import sqlite3
 from pathlib import Path
 import time
 
-from .user_requirements import headers, API_KEY
+# from .user_requirements import headers, API_KEY
+import requests
+from dotenv import load_dotenv
+
 from .database import get_database_columns
+
+# Load BookAPI key from dotenv file
+load_dotenv()
+
+# Get BooksAPI key from .env
+API_KEY = os.getenv('GOOGLE_API_KEY')
+print(f"Google API Key is: {API_KEY}")
+
+headers={
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
+            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+    }
 
 
 def merge_list_items(
@@ -596,11 +610,14 @@ def get_single_book_metadata(file, isbn=None, title=None):
                         file,
                         title=title,
                      )
-    else:
+    elif isbn:
         values = get_metadata_google(
                     file,
                     isbn=isbn,
                  )
+    else:
+        print("Please provide a valid title or isbn")
+
     print(f"""
             Title: {title}
             ISBN: {isbn}"""
@@ -694,7 +711,7 @@ def get_book_covers(cover_dir, database, table):
                         downloaded_bytes += len(chunk)
                         print(f"Download Progress: {downloaded_bytes}/{content_length} bytes, ({(downloaded_bytes / content_length) * 100:.2f}% DONE)")
         # sleep for 3 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
-        time.sleep(3)
+        time.sleep(5)
 
     print()
     return None
