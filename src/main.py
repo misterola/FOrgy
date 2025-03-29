@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import shutil
+import pypdf
 
 from dotenv import load_dotenv
 
@@ -8,6 +9,7 @@ from forgy.messyforg import(
     check_internet_connection,
     fetch_book_metadata,
     create_directories,
+    get_isbns_from_texts,
 )
 from forgy.database import create_db_and_table, get_all_metadata
 from forgy.logger import configure_logger
@@ -198,15 +200,26 @@ def main():
 
 
             # specify options from file
-                
-            [_,
-             GOOGLE_API_KEY,
-             _,
-             database,
-             _,
-             db_table,
-             user_pdfs_source,
-             user_pdfs_destination] = argument_list
+            try:
+                [_,
+                 GOOGLE_API_KEY,
+                 _,
+                 database,
+                 _,
+                 db_table,
+                 user_pdfs_source,
+                 user_pdfs_destination] = argument_list
+            except ValueError:
+                print("All the 5 arguments required inside commands text file must be provided")
+                return
+
+            if user_pdfs_source is None:
+                print(f"Error, user_pdfs_source value is invalid: {user_pdfs_source}")
+                return
+
+            if user_pdfs_destination is None:
+                print(f"Error, user_pdfs_destination value is invalid: {user_pdfs_source}")
+                return
 
 
             db_path = f"{book_metadata_path}/{database}"
@@ -278,6 +291,14 @@ def main():
             user_pdfs_source = args.user_pdfs_source
             user_pdfs_destination = args.user_pdfs_destination
 
+            if user_pdfs_source is None:
+                print(f"Error, user_pdfs_source value is invalid: {user_pdfs_source}")
+                return
+
+            if user_pdfs_destination is None:
+                print(f"Error, user_pdfs_destination value is invalid: {user_pdfs_source}")
+                return
+
             # store GOOGLE_API_KEY as an environment variable
             save_api_key_to_env(GOOGLE_API_KEY)
 
@@ -292,7 +313,7 @@ def main():
                 delete_table=True,
             )
 
-            copy_directory_files(user_pdfs_source, pdfs_path)
+            copy_directory_contents(user_pdfs_source, pdfs_path)
 
             fetch_book_metadata(
                 user_pdfs_source,
@@ -367,8 +388,20 @@ def main():
         else:
             print("please enter a valid argument")
 
+    elif args.subcommands == 'get_isbns_from_texts':
+        source_directory = args.source_directory
+        destination_directory = args.destination_directory
+        isbn_text_filename = args.isbn_text_filename
+
+        get_isbns_from_texts(
+            source_directory,
+            destination_directory,
+            text_filename=isbn_text_filename,
+        )
+
     else:
         print("Please provide a valid subcommand")
+
 
         
 if __name__=='__main__':
