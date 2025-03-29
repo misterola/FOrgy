@@ -329,7 +329,16 @@ def fetch_book_metadata(user_pdfs_source,
 
             # Extract text from file in file_src as a string
             if not file_name.startswith(".") and Path(file_src).is_file():
-                extracted_text = extract_text(file_src)
+                try:
+                    extracted_text = extract_text(file_src)
+                except pypdf.errors.PdfStreamError as e:
+                    print(f"Error encountered while extracting texts from {file_name}: {e}")
+                    continue
+                except Exception as f:
+                    print(f"Error encountered: {e}")
+                    continue
+
+                # extracted_text = extract_text(file_src)
 
                 # Use regex to match isbn in extracted text, into matched_isbn list
                 matched_isbn = []
@@ -535,6 +544,59 @@ def fetch_book_metadata(user_pdfs_source,
                 except requests.exceptions.ConnectionError:
                     print("Request ConnectionError. Check your internet connection")
                     pass
+
+
+def get_isbns_from_texts(source_directory, txt_destination_dir, text_filename="extracted_book_isbns.txt"):
+    """Function to extract isbns for every book in a directory.
+
+    The result is a .txt file containing filenames as keys and extracted
+    isbns as a list of values.
+    """
+
+    source_directory = Path(source_directory)
+    txt_destination_dir = Path(txt_destination_dir)
+
+    if not source_directory.is_dir():
+        print(f"The provided source is not a directory: {source_directory}")
+        pass
+
+    if not txt_destination_dir.is_dir():
+        print(f"The provided isbn text destination is not a directory: {txt_destination_dir}")
+        pass
+
+    with os.scandir(source_directory) as entries:
+        isbn_dict = {}
+        for file in entries:
+            file_path = file.path
+            file_name = file.name
+
+            if not file_name.startswith(".") and Path(file_path).is_file():
+                try:
+                    extracted_text = extract_text(file_path)
+                except pypdf.errors.PdfStreamError as e:
+                    print(f"Error encountered while extracting texts from {file_name}: {e}")
+                    continue
+                except Exception as f:
+                    print(f"Error encountered: {e}")
+                    continue
+                matched_isbn = []
+                matched_regex = isbn_pattern.findall(extracted_text)
+                matched_isbn.append(matched_regex)
+                valid_isbns = format_isbn(matched_isbn)
+                print(f"Valid isbn(s) extracted from {file_name} successfully: {valid_isbns}")
+                isbn_dict[f"{file_name}"] = valid_isbns
+
+                isbns_file_path = f"{txt_destination_dir}/{text_filename}.txt"
+
+        with open(isbns_file_path, 'a') as isbn_file:
+            isbn_file.write(str(isbn_dict))
+            print(f"ISBNs from {file_name} saved to {isbns_file_path}: {valid_isbns}")
+
+    return isbn_dict
+
+    # get_isbns_from_texts(r'C:\Users\Ola\Desktop\nubook', r'C:\Users\Ola\Desktop')
+
+## abstract away extraction of isbns in full with a function that takes extracted text and returns valid isbns
 
 
 # OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
