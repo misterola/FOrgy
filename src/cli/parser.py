@@ -234,10 +234,9 @@ contain pdf files",
         help="provide book title",
     )
 
-    # Add last parser subcommand which takes a folder containing books and return a
+    # get_isbns_from_texts parser enables user to fetch isbns in many pdf files
     # text file of a dictionary whose key is filename and isbn_list as value of extracted ISBN
-    # enable user to rename files with joined isbns
-    # Positional args: source, isbn_file_path
+    # TODO: enable user to rename files with joined isbns
     get_isbns_from_texts_parser = subparsers.add_parser(
                                   "get_isbns_from_texts",
                                   help="Extract isbns from source_directory pdf files into a text file (isbn_text_filename)",
@@ -255,10 +254,8 @@ contain pdf files",
         default="extracted_book_isbns.txt",
         help="provide destination for text file containing isbns",
     )
-    
 
     
-
     return parser
 
 ##
