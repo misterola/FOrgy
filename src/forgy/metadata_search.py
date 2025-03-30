@@ -1,4 +1,8 @@
 # metadata search on google and openlib apis
+
+import sys
+sys.path.append(r'C:\Users\Ola\Desktop\Projects\Forgy\src')
+
 import json
 import os
 import re
@@ -12,8 +16,8 @@ import time
 import requests
 from dotenv import load_dotenv
 
-from .database import get_database_columns
-from .isbn_regex import is_valid_isbn
+from forgy.database import get_database_columns
+from forgy.isbn_regex import is_valid_isbn
 
 # Load BookAPI key from dotenv file
 load_dotenv()
@@ -26,7 +30,6 @@ headers={
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     }
-
 
 def merge_list_items(
     given_list,
@@ -42,7 +45,7 @@ def merge_list_items(
         print(f"parameter is of type {type(given_list)}, not of type:list")
         pass
 
-    
+
 def get_cover_url(dictionary):
     """Function to get book cover thumbnail (medium-sized) from googlebooks api.
 
@@ -78,7 +81,41 @@ def get_cover_url2(cover_id, isbn):
     else:
         image_link = 'https://covers.openlibrary.org/b/isbn/' + isbn + '-M.jpg'
     return image_link
-        
+
+
+def get_image_url_google(
+    # file,
+    isbn_of_book=None,
+    # title_of_book=None,
+    headers=headers):
+    print(f"For get_metadata_google, title={title_of_book}, isbn={isbn_of_book}")
+    """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
+    # fetch metadata from google
+    # initialize dictionary containing imageLinks key
+    # This is same key of imageLinks url in json from api source
+    dict_of_interest = {
+        "imageLinks": ""
+    }
+
+    if isbn_of_book:
+        metadata_dict = google_metadata_dict(isbn=isbn_of_book)
+    else:
+        metadata_dict = google_metadata_dict(title=title_of_book)
+
+
+    # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
+    available_metadata = metadata_handler(dict_of_interest, metadata_dict)
+    dict_of_interest = get_dictionary(available_metadata)
+
+    if len(dict_of_interest) == 0:
+        return None
+    else:
+        pass
+
+    image_link = dict_of_interest.get("imageLinks", "NA")
+
+    return image_link
+
 
 # a function to handle keys and values of different types, including missing keys and values of type str, list
 # dict of interest is populated with available values whose keys match those in API
@@ -98,7 +135,7 @@ def metadata_handler(dict_of_interest, metadata_dict):
                     #this can occur in the case of cover_id in openlib api which is a list containing one integer
                     print(f"{metadata_dict[key][0]} is of type {type(metadata_dict[key][0])}")
                     dict_of_interest[key] = dict_of_interest[key] + str(metadata_dict[key][0])
-                    
+
 
             # if value in retrieved dict is a list containing multiple elements, extract that element using zero index
             # and update the defined empty_valued dictionary (dict_of_interest)
@@ -315,14 +352,14 @@ def modify_title(title):
 # prev: isbn, api, headers as input
 def get_metadata_google(
     file,
-    isbn=None,
-    title=None,
+    isbn_of_book=None,
+    title_of_book=None,
     headers={
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     },
 ):
-    print(f"For get_metadata_google, title={title}, isbn={isbn}")
+    print(f"For get_metadata_google, title={title_of_book}, isbn={isbn_of_book}")
     """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
     # gets file metadata from google or openlibrary apis
     # json_metadata = google_api(isbn)
@@ -335,16 +372,16 @@ def get_metadata_google(
         "publisher": "",
         "authors": "",
         "pageCount": "",
-        "imageLinks": ""   
+        "imageLinks": ""
     }
 
     # dictionary["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
     # Assign dict from extracted metadata to metadata_dict
-    if isbn:
-        metadata_dict = google_metadata_dict(isbn=isbn)
+    if isbn_of_book:
+        metadata_dict = google_metadata_dict(isbn=isbn_of_book)
     else:
-        metadata_dict = google_metadata_dict(title=title)
-    
+        metadata_dict = google_metadata_dict(title=title_of_book)
+
 
     # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
     available_metadata = metadata_handler(dict_of_interest, metadata_dict)
@@ -377,7 +414,7 @@ def get_metadata_google(
     isbn_10, isbn_13 = get_isbns(metadata_dict)
 
     # get reference isbn (ref_isbn), the one used to retrieve the metadata
-    ref_isbn = isbn
+    ref_isbn = isbn_of_book
 
     source = "www.google.com"
 
@@ -391,7 +428,7 @@ def get_metadata_google(
     dict_of_interest["full_title"] = full_title
     dict_of_interest["isbn_10"] = isbn_10
     dict_of_interest["isbn_13"] = isbn_13
-    dict_of_interest["ref_isbn"] = isbn
+    dict_of_interest["ref_isbn"] = isbn_of_book
     dict_of_interest["source"] = source
     dict_of_interest["filesizes"] = file_size
 
@@ -479,9 +516,10 @@ def get_metadata_openlibrary(
 
     # image link
     image_id = dict_of_interest.get("covers", "NA")
+
     image_link = get_cover_url2(image_id, isbn)
 
-    
+
     # GET OTHER VALUES
     # get isbns from metadata
 
@@ -570,7 +608,7 @@ def get_metadata_from_api(api1_dict,
     # If metadata from google is not empty, unpack tuple file_metadata into the various variables
     if file_metadata is not None:
         return file_metadata
-        
+
     else:
         file_metadata = api2_dict[api2_dict_key](file, isbn, headers=headers)
         # time.sleep(5)
@@ -582,7 +620,7 @@ def get_metadata_from_api(api1_dict,
         else:
             print(f"ISBN metadata not found for {pdf_path.stem}")
             move_to_missing_metadata(file_src, missing_metadata)
-            return None                            
+            return None
 
 
 def download_book_covers(isbns):
@@ -593,14 +631,14 @@ def download_book_covers(isbns):
 
     Openlib has covers api while google returns cover with metadata json.
     1. If metadata found, download cover image using image link, save to book_covers folder and rename to book title
-    
+
 
     In both cases, update database to include link to coverpage on pc
     """
     pass
 
 
-def get_single_book_metadata(file, isbn=None, title=None):
+def get_single_book_metadata(file, book_isbn=None, book_title=None):
     """Function to fetch metadata of one book by title or isbn from google bookapi."""
 
     values=""
@@ -609,13 +647,13 @@ def get_single_book_metadata(file, isbn=None, title=None):
     if title:
             values = get_metadata_google(
                         file,
-                        title=title,
+                        title=book_title,
                      )
     elif isbn:
         if is_valid_isbn(isbn):
             values = get_metadata_google(
                         file,
-                        isbn=isbn,
+                        isbn=book_isbn,
                      )
         else:
             print(f"Invalid ISBN: {isbn}")
@@ -627,8 +665,45 @@ def get_single_book_metadata(file, isbn=None, title=None):
             ISBN: {isbn}"""
     )
     print(f"VALUES: {values}")
-        
+
     return values
+
+
+def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1.5):
+    for trial in range(no_of_retries):
+        try:
+                    
+            # get image bytes object (in streams for memory efficiency downloading large files or many files) and handle errors
+            # Send get request to image url
+            response = requests.get(image_url, timeout=30, stream=True)
+
+            #Check if request is successful. raise HTTPError if any
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            print("The request timed out.")
+            print(f"Attempt {trial + 1}")
+            time.sleep(delay_before_retries)
+            delay_before_retries *= 1.5
+            continue
+            #handle raised exception/HTTPError by raise_for_status
+        except requests.exceptions.HTTPError as error:
+            print(f"HTTP error occurred: {error}")
+            print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
+            print(f"Status code: {response.status_code}")
+            time.sleep(delay_before_retries)
+            delay_before_retries *= 1.5
+            continue
+        except requests.RequestException as e:
+            print(f"Error '{e}' occured")
+            print(f"Attempt {trial + 1}: An error occurred: {e}")
+            time.sleep(delay_before_retries)
+            delay_before_retries *= 1.5
+            continue
+        else:
+            # if no exception is raised
+            print("Request was successful")
+            print(f"Status code: {response.status_code}")
+            return response
 
 
 def get_book_covers(cover_dir, database, table):
@@ -642,50 +717,39 @@ def get_book_covers(cover_dir, database, table):
     cover_dir_path = Path(cover_dir)
 
     # get book_metadata from database. The format is [(title, image_url),...(title, image_url)]
-    book_metadata = get_database_columns(database, table)
+    book_metadata = get_database_columns(database, table, columns=["Title", "RefISBN", "Source", "ImageLink"])
 
     # Iterate through "title, image_url" in book_metadata and download file
      
     for val in book_metadata:
         #enable matching of order of columns
-        title, image_url = val
+        title, ref_isbn, source, image_url = val
         # print(f"Title: {title}\nImage_url: {image_url}")
 
         # enable skipping already downloaded cover pages
-        
-        with open(f"{cover_dir_path}/{title}.jpg", 'wb') as image_file:
-            # set number of api call requests before skipping iteration
-            retries = 3
-            delay_before_retries = 1.5
-            
-            try:
-                for trial in range(retries):
-                    # get image bytes object (in streams for memory efficiency downloading large files or many files) and handle errors
-                    # Send get request to image url
-                    response = requests.get(image_url, timeout=30, stream=True)
 
-                    #Check if request is successful. raise HTTPError if any
-                    response.raise_for_status()
-            except requests.exceptions.Timeout:
-                print("The request timed out.")
-                print(f"Attempt {trial + 1}")
-                continue
-            #handle raised exception/HTTPError by raise_for_status
-            except requests.exceptions.HTTPError as error:
-                print(f"HTTP error occurred: {error}")
-                print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
-                print(f"Status code: {response.status_code}")
-                continue
-            except requests.RequestException as e:
-                print(f"Error '{e}' occured")
-                print(f"Attempt {trial + 1}: An error occurred: {e}")
-                continue
+        image_file_path = f"{cover_dir_path}/{title}.jpg"
+
+        if image_url== "NA":
+            if source == "www.google.com":
+                # new_source = "www.openlibrary.org"
+                image_url = get_cover_url2("NA", ref_isbn)
+                print(f"New image_url extracted from OpenlibraryAPI: {image_url}")
+            elif source == "www.openlibrary.org":
+        #        new_source = "www.google.com"
+
+                # Since we do not need to extract the whole metadata in this case, the i
+                image_url = get_image_url_google(
+                    isbn_of_book=ref_isbn,
+                )
+                print(f"New image_url extracted from Google BooksAPI: {image_url}")
             else:
-                # if no exception is raised
-                print("Request was successful")
-                print(f"Status code: {response.status_code}")
-            time.sleep(delay_before_retries)
-            delay_before_retries *= 1.5
+                print(f"Invalid image url in database: {image_url}")
+                pass
+
+        with open(image_file_path, 'wb') as image_file:
+            # set number of api call requests before skipping iteration
+            response = download_image_bytes(image_url)
 
             # Check if the response was successful. response.ok returns True if success status code (2xx) or False otherwise(4xx, 5xx)
             if not response.ok:
@@ -706,7 +770,7 @@ def get_book_covers(cover_dir, database, table):
                     downloaded_bytes = 0
                     content_length = int(content_length)
                     print(f"{title}")
-                    for chunk in response.iter_content(chunk_size=1024):
+                    for chunk in response.iter_content(chunk_size=3072):
                         # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
                         if not chunk:
                             break
@@ -715,7 +779,16 @@ def get_book_covers(cover_dir, database, table):
                         #update total length of downloaded chunks
                         downloaded_bytes += len(chunk)
                         print(f"Download Progress: {downloaded_bytes}/{content_length} bytes, ({(downloaded_bytes / content_length) * 100:.2f}% DONE)")
-        # sleep for 3 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
+##        # get_file_size function returns a str filesize as MB
+##        # so we convert its returned value to float and kb
+##        file_size_kb = float(get_file_size(image_path))*1024
+##        if file_size_kb <= 1.00:
+##            redownload_empty_bookcover(image_path, title, ref_isbn, source, image_url)
+##            continue
+##        elif file_size_kb > 1.00:
+##            print(f"Image file is valid: {image_path}")
+
+        # sleep for 5 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
         time.sleep(5)
 
     print()
