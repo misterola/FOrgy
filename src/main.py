@@ -144,6 +144,13 @@ def main():
             
 
     elif args.subcommands == 'get_metadata':
+        # if user is not connected to internet exit
+        if check_internet_connection():
+            print("Internet connection is available")
+        else:
+            print("Internet is unavailable")
+            return None
+        
         # Set-up internal directories (in parent of current directory...FOrgy directory)
         [data_path,
         pdfs_path,
@@ -184,6 +191,12 @@ def main():
         file = args.file
         
         if file:
+
+            # Confirm existence of file
+            if not Path(file).is_file():
+                print(f"The provided file does not exist: {file}")
+                return
+                
             print(f"Processing arguments in {args.file}")
 
             # Each element in argument_list represents an item on each line in .txt file containing argument
@@ -281,6 +294,7 @@ def main():
                     pass
 
         elif not file and any(cli_options_in_file):
+            
             print("THE CASE OF CLI ARGS")
             book_covers = args.book_covers
             metadata_dict = args.metadata_dict
@@ -367,6 +381,13 @@ def main():
 
 
     elif args.subcommands == 'get_single_metadata':
+        # if user is not connected to internet exit
+        if check_internet_connection():
+            print("Internet connection is available")
+        else:
+            print("Internet is unavailable")
+            return None
+        
         title_query=args.title
         isbn_query = args.isbn
         file = args.file
@@ -375,14 +396,14 @@ def main():
             isbn=None, 
             get_single_book_metadata(
                 file,
-                title=title_query
+                book_title=title_query
             )
         elif isbn_query:
             #isbn_query = args.isbn
             title=None
             get_single_book_metadata(
                 file,
-                isbn=isbn_query,
+                book_isbn=isbn_query,
             )
 
         else:
@@ -405,8 +426,5 @@ def main():
 
         
 if __name__=='__main__':
-    if check_internet_connection():
-        main()
-    else:
-        print("Internet is unavailable")
+    main()
         
