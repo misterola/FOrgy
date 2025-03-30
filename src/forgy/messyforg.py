@@ -13,6 +13,7 @@ from .isbn_regex import (
     isbn_pattern,
     format_isbn,
     is_isbn_in_db,
+    get_valid_isbns,
 )
 from .text_extraction import extract_text
 from .metadata_search import (
@@ -203,7 +204,7 @@ def show_statistics(
         filename,
         user_pdfs_source,
         forgy_pdfs_copy,
-        database,
+        database_path,
         table,
         missing_isbn_path,
         missing_metadata,
@@ -225,18 +226,18 @@ def show_statistics(
 
     no_of_processed = number_of_processed_files(
         user_pdfs_source,
-        database,
+        database_path,
         table,
         missing_isbn_path,
         missing_metadata
     )
     percentage_completion = no_of_processed/total_no_of_files*100
-    no_of_database_files = number_of_database_files(database, table)
+    no_of_database_files = number_of_database_files(database_path, table)
 
     time_remaining = total_time_remaining(
         duration_dictionary,
         user_pdfs_source,
-        database,
+        database_path,
         table,
         no_of_database_files,
         missing_isbn_path,
@@ -245,9 +246,9 @@ def show_statistics(
     time_remaining = format_time_remaining(time_remaining)
     print(f"DB_TABLEEE: {table}")
     (percent_google_api,
-     percent_openlibrary_api) = percent_api_utilization(database, table)
+     percent_openlibrary_api) = percent_api_utilization(database_path, table)
 
-    process_efficiency = file_processing_efficiency(user_pdfs_source, database, table, missing_isbn_path)
+    process_efficiency = file_processing_efficiency(user_pdfs_source, database_path, table, missing_isbn_path)
     n_missing_isbn = number_of_dir_files(missing_isbn_path)
     n_missing_metadata = number_of_dir_files(missing_metadata)
 
@@ -274,7 +275,7 @@ def show_statistics(
 def fetch_book_metadata(user_pdfs_source,
                         pdfs_path, #pdfs_path
                         user_pdfs_destination, #NEW where to copy or move data directory to
-                        database, #db_path
+                        database_path, #db_path
                         missing_isbn_path,
                         missing_metadata_path,
                         extracted_texts_path,
@@ -305,7 +306,7 @@ def fetch_book_metadata(user_pdfs_source,
                 file_name,
                 user_pdfs_source,
                 pdfs_path,
-                database,
+                database_path,
                 table_name,
                 missing_isbn_path,
                 missing_metadata_path,
@@ -338,13 +339,8 @@ def fetch_book_metadata(user_pdfs_source,
                     print(f"Error encountered: {e}")
                     continue
 
-                # extracted_text = extract_text(file_src)
-
                 # Use regex to match isbn in extracted text, into matched_isbn list
-                matched_isbn = []
-                matched_regex = isbn_pattern.findall(extracted_text)
-                matched_isbn.append(matched_regex)
-                valid_isbn = format_isbn(matched_isbn)
+                valid_isbn = get_valid_isbns(extracted_text)
 
                 # Add all in valid_isbn list to a set of valid isbns
                 # add_isbn_to_set(valid_isbn, valid_isbn_set)
@@ -377,7 +373,7 @@ def fetch_book_metadata(user_pdfs_source,
                             continue
                 # Move to next book if its isbn has been previously extracted
                 # (compare with ref_isbn_set)
-                if is_isbn_in_db(database, table_name, valid_isbn):
+                if is_isbn_in_db(database_path, table_name, valid_isbn):
                     process_duration_sec = process_duration(start_time)
                     save_process_duration(file_name,
                                           process_duration_sec,
@@ -474,7 +470,7 @@ def fetch_book_metadata(user_pdfs_source,
             print(values)
 
             # Extract all titles contained in database as a set 'db_titles'
-            db_titles = titles_in_db(database, table_name)
+            db_titles = titles_in_db(database_path, table_name)
 
             # Check if the metadata tuple (i.e. values) is not empty
             # and title is already in database. If that is the case,
@@ -514,14 +510,14 @@ def fetch_book_metadata(user_pdfs_source,
                     pass
 
                 # Add retrieved metadata to database
-                add_metadata_to_table(database, table_name, values)
+                add_metadata_to_table(database_path, table_name, values)
 
                 # Add the name of renamed book to renamed_files_set
                 # Add the title of book to title_set...both defined earlier
                 renamed_files_set.add(new_file_name)
                 title_set.add(values[0])
 
-                view_database_table(database, table_name)
+                view_database_table(database_path, table_name)
 
             # For files with missing missing_metadata, move file to
             # missing_isbn directory
@@ -579,10 +575,7 @@ def get_isbns_from_texts(source_directory, txt_destination_dir, text_filename="e
                 except Exception as f:
                     print(f"Error encountered: {e}")
                     continue
-                matched_isbn = []
-                matched_regex = isbn_pattern.findall(extracted_text)
-                matched_isbn.append(matched_regex)
-                valid_isbns = format_isbn(matched_isbn)
+                valid_isbns = get_valid_isbns(extracted_text)
                 print(f"Valid isbn(s) extracted from {file_name} successfully: {valid_isbns}")
                 isbn_dict[f"{file_name}"] = valid_isbns
 
