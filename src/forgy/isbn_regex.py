@@ -334,6 +334,14 @@ def format_isbn(matched_isbn):
     return valid_isbn
 
 
+def get_valid_isbns(extracted_text):
+    # Use regex to match isbn in extracted text, into matched_isbn list
+    matched_isbn = []
+    matched_regex = isbn_pattern.findall(extracted_text)
+    matched_isbn.append(matched_regex)
+    valid_isbn = format_isbn(matched_isbn)
+    return valid_isbn
+
 """Add isbns in valid_isbn list to a set containing isbns
 def add_isbn_to_set(isbn_list, isbn_set):
     for isbn in isbn_list:
