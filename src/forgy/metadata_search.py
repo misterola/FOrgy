@@ -683,21 +683,27 @@ def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1
             print("The request timed out.")
             print(f"Attempt {trial + 1}")
             time.sleep(delay_before_retries)
-            delay_before_retries *= 1.5
+            time_delay_before_retries *= 1.5
             continue
             #handle raised exception/HTTPError by raise_for_status
+        except requests.exceptions.ReadTimeout:
+            print(f"ReadTimeout Error")
+            time.sleep(delay_before_retries)
+            time_delay_before_retries *= 1.5
+            continue
+            
         except requests.exceptions.HTTPError as error:
             print(f"HTTP error occurred: {error}")
             print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
             print(f"Status code: {response.status_code}")
             time.sleep(delay_before_retries)
-            delay_before_retries *= 1.5
+            time_delay_before_retries *= 1.5
             continue
-        except requests.RequestException as e:
+        except requests.exceptions.RequestException as e:
             print(f"Error '{e}' occured")
             print(f"Attempt {trial + 1}: An error occurred: {e}")
             time.sleep(delay_before_retries)
-            delay_before_retries *= 1.5
+            time_delay_before_retries *= 1.5
             continue
         else:
             # if no exception is raised
@@ -752,9 +758,6 @@ def get_book_covers(cover_dir, database, table):
     # get book_metadata from database. The format is [(title, image_url),...(title, image_url)]
     book_metadata = get_database_columns(database, table, columns=["Title", "RefISBN", "Source", "ImageLink"])
 
-    successful_image_downloads = 0
-    unsuccessful_image_downloads = 0
-
     # Iterate through "title, image_url" in book_metadata and download file
      
     for val in book_metadata:
@@ -787,22 +790,31 @@ def get_book_covers(cover_dir, database, table):
             response = download_image_bytes(image_url)
             process_image_bytes(response, image_file)
 
-        # get_file_size function returns a str filesize as MB
-        # so we convert its returned value to float and kb
-        file_size_kb = float(get_file_size(image_file_path))*1024
-        if file_size_kb <= 1.00:
-            print(f"UNSUCCESSFUL: {image_file_path}")
-            unsuccessful_image_downloads += 1
-        elif file_size_kb > 1.00:
-            successful_image_downloads += 1
-            print(f"Image file is valid: {image_file_path}")
-        else:
-            pass
-
         # sleep for 5 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
         time.sleep(5)
 
         print()
+
+    successful_image_downloads = 0
+    unsuccessful_image_downloads = 0
+
+    # get_file_size function returns a str filesize as MB
+    # so we convert its returned value to float and kb
+    with os.scandir(cover_dir_path) as entries:
+        for entry in entries:
+            if entry.is_file():
+                # file_size_kb = float(get_file_size(entry.path))*1024
+                file_size_bytes = entry.stat().st_size
+                if file_size_bytes <= 1000:
+                    print(f"UNSUCCESSFUL: {image_file_path}")
+                    unsuccessful_image_downloads += 1
+                elif file_size_bytes > 1000:
+                    successful_image_downloads += 1
+                    print(f"Image file is valid: {image_file_path}")
+                else:
+                    pass
+            else:
+                print(f"Entry is not a file {entry}")
 
     print(f"""
     FOrgy Cover Image Download Statistics:
