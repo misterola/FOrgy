@@ -385,16 +385,6 @@ def organize_files_in_directory(source_directory, destination_directory, move=Fa
         else:
             print(f"No {ext} files in directory {src_dir.name}.")
 
-
-    
-##                    try:
-##                        shutil.move(file.path, folder_path / file.name)
-##                    except OSError as e:
-##                        print(f"Error {e} occured on {file.name}")
-##                        continue
-##                    except Exception as e:
-##                        print(f"Error '{e}' occured on {file.name}")
-##                        continue
     return extension_set
 
 
@@ -421,18 +411,52 @@ def delete_files_in_directory(directory, files=True, directories=False):
     except OSError as e:
         print(f"Error {e} occured")
     
-##    try:
-##        with os.scandir(directory) as entries:
-##            for entry in entries:
-##                if entry.is_file():
-##                    os.unlink(entry.path)
-##        print(f"Files in {directory} deleted successfully")
-##    except OSError as e:
-##        print(f"Error {e} occured")
-    
 
 # To test
 # print(organize_files_in_directory(r"C:\Users\Ola\Desktop\ubooks_keji", r"C:\Users\Ola\Desktop"))
+
+def move_file_or_directory(source, destination):
+    source = Path(source)
+    destination = Path(destination)
+    try:
+        shutil.move(source, destination)
+        # FileNotFoundError raised if file has a missing ISBN and is already
+        # moved to missing_isbn directory. skip this whole process for file
+        # that raises this error
+        print(f"File {source.name} moved to {destination} directory")
+    except FileNotFoundError:
+        print(f"File not found: {source}")
+        pass
+    except (PermissionError, IsADirectoryError, OSError) as e:
+        print(f"Error encountered: {e}")
+        pass
+    except shutil.Error as e:
+        print(f"Shutil error encountered: {e}")
+        pass
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+        pass
+   
+
+def rename_file_or_directory(source, destination):
+    source = Path(source)
+    destination = Path(destination)
+    try:
+        os.rename(source, destination)
+        # Device how to handle duplicates by attacching time to file name
+        print(f"File {source.name} renamed to {destination.name} directory")
+    except FileExistsError:
+        print(f"File already exists at the destination: {source.name}")
+        pass
+    except FileNotFoundError:
+        print(f"Source file {source.name} not found in {source}")
+        pass
+    except (PermissionError, IsADirectoryError, OSError) as e:
+        print(f"Error encountered: {e}")
+        pass
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+        pass
     
 
 if 'name' == '__main__':
