@@ -186,6 +186,17 @@ def get_all_metadata(database, table):
     return all_metadata
 
 
+def get_all_metadata(database, table):
+    """Function makes book title key and book metadata value in all_metadata dictionary"""
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT * FROM {table};")
+        book_metadata = cursor.fetchall()
+        for val in book_metadata:
+            print(val)
+            print()
+
+
 def get_database_columns(database, table, columns=["Title", "ImageLink"]):
     """Function to get values of columns in database table.
 
