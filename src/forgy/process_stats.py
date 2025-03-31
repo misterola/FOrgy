@@ -9,7 +9,8 @@
 # excl. those files with missing ISBN)
 # time remaining estmated base on average time per file so far
 # format to have a pretty display
-
+import textwrap
+import os
 from .filesystem_utils import (
     count_files_in_directory,
 )
@@ -191,6 +192,99 @@ def total_time_remaining(duration_dict,
         return time_remaining
     else:
         return time_remaining/60
+
+
+def format_filename(filename):
+    width = 36
+    wraped_filename = textwrap.fill(filename, width)
+    lines = wraped_filename.split('\n')
+    # print(f"Current file: {current_file}")
+    first_line = f"{lines[0]}"
+
+    # print subsequent lines
+    # subsequent_lines = f"'                {line}' for line in lines[1:]"
+    subsequent_lines = '\n'.join([f"                   {line}" for line in lines[1:]])
+
+    return f'{first_line}\n{subsequent_lines}'.rstrip('\n')
+
+
+def format_time_remaining(time):
+    if time < 60:
+        time = f"{time:.2f} minutes"
+    else:
+        time = f"{time:.2f} hours"
+    return time
+
+
+def show_statistics(
+        filename,
+        user_pdfs_source,
+        forgy_pdfs_copy,
+        database_path,
+        table,
+        missing_isbn_path,
+        missing_metadata,
+        duration_dictionary):
+    # Define header and footer for table
+    table_header = """
+=========================================================
+                FOrgy Process Statistics
+=========================================================
+"""
+
+    footer = """
+=========================================================
+"""
+    # Get and format filename
+    filename = format_filename(filename)
+
+    total_no_of_files = count_files_in_directory(user_pdfs_source)
+
+    no_of_processed = number_of_processed_files(
+        user_pdfs_source,
+        database_path,
+        table,
+        missing_isbn_path,
+        missing_metadata
+    )
+    percentage_completion = no_of_processed/total_no_of_files*100
+    no_of_database_files = number_of_database_files(database_path, table)
+
+    time_remaining = total_time_remaining(
+        duration_dictionary,
+        user_pdfs_source,
+        database_path,
+        table,
+        no_of_database_files,
+        missing_isbn_path,
+        missing_metadata
+    )
+    time_remaining = format_time_remaining(time_remaining)
+    print(f"DB_TABLEEE: {table}")
+    (percent_google_api,
+     percent_openlibrary_api) = percent_api_utilization(database_path, table)
+
+    process_efficiency = file_processing_efficiency(user_pdfs_source, database_path, table, missing_isbn_path)
+    n_missing_isbn = number_of_dir_files(missing_isbn_path)
+    n_missing_metadata = number_of_dir_files(missing_metadata)
+
+    updated_stats = f"""
+    Progress: file {no_of_processed} of {total_no_of_files}
+    Current file: {format_filename(filename)}
+    Percentage completion: {percentage_completion:.1f}% DONE
+    Time remaining: {time_remaining}
+    API utilization: {percent_google_api:.1f}% Google, {percent_openlibrary_api:.1f}% Openlibrary
+    Process efficiency: {process_efficiency:.1f}%"
+    Process summary: {no_of_database_files} files renamed or added to DB,
+                     {n_missing_isbn} files with missing ISBN,
+                     {n_missing_metadata} files with missing metadata"""
+
+    # Clear screen (gives the values changing effect)
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(table_header, end='')
+    print(updated_stats)
+    print(footer)
+
 
 # Preferred format of process stats
 
