@@ -11,7 +11,7 @@ from forgy.messyforg import(
     create_directories,
     get_isbns_from_texts,
 )
-from forgy.database import create_db_and_table, get_all_metadata
+from forgy.database import create_db_and_table, get_all_metadata, view_database_table
 from forgy.logger import configure_logger
 from cli.parser import get_parser
 from forgy.filesystem_utils import (
@@ -262,6 +262,7 @@ def main():
                 db_table,
                 database,
             )
+            view_database_table(db_path, db_table)
 
             if book_covers:
                 get_book_covers(cover_pics_path, db_path, db_table) #db_table is table_name, db_path is full path
@@ -340,6 +341,8 @@ def main():
                 db_table,
                 database,
             )
+
+            view_database_table(db_path, db_table)
 
             if book_covers:
                 get_book_covers(cover_pics_path, db_path, db_table) #db_table is table_name, db_path is full path
