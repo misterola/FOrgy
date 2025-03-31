@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 
 from forgy.database import get_database_columns
 from forgy.isbn_regex import is_valid_isbn
+from forgy.filesystem_utils import count_files_in_directory
 
 # Load BookAPI key from dotenv file
 load_dotenv()
@@ -31,9 +32,8 @@ headers={
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     }
 
-def merge_list_items(
-    given_list,
-):  # format can be first author et al if list contains more than two et al
+def merge_list_items(given_list):
+    # format can be first author et al if list contains more than two et al
     """convert content of
     list into a single string of the
     list of values neatly separated
@@ -46,7 +46,7 @@ def merge_list_items(
         pass
 
 
-def get_cover_url(dictionary):
+def get_cover_url_google(dictionary):
     """Function to get book cover thumbnail (medium-sized) from googlebooks api.
 
     The format of imageLinks dictionary retrieved from json metadata
@@ -67,7 +67,7 @@ def get_cover_url(dictionary):
     return cover_url
 
 
-def get_cover_url2(cover_id, isbn):
+def get_cover_url_openlibrary(cover_id, isbn):
     """Funtion to get cover image from openlibrary api.
 
     Cover API documentation can be found here:
@@ -84,8 +84,8 @@ def get_cover_url2(cover_id, isbn):
 
 
 def get_image_url_google(
-    # file,
     isbn_of_book=None,
+
     # title_of_book=None,
     headers=headers):
     print(f"For get_metadata_google, title={title_of_book}, isbn={isbn_of_book}")
@@ -145,7 +145,7 @@ def metadata_handler(dict_of_interest, metadata_dict):
                 )
             # if a dictionary if returned (containing two elements like the case of book thumbnail urls in googleapi)
             elif isinstance(metadata_dict[key], dict) and len(metadata_dict[key]) >= 1:
-                dict_of_interest[key] = get_cover_url(metadata_dict[key])
+                dict_of_interest[key] = get_cover_url_google(metadata_dict[key])
                 print(f"DICT OF INTEREST: {dict_of_interest[key]}")
             else:
                 # If value is a single value (string), simply assign the value to
@@ -517,7 +517,7 @@ def get_metadata_openlibrary(
     # image link
     image_id = dict_of_interest.get("covers", "NA")
 
-    image_link = get_cover_url2(image_id, isbn)
+    image_link = get_cover_url_openlibrary(image_id, isbn)
 
 
     # GET OTHER VALUES
@@ -706,6 +706,39 @@ def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1
             return response
 
 
+def process_image_bytes(response, image_file):
+    # Check if the response was successful. response.ok returns True if success status code (2xx) or False otherwise(4xx, 5xx)
+    print(f"RESPONSE: {response}")
+    if not response.ok:
+        print(response)
+    else:
+        #retrieve Content-Length header from HTTP request
+        content_length = response.headers.get('content-length')
+        #print(response.headers)
+        #print(content_length)
+
+        # if server does not provide content length (size of content in bytes),
+        # download the tne entire image at once. Load the entire image into memory and write to file at once without monitoring progress
+        if content_length is None:
+            image_file.write(response.content)    # response.content is the raw binary content of response body (image)
+            # print(f"{title} downloaded successfully")
+        else:
+            # if server provides content length, download file size in 1kilobyte chunks.
+            downloaded_bytes = 0
+            content_length = int(content_length)
+            # print(f"{title}")
+            for chunk in response.iter_content(chunk_size=3072):
+                # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
+                if not chunk:
+                    break
+                #write each chunk to file as it is downloaded
+                image_file.write(chunk)
+                #update total length of downloaded chunks
+                downloaded_bytes += len(chunk)
+                print(f"Download Progress: {(downloaded_bytes / content_length) * 100:.2f}% of {content_length} bytes downloaded)")
+
+
+
 def get_book_covers(cover_dir, database, table):
     """Function to extract cover page for all books in library.db(those with successfully obtained metadata."""
     
@@ -719,12 +752,14 @@ def get_book_covers(cover_dir, database, table):
     # get book_metadata from database. The format is [(title, image_url),...(title, image_url)]
     book_metadata = get_database_columns(database, table, columns=["Title", "RefISBN", "Source", "ImageLink"])
 
+    successful_image_downloads = 0
+    unsuccessful_image_downloads = 0
+
     # Iterate through "title, image_url" in book_metadata and download file
      
     for val in book_metadata:
         #enable matching of order of columns
         title, ref_isbn, source, image_url = val
-        # print(f"Title: {title}\nImage_url: {image_url}")
 
         # enable skipping already downloaded cover pages
 
@@ -733,7 +768,7 @@ def get_book_covers(cover_dir, database, table):
         if image_url== "NA":
             if source == "www.google.com":
                 # new_source = "www.openlibrary.org"
-                image_url = get_cover_url2("NA", ref_isbn)
+                image_url = get_cover_url_openlibrary("NA", ref_isbn)
                 print(f"New image_url extracted from OpenlibraryAPI: {image_url}")
             elif source == "www.openlibrary.org":
         #        new_source = "www.google.com"
@@ -750,48 +785,32 @@ def get_book_covers(cover_dir, database, table):
         with open(image_file_path, 'wb') as image_file:
             # set number of api call requests before skipping iteration
             response = download_image_bytes(image_url)
+            process_image_bytes(response, image_file)
 
-            # Check if the response was successful. response.ok returns True if success status code (2xx) or False otherwise(4xx, 5xx)
-            if not response.ok:
-                print(response)
-            else:
-                #retrieve Content-Length header from HTTP request
-                content_length = response.headers.get('content-length')
-                #print(response.headers)
-                #print(content_length)
-
-                # if server does not provide content length (size of content in bytes),
-                # download the tne entire image at once. Load the entire image into memory and write to file at once without monitoring progress
-                if content_length is None:
-                    image_file.write(response.content)    # response.content is the raw binary content of response body (image)
-                    print(f"{title} downloaded successfully")
-                else:
-                    # if server provides content length, download file size in 1kilobyte chunks.
-                    downloaded_bytes = 0
-                    content_length = int(content_length)
-                    print(f"{title}")
-                    for chunk in response.iter_content(chunk_size=3072):
-                        # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
-                        if not chunk:
-                            break
-                        #write each chunk to file as it is downloaded
-                        image_file.write(chunk)
-                        #update total length of downloaded chunks
-                        downloaded_bytes += len(chunk)
-                        print(f"Download Progress: {downloaded_bytes}/{content_length} bytes, ({(downloaded_bytes / content_length) * 100:.2f}% DONE)")
-##        # get_file_size function returns a str filesize as MB
-##        # so we convert its returned value to float and kb
-##        file_size_kb = float(get_file_size(image_path))*1024
-##        if file_size_kb <= 1.00:
-##            redownload_empty_bookcover(image_path, title, ref_isbn, source, image_url)
-##            continue
-##        elif file_size_kb > 1.00:
-##            print(f"Image file is valid: {image_path}")
+        # get_file_size function returns a str filesize as MB
+        # so we convert its returned value to float and kb
+        file_size_kb = float(get_file_size(image_file_path))*1024
+        if file_size_kb <= 1.00:
+            print(f"UNSUCCESSFUL: {image_file_path}")
+            unsuccessful_image_downloads += 1
+        elif file_size_kb > 1.00:
+            successful_image_downloads += 1
+            print(f"Image file is valid: {image_file_path}")
+        else:
+            pass
 
         # sleep for 5 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
         time.sleep(5)
 
-    print()
+        print()
+
+    print(f"""
+    FOrgy Cover Image Download Statistics:
+    Total no of images: {count_files_in_directory(cover_dir_path)}
+    Successful image downloads: {successful_image_downloads}
+    Unsuccessful image downloads: {unsuccessful_image_downloads}"""
+    )
+    
     return None
    
 
