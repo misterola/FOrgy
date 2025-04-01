@@ -1,17 +1,17 @@
-# main
+"""
+The main module of the forgy package.
+"""
+
+
 from pathlib import Path
-import shutil
 import os
 import time
 import random
-import textwrap
-import os
 
 import requests
+import pypdf
 
 from .isbn_regex import (
-    isbn_pattern,
-    format_isbn,
     is_isbn_in_db,
     get_valid_isbns,
 )
@@ -21,55 +21,46 @@ from .metadata_search import (
     get_metadata_google,
     get_metadata_openlibrary,
     get_metadata_from_api,
-    modify_title,
-    get_book_covers,
 )
 from .database import (
-    create_db_and_table,
-    create_library_db,
     add_metadata_to_table,
-    view_database_table,
-    # delete_table,
     titles_in_db,
-    get_all_metadata,
 )
-from .process_stats import (
-    number_of_dir_files,
-    number_of_processed_files,
-    total_time_remaining,
-    number_of_database_files,
-    percent_api_utilization,
-    file_processing_efficiency,
-    show_statistics,
-)
+from .process_stats import show_statistics
 from .filesystem_utils import (
-    count_files_in_directory,
     delete_files_in_directory,
-    get_files_from_directories,
-    get_files_from_tree,
-    copy_directory_contents,
     move_file_or_directory,
     rename_file_or_directory,
 )
-from .logger import configure_logger
+from .logger import create_logger
 
+# Both console and rotating file handlers are created
+# They log ERROR and INFO levels respectively
+logger = create_logger('forgy')
+logger.info("Logger created successfully")
 
-logger = configure_logger('forgy')
 
 def check_internet_connection():
-    """Check user internet connection."""
+    """Check user internet connection.
+
+    Return True if user is connected
+    and False otherwise.
+    """
     try:
-        response = requests.get("https://www.google.com", timeout=5)
+        response = requests.get(
+            "https://www.google.com",
+            timeout=5
+        )
 
         if response.status_code == 200:
-            print("Internet connection is active")
+            logger.info("Internet connection is active")
             # logger.info("Internet connection is active")
             return True
-    except requests.ConnectionError:
-        print("No internet connection")
+    except requests.exceptions.ConnectionError:
+        logger.exception("No internet connection")
         return False
 
-# Create data directory and subdirectories. Create directories before the first instance of calling logger
+
 def create_directories(
     data="data",
     forgy_pdfs_copy="pdfs",
@@ -81,24 +72,34 @@ def create_directories(
     delete_content=True
 ):
 
-    """Create data directory and its subdirectories"""
+    """Create data directory and its subdirectories.
 
-    # get the parent directory for data/
+    These are needed to contain diffenrent categories of files
+    and directories handled by FOrgy during operations of
+    get_metadata subcommand or while fetch_book_metadata
+    function is working"""
+
     current_directory = Path(os.getcwd())
-    # data_parent_directory = current_directory.parent.parent  # if you run this module
-    data_parent_directory = current_directory.parent  # if you run from main
-    print(f"Data parent directory: {data_parent_directory}")
 
-    # Path to data directory
+    # Get the parent directory for the data/ directory.
+    # If this module is run from main.py, the parent is
+    # one level above current directory in the directory
+    # tree. If this module runs on its own, the parent is
+    # even one steps further above.
+    data_parent_directory = current_directory.parent
+    logger.info(f"Data parent directory: {data_parent_directory}")
+
+    # Create path to data directory
     data_path = data_parent_directory/data
 
-    # Create the paths to all directories in data/
+    # Create the paths to all sub_directories in data/
     forgy_pdfs_copy_path = data_path/forgy_pdfs_copy
     missing_isbn_path = data_path/missing_isbn
     missing_metadata_path = data_path/missing_metadata
     book_metadata_path = data_path/book_metadata
 
-    # Create paths to subdirectories (missing_isbn/extracted_texts and book_metadata/covers) in data/
+    # Create paths to subdirectories of some directories in data/
+    # (i.e. missing_isbn/extracted_texts and book_metadata/covers)
     extracted_texts_path = missing_isbn_path/extracted_texts
     cover_pics_path = book_metadata_path/book_covers
 
@@ -115,27 +116,31 @@ def create_directories(
     for directory in directories:
         if directory.exists() and delete_content:
             delete_files_in_directory(directory)
-            print(f"Files in existing {directory} directory deleted")
+            logger.warning(
+                f"Files in existing {directory} directory deleted"
+            )
             continue
         try:
             directory.mkdir(exist_ok=True)
-            print(f"{directory} directory created")
+            logger.info(f"{directory} directory created successfully")
         except FileExistsError:
             # Delete all files inside directory
             delete_files_in_directory(directory)
-            print(f"Content of {directory} directory cleared")
+            logger.exception(f"Content of {directory} directory cleared")
             continue
-    # unpack all links to those paths when this function is called      
     return directories
-      
+
 
 def estimate_process_duration(start_time):
-    """Function to calculate duration of operation for each file.
+    """Function to estimate duration of get_metadata operation
+        on each file.
 
     Start time is predefined at the start of the loop that goes
     through file.
+
+    Timing for unsuccessful get_metadata operation is taken right
+    before the operation is carried out on the next file in loop.
     """
-    # start_time = start_time
     end_time = time.time()
     duration = end_time - start_time
     return f"{duration:.5f}"
@@ -151,13 +156,25 @@ def save_process_duration(file_name,
     duration_dictionary[file_name] = process_duration
     return duration_dictionary
 
-def estimate_and_save_process_duration(start_time, file_name, duration_dictionary):
+
+def estimate_and_save_process_duration(
+    start_time,
+    file_name,
+    duration_dictionary
+):
+    """Function to save duration of operation on each file to a
+        duration_dictionary which is maintained for the session.
+
+    The key:alue pairs in duration dictionary represent
+    file_name:process_duration.
+    """
     process_duration_sec = estimate_process_duration(start_time)
     save_process_duration(
         file_name,
         process_duration_sec,
         duration_dictionary
     )
+
 
 def return_dict_key(dictionary):
     """Function to get key in a dictionary of 1 item."""
@@ -188,42 +205,68 @@ def choose_random_api(api_list):
     api2_dict_key = return_dict_key(api2_dict)
 
     return (api1_dict, api1_dict_key, api2_dict, api2_dict_key)
-    
 
-# Iterate through each file in the new 'ubooks_copy' directory
-# and extract text in first 20 pages of each file
-def fetch_book_metadata(
+
+def fetch_book_metadata(  # noqa: C901
     user_pdfs_source,
-    pdfs_path, #pdfs_path
-    user_pdfs_destination, #NEW where to copy or move data directory to
-    database_path, #db_path
+    pdfs_path,
+    user_pdfs_destination,
+    database_path,
     missing_isbn_path,
     missing_metadata_path,
     extracted_texts_path,
-    table_name, # ="Books",
+    table_name,
     database_name
-): # ="library.db"
-    
-    """Database here is the path to the .db file"""
-    # Initialize raw_files_set to store path to raw files iterated over and initialize
-    # renamed_files_set to store path to renamed file. This ensures that no file is
-    # iterated over twice and metadata is not fetched twice.
+):
+    """Function to get book metadata from google BooksAPI and openlibrary
+    APIs, rename books using title from fetched metadata, save book
+    metadata to database, and move files without isbn or with
+    unsuccessful metadata request to missing_isbn and missing_metadata
+    directories respectively.
+
+    user_pdfs_source: source directory containing pdf files provided
+                      by user
+    user_pdfs_path: the path within the data directory where FOrgy's
+                    copy of user_pdfs_source is stored
+    user_pdfs_destination: where the extracted and organized
+                           data is stored on user pc
+    database_path: a path within the data/ directory where database .db
+                   file is stored
+    missing_isbn_path: directory within data/ directory which contains
+                       files which do not contain isbns or text extraction
+                       from them failed
+    missing_metadata_path: directory within data/ directory where files
+                            whose metadata are not provided by the two
+                            APIs are moved into
+    extracted_text_path: path containing extracted texts from a file with
+                         missing_isbn for manual confirmation
+    database_name: name of the database (.db) file
+
+    table_name: name of the table within database containing all extracted
+                book metadata
+    """
+
+    # Initialize raw_files_set to store path to raw files iterated
+    # over and initialize renamed_files_set to store path to renamed file
+    # This ensures that no file is iterated over twice and metadata is not
+    # fetched twice. Title set contains new names of renamed files and it
+    # serves a similar purpose with the other two sets mentioned
     raw_files_set = set()
     renamed_files_set = set()
     title_set = set()
 
-    # Duration dictionary stores how long it takes for operation on
-    # each file.
+    # Duration dictionary stores how long it takes for successful or
+    # unsuccessful fetch_metadata operation on a file
     # This will help in estimating total time required to complete file
     # organizing in the process_statistics module
     duration_dictionary = {}
 
-    
-    with os.scandir(pdfs_path) as entries:    
-        for file in entries:    # noqa: C901 # A complex loop_McCabe 30
-            # Get and format filename
+    with os.scandir(pdfs_path) as entries:
+        for file in entries:
             file_name = file.name
-            print(f"DB_TABLEE: {table_name}")
+
+            # Keep process statistics table display active
+            # while the fetch_book_metadata function runs
             show_statistics(
                 file_name,
                 user_pdfs_source,
@@ -234,72 +277,85 @@ def fetch_book_metadata(
                 missing_metadata_path,
                 duration_dictionary
             )
+
+            # start time will be used to estimate process
+            # duration before the next file is iterated over
             start_time = time.time()
 
-            # get file path
-            file_src = Path(file.path)
+            # The path attribute of DirEntry object contains
+            # file path (file_path)
+            file_path = Path(file.path)
 
             # If file has been iterated over or renamed, skip to next iteration
             if (file_name in raw_files_set) or (file_name in renamed_files_set):
                 continue
 
-            # Initialize values of metadata parameters and assign to values
+            # Initialize values, an empty tuple containing metadata parameters
+            values = ()
 
-            values = ""
+            # Initialize list of valid isbns regex_matched from text
+            valid_isbn_list = []
 
-            # Initialize list of valid isbns
-            valid_isbn = []
-
-            # Extract text from file in file_src as a string
-            if not file_name.startswith(".") and Path(file_src).is_file():
+            # Extract text from file in file_path as a long string
+            if not file_name.startswith(".") and Path(file_path).is_file():
                 try:
-                    extracted_text = extract_text(file_src)
+                    extracted_text = extract_text(file_path)
                 except pypdf.errors.PdfStreamError as e:
-                    print(f"Error encountered while extracting texts from {file_name}: {e}")
+                    logger.exception(
+                        f"Error encountered while extracting texts from {file_name}: {e}"
+                    )
                     continue
                 except Exception as f:
-                    print(f"Error encountered: {f}")
+                    logger.exception(f"Error encountered: {f}")
                     continue
 
                 # Use regex to match isbn in extracted text, into matched_isbn list
-                valid_isbn = get_valid_isbns(extracted_text)
-
-                # Add all in valid_isbn list to a set of valid isbns
-                # add_isbn_to_set(valid_isbn, valid_isbn_set)
-                print(valid_isbn)
+                valid_isbn_list = get_valid_isbns(extracted_text)
 
                 # Extracted_text_list = extracted_text.split(' ')
 
                 # For files with missing isbn, save extracted text into file,
                 # and move file to missing_isbn directory
-                if (missing_isbn_path.exists() and (not valid_isbn)):
-                    move_file_or_directory(file_src, missing_isbn_path)
-                    
+                if (missing_isbn_path.exists() and (not valid_isbn_list)):
+                    move_file_or_directory(file_path, missing_isbn_path)
+
                     # For files with missing isbn, generate (empty) text files
-                    # to ascertain problem
-                    with open(f"{missing_isbn_path}/{extracted_texts_path.name}/{file_src.stem}.txt", "a") as page_new:
+                    # and save in extracted_texts_path directory in data/
+                    with open(
+                        f"{missing_isbn_path}/{extracted_texts_path.name}/{file_path.stem}.txt", "a"
+                    ) as page_new:
                         try:
                             page_new.write(extracted_text)
                         except (FileNotFoundError, UnicodeEncodeError) as e:
-                            print(f"Error encountered: {e}")
-                            estimate_and_save_process_duration(start_time, file_name, duration_dictionary)
-                            print(duration_dictionary)
+                            logger.exception(f"Error encountered: {e}")
+                            estimate_and_save_process_duration(
+                                start_time,
+                                file_name,
+                                duration_dictionary
+                            )
                             continue
-                # Move to next book if its isbn has been previously extracted
-                # (compare with ref_isbn_set)
-                if is_isbn_in_db(database_path, table_name, valid_isbn):
-                    estimate_and_save_process_duration(start_time, file_name, duration_dictionary)
-                    print(duration_dictionary)
+
+                # Compare extracted valid_isbn_list with those in ref_isbn_set
+                # from from db RefISBN column. Skip iteration if file is already
+                # worked on
+                if is_isbn_in_db(database_path, table_name, valid_isbn_list):
+                    estimate_and_save_process_duration(
+                        start_time,
+                        file_name,
+                        duration_dictionary
+                    )
                     continue
 
                 # Use each isbn in int_isbn_list to search on openlibrary api
                 # and googlebookapi for book metadata and download in json
                 # Repeat same for every isbn in list. If metadata not found,
-                # print error message.
-                for isbn in valid_isbn:
+                # move file to missing_metadata directory and continue to next isbn.
+                for isbn in valid_isbn_list:
 
                     try:
                         # Select api randomly to avoid overworking any of the apis
+                        # The other api will only be checked if the first returns
+                        # no metadata
                         api_list = [
                             {"google": get_metadata_google},
                             {"openlibrary": get_metadata_openlibrary},
@@ -311,8 +367,8 @@ def fetch_book_metadata(
                          api2_dict_key) = choose_random_api(api_list)
 
                         if api1_dict_key == "google":
-                            # Assign retrieved metadata to tuple value for easy
-                            # addition to database. This updates the initialized values
+
+                            # Update initialized empty tuple with the values from API
                             values = get_metadata_from_api(
                                 api1_dict,
                                 api1_dict_key,
@@ -321,13 +377,18 @@ def fetch_book_metadata(
                                 isbn,
                                 file,
                                 headers,
-                                file_src,
+                                file_path,
                                 missing_metadata_path
                             )
-                            raw_files_set.add(file)
+                            # add the filename to raw_files_set to mark it as
+                            # processed
+                            raw_files_set.add(file_name)
                             time.sleep(5)
-                            estimate_and_save_process_duration(start_time, file_name, duration_dictionary)
-                            print(duration_dictionary)
+                            estimate_and_save_process_duration(
+                                start_time,
+                                file_name,
+                                duration_dictionary
+                            )
                             continue
 
                         else:
@@ -339,106 +400,119 @@ def fetch_book_metadata(
                                 isbn,
                                 file,
                                 headers,
-                                file_src,
+                                file_path,
                                 missing_metadata_path
                             )
-                            raw_files_set.add(file)
+                            raw_files_set.add(file_name)
                             time.sleep(5)
-                            estimate_and_save_process_duration(start_time, file_name, duration_dictionary)
-                            print(duration_dictionary)
+                            estimate_and_save_process_duration(
+                                start_time,
+                                file_name,
+                                duration_dictionary
+                            )
                             continue
 
                     except ConnectionError:
-                        print("Connection Error")
+                        logger.exception("Connection Error")
                         continue
                     except TimeoutError:
-                        print("Timeout Error")
+                        logger.exception("Timeout Error")
                         continue
                     except requests.exceptions.ConnectTimeout:
-                        print("Request ConnectTimeoutError")
+                        logger.exception("Request ConnectTimeoutError")
                         continue
                     except requests.exceptions.HTTPError:
-                        print("Request HTTPError")
+                        logger.exception("Request HTTPError")
                         continue
                     except requests.exceptions.ConnectionError:
-                        print(
+                        logger.exception(
                             "Request ConnectionError. Check your internet connection",
-                            end="\n"
+                            end="\n",
                         )
                         continue
                     except requests.ReadTimeout:  # noqa: F821
-                        print("ReadTimeoutError")
+                        logger.exception("ReadTimeoutError")
                         continue
                     except requests.RequestException as e:
-                        print(f"Error '{e}' occured")
+                        logger.exception(f"Error '{e}' occured")
+                    except Exception as e:
+                        logger.exception(f"An unexpected error occured: {e}")
 
-            print(values)
+            logger.info(values)
 
             # Extract all titles contained in database as a set 'db_titles'
             db_titles = titles_in_db(database_path, table_name)
 
-            # Check if the metadata tuple (i.e. values) is not empty
-            # and title is already in database. If that is the case,
-            # skip to next iteration
-            # if values and f"{values[0]}.pdf" in db_titles:
+            # If the current book title is in database and values metadata tuple
+            # is not empty, continue to next iteration
             if values and f"{values[0]}" in db_titles:
-                estimate_and_save_process_duration(start_time, file_name, duration_dictionary)
-                print(duration_dictionary)
+                estimate_and_save_process_duration(
+                    start_time,
+                    file_name,
+                    duration_dictionary
+                )
                 continue
 
-            # ........#
-            # For file with retrieved metadata, rename and do not move
+            # For file with retrieved metadata, rename and keep in
+            # current directory. A valid metadata must have minimum
+            # of two values (title and subtitle). A book without title
+            # is almost nonexistent
             if (
                 missing_metadata_path.exists()
-                and valid_isbn
+                and valid_isbn_list
                 and values != ""
                 and len(list(set(values[0:6]))) >= 2
             ):
 
-                # Default is 4 out of 6
-                # Rename file in its original ubooks directory
-                old_file_name = file_src
+                # Rename file using title from API metadata that is formatted
+                # to 255 character limit. For successful metadata retrieval
+                # parent directory of file is not changed
                 dst_dir = pdfs_path
                 new_file_name = f"{values[0]}.pdf"
-                # new_file_path = os.path.join(dst_dir, new_file_name)
                 new_file_path = Path(dst_dir)/new_file_name
 
-                # Rename file
-                rename_file_or_directory(file_src, new_file_path)
+                rename_file_or_directory(file_path, new_file_path)
 
                 # Add retrieved metadata to database
                 add_metadata_to_table(database_path, table_name, values)
 
                 # Add the name of renamed book to renamed_files_set
-                # Add the title of book to title_set...both defined earlier
+                # Add the title of book to title_set...both sets defined earlier
                 renamed_files_set.add(new_file_name)
                 title_set.add(values[0])
-
-                # view_database_table(database_path, table_name)
 
             # For files with missing missing_metadata, move file to
             # missing_isbn directory
             else:
-                move_file_or_directory(file_src, missing_metadata_path)
+                move_file_or_directory(file_path, missing_metadata_path)
+
+    logger.info(f"duration_dictionary: {duration_dictionary}")
 
 
-def get_isbns_from_texts(source_directory, txt_destination_dir, text_filename="extracted_book_isbns.txt"):
+def get_isbns_from_texts(
+    source_directory,
+    txt_destination_dir,
+    text_filename="extracted_book_isbns.txt"
+):
     """Function to extract isbns for every book in a directory.
 
-    The result is a .txt file containing filenames as keys and extracted
-    isbns as a list of values.
+    The result is a .txt file containing filenames as keys and
+    extracted isbns as a list (containing valid isbn values).
     """
-
     source_directory = Path(source_directory)
     txt_destination_dir = Path(txt_destination_dir)
 
     if not source_directory.is_dir():
-        print(f"The provided source is not a directory: {source_directory}")
-        pass
+        logger.warning(
+            f"The provided source is not a directory: {source_directory}"
+        )
+        return
 
     if not txt_destination_dir.is_dir():
-        print(f"The provided isbn text destination is not a directory: {txt_destination_dir}")
-        pass
+        logger.warning(
+            f"The provided isbn text destination is not a directory: {txt_destination_dir}"
+        )
+        return
 
     with os.scandir(source_directory) as entries:
         isbn_dict = {}
@@ -448,35 +522,33 @@ def get_isbns_from_texts(source_directory, txt_destination_dir, text_filename="e
 
             if not file_name.startswith(".") and Path(file_path).is_file():
                 try:
+                    # Extract text in first 20 pages of book as a long string
                     extracted_text = extract_text(file_path)
                 except pypdf.errors.PdfStreamError as e:
-                    print(f"Error encountered while extracting texts from {file_name}: {e}")
+                    logger.exception(
+                        f"Error encountered while extracting texts from {file_name}: {e}"
+                    )
                     continue
-                except Exception as f:
-                    print(f"Error encountered: {e}")
+                except Exception as e:
+                    logger.exception(f"Error encountered: {e}")
                     continue
-                valid_isbns = get_valid_isbns(extracted_text)
-                print(f"Valid isbn(s) extracted from {file_name} successfully: {valid_isbns}")
-                isbn_dict[f"{file_name}"] = valid_isbns
+
+                valid_isbn_list = get_valid_isbns(extracted_text)
+                logger.info(
+                    f"Valid isbn(s) extracted from {file_name} successfully: {valid_isbn_list}"
+                )
+                isbn_dict[f"{file_name}"] = valid_isbn_list
 
                 isbns_file_path = f"{txt_destination_dir}/{text_filename}.txt"
 
         with open(isbns_file_path, 'a') as isbn_file:
             isbn_file.write(str(isbn_dict))
-            print(f"ISBNs from {file_name} saved to {isbns_file_path}: {valid_isbns}")
+            logger.exception(
+                f"ISBNs from {file_name} saved to {isbns_file_path}: {valid_isbn_list}"
+            )
 
     return isbn_dict
 
-    # get_isbns_from_texts(r'C:\Users\Ola\Desktop\nubook', r'C:\Users\Ola\Desktop')
-
-## abstract away extraction of isbns in full with a function that takes extracted text and returns valid isbns
-
-
-# OBSERVED REASONS FOR MISSING ISBN IN EXTRACTED TEXT
-# isbn pattern not matching: read isbn standard and write a better regex
-# text not having any isbn: follow instruction above 'with statement'
-# text cannot be extracted: use OCR
-# incomplete isbn digit (e.g. 9 digits): follow instruction above
 
 # APIs
 # googlebooks api: https://www.googleapis.com/books/v1/volumes?q=isbn:0-444-82409-x
