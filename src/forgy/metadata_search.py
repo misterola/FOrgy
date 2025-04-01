@@ -623,6 +623,18 @@ def get_metadata_from_api(api1_dict,
             return None
 
 
+
+
+
+
+def random_get_metadata_from_api():
+    """Function to randomly select google or openlibrary api first for
+    metadata search before selecting the other in case of unavailable metadata.
+
+    """
+    pass
+
+
 def download_book_covers(isbns):
     """use ref isbn to fetch thumbnail cover image or medium cover image from google or openlibrary respectively.
 
@@ -672,7 +684,6 @@ def get_single_book_metadata(file, book_isbn=None, book_title=None):
 def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1.5):
     for trial in range(no_of_retries):
         try:
-                    
             # get image bytes object (in streams for memory efficiency downloading large files or many files) and handle errors
             # Send get request to image url
             response = requests.get(image_url, timeout=30, stream=True)
@@ -682,27 +693,26 @@ def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1
         except requests.exceptions.Timeout:
             print("The request timed out.")
             print(f"Attempt {trial + 1}")
-            time.sleep(delay_before_retries)
+            time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
             #handle raised exception/HTTPError by raise_for_status
         except requests.exceptions.ReadTimeout:
             print(f"ReadTimeout Error")
-            time.sleep(delay_before_retries)
+            time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
-            
         except requests.exceptions.HTTPError as error:
             print(f"HTTP error occurred: {error}")
             print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
             print(f"Status code: {response.status_code}")
-            time.sleep(delay_before_retries)
+            time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
         except requests.exceptions.RequestException as e:
             print(f"Error '{e}' occured")
             print(f"Attempt {trial + 1}: An error occurred: {e}")
-            time.sleep(delay_before_retries)
+            time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
         else:
@@ -733,16 +743,20 @@ def process_image_bytes(response, image_file):
             downloaded_bytes = 0
             content_length = int(content_length)
             # print(f"{title}")
-            for chunk in response.iter_content(chunk_size=3072):
-                # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
-                if not chunk:
-                    break
-                #write each chunk to file as it is downloaded
-                image_file.write(chunk)
-                #update total length of downloaded chunks
-                downloaded_bytes += len(chunk)
-                print(f"Download Progress: {(downloaded_bytes / content_length) * 100:.2f}% of {content_length} bytes downloaded)")
-
+            try:
+                for chunk in response.iter_content(chunk_size=3072):
+                    # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
+                    if not chunk:
+                        break
+                    #write each chunk to file as it is downloaded
+                    image_file.write(chunk)
+                    #update total length of downloaded chunks
+                    downloaded_bytes += len(chunk)
+                    print(f"Download Progress: {(downloaded_bytes / content_length) * 100:.2f}% of {content_length} bytes downloaded)")
+            except ChunkedEncodingError:
+                print("Chunked Encoding Error occured")
+            except Exception as e:
+                print(f"An unexpected exception occured: {e}")
 
 
 def get_book_covers(cover_dir, database, table):
