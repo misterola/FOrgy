@@ -1,96 +1,155 @@
+"""
+A module to carryout various operations on
+db using sqlite3 in the python standard library
+"""
+
+
 import sqlite3
 from pathlib import Path
 
-home = Path.home()
+from .logger import create_logger
 
-# Create a 'library.db' database
+
+logger = create_logger("database")
+
+
+
 def create_library_db(destination, library_name = 'library.db'):
-    """Create a library.db file to store retrieved book metadata in.
-
-        If you are specifying a database or directory, it must exist at destionation.
-        You can provide a destination only or a destination with preferred library name.
-        if both are provided and same, database connection established and closed.
     """
-    # Check if destionation is a directory   
-    if not Path(destination).is_dir() and not Path(destination).name.endswith('.db'):
-        print(f"{destination} is not a valid directory or database path. Database connection unsuccessful")
+    Create a library.db file to contain retrieved book metadata.
+
+    A database (existing .db file path) or a directory path must
+    be specified and both must exist at the provided path. If a
+    directory path is provided, the database(.db file) is created
+    inside it and if it is a database, a connection is made to it
+    to ascertain it's suitability. The database is then closed.
+    """  
+    if (
+        not Path(destination).is_dir()
+        and not Path(destination).name.endswith('.db')
+    ):
+        logger.error(
+            f"{destination} is not a valid directory or database\
+path. Database connection unsuccessful"
+        )
         return None
-    # if destination is a directory and not a database file, create database file in directory
-    if not Path(destination).name.endswith('.db') and Path(destination).is_dir():
-        # print(f"Invalid database path {destination} provided")
-        print(f"A parent directory for database is provided")
+
+    # If destination is a directory and not a database file,
+    # create database file in directory
+    if (
+        not Path(destination).name.endswith('.db')
+        and Path(destination).is_dir()
+    ):
+        logger.info("A parent directory for database is provided")
         database_path = Path(destination)/f"{library_name}"
-        # return None
+
         with sqlite3.connect(database_path) as connection:
-            cursor = connection.cursor()  # noqa: F841  # no use for cursor variable
-            print(f"New database created at {database_path})")
+            cursor = connection.cursor()  # noqa: F841  # no use for cursor
+            logger.info(f"New database created at {database_path})")
             return None
-    # if .db path provided and it already exists, try to establish connection with it
-    if Path(destination).name.endswith('.db') and Path(destination).exists():
-        print(f"Database file already exists at destination {destination})")
+
+    # if .db path provided and it already exists, try to establish
+    # connection with it
+    if (
+        Path(destination).name.endswith('.db')
+        and Path(destination).exists()
+    ):
+        logger.info(
+            f"Database file already exists at destination {destination}"
+        )
+
         try:
             with sqlite3.connect(destination) as connection:
-                cursor = connection.cursor()  # noqa: F841  # no use for cursor variable
-                print("Database connection established")
+                cursor = connection.cursor()  # noqa: F841  # no use for cursor
+                logger.info("Database connection established")
                 return None
         except Exception as e:
-            print(f"Error {e} occured during operation. Database connection not successful")
+            logger.exception(f"Error {e} occured during operation. \
+Database connection not successful"
+            )
             return None
+
     # if db path provided but it doesn't exist
     else:
-        print(f"The specified database {destination} does not exist")
+        logger.exception(
+            f"The specified database {destination} does not exist"
+        )
     return None
 
 
-# Create 'Books' table in 'library.db' database
-def create_db_and_table(destination, table_name="Books", db_name='library.db', delete_table=True):  # deletes table if it exists
-    """.db file must first be created by just establishing connection once. call create_library_db once with the correct path
 
-    Create database and Books table in database. Existing table delete in database by default.
-    Same is the case in underlying functions.
+def create_db_and_table(
+    destination,
+    table_name="Books",
+    db_name='library.db',
+    delete_table=True  # deletes table if it exist
+):
 
-    Database can be a directory or .db file path.
     """
-    # correct inconsistent naming on columns
-    print(f"DESTINATION: {destination}")
+    Create a database (library.db), and 'Books' table within it,
+    inside a valid directory
+
+    The database can be a directory or .db file path. If a directory
+    is provided, the create_library_db is used to create library.db
+    file in destination directory, and 'Books' table is created within
+    the library.db database.
+    """
     if not Path(destination).name.endswith('.db'):
-        print("The given destination is not a database")
+        logger.error("The given destination is not a database")
 
         if not Path(destination).is_dir():
-            print("The given destination is not a valid directory path")
+            logger.error(
+                "The given destination is not a valid directory path"
+            )
             return None
-    print(f"The DESTINATION CHECK: {Path(destination).exists()}")
-    # If the database already exists, check if it contains Books database
+
+    # If the database already exists, verify if it contains Books database
     if Path(destination).is_dir() and not Path(destination).name.endswith('.db'):
         create_library_db(destination)
 
     db_path = Path(destination)/f"{db_name}"
-    print(db_path)
+    logger.info(f"The databaese path: {db_path}")
     
     if Path(destination).exists() and db_path.name.endswith('.db'):
-        print("Database already exists")
-        # Check if table_name is in database and possibly delete
+        logger.info("Database already exists")
+        
         with sqlite3.connect(db_path) as connection:
             cursor = connection.cursor()
-            # Parametric query to select table from database. 
-            query = f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"""
-            cursor.execute(query, (table_name,))
-            table_in_db = cursor.fetchone()  # returns a tuple containing one element (the name of the table) format: ("Books",)
-            print(f"Table {table_name} value retrieved: {table_in_db}")
 
+            # To check if database contains "Books" table, we use parametric query
+            # to select tables from database. 
+            query = (
+                f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"  #""
+            )
+            cursor.execute(query, (table_name,))
+
+            # returns a tuple containing one element (the name of the table)
+            # format: ("Books",)
+            table_in_db = cursor.fetchone()
+
+            logger.info(f"Table {table_name} value retrieved: {table_in_db}")
+
+            # Check if a table is in database (the returned tuple is not empty)
             if table_in_db and delete_table:
-                print(f"{table_name} table already exists in database")
+                logger.info(f"{table_name} table already exists in database")
                 cursor.execute(f"DROP TABLE IF EXISTS {table_name};")
-                print(f"Existing {table_name} database deleted successfully")
+                logger.info(f"Existing {table_name} database deleted successfully")
             elif table_in_db and not delete_table:
-                print(f"{table_name} table already exists in database and will be adopted")
+                logger.info(
+                    f"{table_name} table already exists in database and will be adopted"
+                )
                 return None
-            # Cases: not table_in_db and delete_table, not table_in_db and not delete_table
+
+            # Cases:
+            # not table_in_db and delete_table,
+            # not table_in_db and not delete_table
             else:
                 pass
-            # Create a fresh "Books" table
+
+            # Create a new "Books" table
             cursor.execute(
-                # primary key and/or unique constraints may be necessary to prevent duplication of title and date_of_publication
+                # primary key and/or unique constraints may be necessary
+                # to prevent duplication of title and date_of_publication
                 f"""CREATE TABLE {table_name}(
                         Title TEXT,
                         Subtitle TEXT,
@@ -108,74 +167,104 @@ def create_db_and_table(destination, table_name="Books", db_name='library.db', d
                         Date_created TEXT
                     );"""
                )
-            print(f"New {table_name} database table created successfully")
+            logger.info(
+                f"New {table_name} database table created successfully"
+            )
     else:
         # If destination path does not exist
-        print("Database table creation unsuccessfull. Use the create_library_db function to create .db file")
+        logger.info("Database table creation unsuccessfull. Use the\
+create_library_db function to create .db file"
+        )
         return None      
 
 
-# Add metadata to 'Book' table
 def add_metadata_to_table(destination, table_name, values):
+    """Add retrieved metadata values to 'Book' table in database"""
     with sqlite3.connect(destination) as connection:
         cursor = connection.cursor()
-        print("Database connection successful")
+        logger.info("Database connection successful")
         cursor.execute(
             f"INSERT INTO {table_name} VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             values,
         )
-        print("Book details added successfully")
+        logger.info("Book details added successfully")
 
 
-# Check content of database
+
 def view_database_table(source, table_name):
+    """Function to view titles of all books in database"""
     with sqlite3.connect(source) as connection:
         # connection.isolation_level = None
         cursor = connection.cursor()
-        for row in cursor.execute("SELECT Title FROM Books;").fetchall():
+        for row in cursor.execute(
+            "SELECT Title FROM Books;").fetchall():
             print(row)
-        
 
 
-# Delete table from database
 def delete_table(source, table_name):
+    """Delete table from database"""
     with sqlite3.connect(source) as connection:
         cursor = connection.cursor()
         cursor.executescript(f"DROP TABLE IF EXISTS {table_name};")
-        print(f"Database table {table_name} deleted successfully")
+        logger.info(f"Database table {table_name} deleted successfully")
 
 
-# Check database for existence of title in Title
 def titles_in_db(database, table):
-    # Extract title from database as a set. Number of items in set is number of items added to database
+    """Check database for existence of a given title in Title
+        column of database.
+    """
+    # Extract title from database as a set. Number of items in set
+    # is number of items added to database
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         try:
             cursor.execute(f"SELECT Title FROM {table};")
-            existing_db_titles = cursor.fetchall()  # Has the form [('title1',), ('title2',)]
+
+            # Titles in db is extracted as a list of tuples
+            # The format: [('title1',), ('title2',)]
+            existing_db_titles = cursor.fetchall()
+
             ref_title_set = set()
+
             for titl in existing_db_titles:
                 ref_title_set.add(titl[0])
-            #return ref_title_set
+
+            # connection.commit() to ensure changes are saved before
+            # closing db in all cases of return within a context manager
+            return ref_title_set
+
         except sqlite3.OperationalError:
             ref_title_set = set()
-            # re
+            # return ref_title_set
+
     return ref_title_set
 
 
 def api_utilization(database, table):
-        # Extract 'Source from database as a list. Sources are either openlibrary or google
+    """
+    Function to extract all API sources on Sources column
+    of Books table as a list.
+    """
+    # Extract 'Source' column from database as a list.
+    # Sources are either openlibrary or google domain name
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT Source FROM {table};")
-        api_sources = cursor.fetchall()  # Has the form [('api1',), ('api2',)]
+
+        # A list of tuples is returned: the format: [('api1',), ('api2',)]
+        api_sources = cursor.fetchall()
         api_sources_list = []
         for source in api_sources:
             api_sources_list.append(source[0])
+
     return api_sources_list
 
+
 def get_all_metadata(database, table):
-    """Function makes book title key and book metadata value in all_metadata dictionary"""
+    """
+    Function makes book title key and book metadata value
+    in all_metadata dictionary.
+    """
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT * FROM {table};")
@@ -183,41 +272,32 @@ def get_all_metadata(database, table):
         all_metadata = {}
         for entry in book_metadata:
             all_metadata[entry[0]] = entry
+
     return all_metadata
 
 
 def get_all_metadata(database, table):
-    """Function makes book title key and book metadata value in all_metadata dictionary"""
+    """Function to get all metadata values from database."""
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT * FROM {table};")
         book_metadata = cursor.fetchall()
         for val in book_metadata:
-            print(val)
-            print()
+            logger.info(val)
+            # print()
 
 
 def get_database_columns(database, table, columns=["Title", "ImageLink"]):
-    """Function to get values of columns in database table.
+    """
+    Function to fetch all book metadata from database.
 
-    This is used to retrieve book titles/isbns and correspoding image_url
+    Book metadata format: [(title, image_url),...(title, image_url)]
     """
     database_columns = ", ".join(columns)
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT {database_columns} FROM {table};")
-        # Get book metadata. The format is [(title, image_url),...(title, image_url)]
+        # Get book metadata. The format is 
         book_metadata = cursor.fetchall()
-##        for val in book_metadata:
-##            title = val[0]
-##            image_url = val[1]
-##            print(f"Title: {title}\nImage_url: {image_url}")
+
     return book_metadata
-
-
-
-# tests: all_funcs    
-
-# Test module
-# Create_library_db(home/'Desktop'/'library.db')
-# Create_table(home/'Desktop'/'library.db', 'Trial')
