@@ -2,8 +2,7 @@
 The metadata_search module contains functions to get
 book metadata from Google BooksAPI and OpenlibraryAPI.
 """
-# import sys
-# sys.path.append(r'C:\Users\Ola\Desktop\Projects\Forgy\src')
+
 import json
 import os
 import re
