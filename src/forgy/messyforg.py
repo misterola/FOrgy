@@ -366,6 +366,14 @@ def fetch_book_metadata(  # noqa: C901
                          api2_dict,
                          api2_dict_key) = choose_random_api(api_list)
 
+                        # Case 1: The selected API = google and valid json_metadata values returned,
+                        # extract book metadata from Google API. If returned json metatada from
+                        # Google BooksAPI is invalid, set API = openlibary. Return value if valid
+                        # or return a NoneType if not.
+                        # Case 2: The selected API = openlibrary and valid json_metadata returned,
+                        # extract book metadata from Openlibrary API. if returned json metadata from
+                        # Openlibrary is invalid, set API = google. Return values from Google API
+                        # if valid, otherwise, return a NoneType.
                         if api1_dict_key == "google":
 
                             # Update initialized empty tuple with the values from API
@@ -438,7 +446,7 @@ def fetch_book_metadata(  # noqa: C901
                     except Exception as e:
                         logger.exception(f"An unexpected error occured: {e}")
 
-            logger.info(values)
+            logger.info(f"Extracted metadata for {file_name}: {values}")
 
             # Extract all titles contained in database as a set 'db_titles'
             db_titles = titles_in_db(database_path, table_name)
