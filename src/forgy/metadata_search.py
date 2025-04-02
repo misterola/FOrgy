@@ -1,96 +1,125 @@
-# metadata search on google and openlib apis
-
-import sys
-sys.path.append(r'C:\Users\Ola\Desktop\Projects\Forgy\src')
-
+"""
+The metadata_search module contains functions to get
+book metadata from Google BooksAPI and OpenlibraryAPI.
+"""
+# import sys
+# sys.path.append(r'C:\Users\Ola\Desktop\Projects\Forgy\src')
 import json
 import os
 import re
-import shutil
 from datetime import datetime
-import sqlite3
 from pathlib import Path
 import time
 
-# from .user_requirements import headers, API_KEY
 import requests
 from dotenv import load_dotenv
 
-from forgy.database import get_database_columns
-from forgy.isbn_regex import is_valid_isbn
-from forgy.filesystem_utils import count_files_in_directory
+from .database import get_database_columns
+from .isbn_regex import is_valid_isbn
+from .filesystem_utils import (
+    count_files_in_directory,
+    move_file_or_directory,
+)
 
-# Load BookAPI key from dotenv file
+from .logger import create_logger
+
+
+logger = create_logger('metadata_search')
+logger.info('logger created successfully')
+
+headers={  # noqa: E225
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)\
+ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+}
+
+# Load BookAPI key from .env file
 load_dotenv()
 
-# Get BooksAPI key from .env
 API_KEY = os.getenv('GOOGLE_API_KEY')
-print(f"Google API Key is: {API_KEY}")
+logger.info("Google API key added")
 
-headers={
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
-            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
-    }
 
 def merge_list_items(given_list):
-    # format can be first author et al if list contains more than two et al
-    """convert content of
-    list into a single string of the
-    list of values neatly separated
-    by a comma"""
+    """Convert elements in a list into a single string of the
+    list of values neatly separated by a comma.
+
+    Function format the authors field in json metadata which may be
+    a list containing author names.
+
+    Note: function may be modified to include 'et. al.' where
+    the number of authors is more than three.
+    """
     if isinstance(given_list, list):
         appended_values = ", ".join(given_list)
         return appended_values
     else:
-        print(f"parameter is of type {type(given_list)}, not of type:list")
+        logger.info(
+            f"{given_list} is of type {type(given_list)}, not list"
+        )
         pass
 
 
 def get_cover_url_google(dictionary):
-    """Function to get book cover thumbnail (medium-sized) from googlebooks api.
+    """Function to get book cover thumbnail (medium-sized)
+        from googlebooks api.
 
-    The format of imageLinks dictionary retrieved from json metadata
+    ImageLinks come with returned json_metadata
+
+    The format of imageLinks dictionary retrieved from google:
 
     "imageLinks": {
-          "smallThumbnail": "http://books.google.com/books/content?id=mC-4CwAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
-          "thumbnail": "http://books.google.com/books/content?id=mC-4CwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+          "smallThumbnail": "http://books.google.com/...",
+          "thumbnail": "http://books.google.com/..."
     }
+    Note: Indexing the ImageLinks from returned metadata:
+    json_metadata["items"][0]["volumeInfo"]["imageLinks"]
     """
-    #cover_info = dictionary["items"][0]["volumeInfo"]["imageLinks"]
-    print(f"SUPPLIED DICT: {dictionary}")
     if "thumbnail" in dictionary.copy().keys():
         cover_url = dictionary["thumbnail"]
     elif "smallThumbnail" in dictionary.copy().keys():
         cover_url = dictionary["smallThumbnail"]
     else:
         cover_url = "NA"
+
     return cover_url
 
 
 def get_cover_url_openlibrary(cover_id, isbn):
     """Funtion to get cover image from openlibrary api.
 
+    The api may return cover_id or not (doesn't in most cases).
+    The cover_id can be converted into the cover_url from covers
+    API. In the absence of cover_id, the Cover API is queried
+    using book's ISBN
+
     Cover API documentation can be found here:
     https://openlibrary.org/dev/docs/api/covers
     Rate-limit for openlib = 100 covers per 5 minutes per user IP
 
-    Modify function later to have thumbnail-size parameter
+    Note: May modify function later to include thumbnail-size param
     """
     if cover_id != "NA":
-        image_link = 'https://covers.openlibrary.org/b/id/' + cover_id + '-M.jpg'
+        image_link = (
+            'https://covers.openlibrary.org/b/id/' + cover_id + '-M.jpg'
+        )
     else:
-        image_link = 'https://covers.openlibrary.org/b/isbn/' + isbn + '-M.jpg'
+        image_link = (
+            'https://covers.openlibrary.org/b/isbn/' + isbn + '-M.jpg'
+        )
+
     return image_link
 
 
 def get_image_url_google(
     isbn_of_book=None,
+    headers=headers,
+    title_of_book=None
+):
+    """Function to get imageLinks for a book from Google BooksAPI using
+        Book ISBN or title.
 
-    # title_of_book=None,
-    headers=headers):
-    print(f"For get_metadata_google, title={title_of_book}, isbn={isbn_of_book}")
-    """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
-    # fetch metadata from google
+    Function filters out just the imageLinks dictionary from JSON metadata.
+    """
     # initialize dictionary containing imageLinks key
     # This is same key of imageLinks url in json from api source
     dict_of_interest = {
@@ -99,11 +128,12 @@ def get_image_url_google(
 
     if isbn_of_book:
         metadata_dict = google_metadata_dict(isbn=isbn_of_book)
-    else:
+    elif title_of_book:
         metadata_dict = google_metadata_dict(title=title_of_book)
+    else:
+        logger.warning("Please provide a valid book identifier")
 
-
-    # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
+    # Populate dict_of_interest with metadata value with key imageLinks
     available_metadata = metadata_handler(dict_of_interest, metadata_dict)
     dict_of_interest = get_dictionary(available_metadata)
 
@@ -117,100 +147,187 @@ def get_image_url_google(
     return image_link
 
 
-# a function to handle keys and values of different types, including missing keys and values of type str, list
-# dict of interest is populated with available values whose keys match those in API
 def metadata_handler(dict_of_interest, metadata_dict):
-    """dict of interest is empty_valued while metadata_dict is from json data from api"""
-    print(f"dict_of_interest: {dict_of_interest}, metadata_dict: {metadata_dict}")
+    """Function to extract keys and values of interest from API's
+        JSON metadata_dict into FOrgy's dict_of_interest.
+
+    metadata_dict: a dictionary extracted from JSON API metadata
+                    which contains all metadata values present in
+                    JSON data returned by API call. Extracting
+                    metadata_dict is different for each API. It's
+                    much simpler for openlibrary.
+                    For Openlibrary API, metadata_dict:
+                        json_metadata
+                    For Google BooksAPI, metadata_dict:
+                        json_metadata["items"][0]["volumeInfo"]
+
+
+    dict_of_interest: a dictionary with keys matching keys of data
+                      to be extracted from API's JSON metadata and
+                      values intialized to empty strings. The keys
+                      are also different for each API.
+                      The dict_of_interest is populated with available
+                      values whose keys match those in API.
+
+    Function handles metadata_dict keys and values of different types,
+    including missing keys and values of type str, list, dict and
+    extracts them accordingly. If key in defined empty-valued dict_of_interest
+    also exist in metadata_dict from api (this means data is available).
+    This data is carefully extracted by this function.
+    """
+    logger.info(
+        f"dict_of_interest: {dict_of_interest}"
+    )
+    logger.info(
+        f"metadata_dict: {metadata_dict}"
+    )
+
     for key in dict_of_interest.keys():
-        # if key in defined empty-valued book dictionary also exist
-        # in metadata keys from api (this means data is available)
         if key in metadata_dict.keys():
-            # if value in retrieved dict is a list containing single element, extract that element using zero index
-            # and update the defined empty_valued dictionary (dict_of_interest)
-            if isinstance(metadata_dict[key], list) and len(metadata_dict[key]) == 1:
+            # CASE 1:
+            # If retrieved value from metadata_dict is a list containing a
+            # single element, extract that element using its index, zero,
+            # and update the defined empty_valued (dict_of_interest)
+            # dictionary with it.
+            if (
+                isinstance(metadata_dict[key], list)
+                and len(metadata_dict[key]) == 1
+            ):
                 try:
-                    dict_of_interest[key] = dict_of_interest[key] + metadata_dict[key][0]
+                    dict_of_interest[key] = (
+                        dict_of_interest[key]
+                        + metadata_dict[key][0]
+                    )
                 except TypeError:
-                    #this can occur in the case of cover_id in openlib api which is a list containing one integer
-                    print(f"{metadata_dict[key][0]} is of type {type(metadata_dict[key][0])}")
-                    dict_of_interest[key] = dict_of_interest[key] + str(metadata_dict[key][0])
+                    # TypeError can be encountered in the case of cover_id
+                    # in Openlibrary API which is a list containing one integer
+                    # Type conversion becomes necessary in this case
+                    logger.exception(
+                        f"{metadata_dict[key][0]} is a {type(metadata_dict[key][0])}"
+                    )
+                    dict_of_interest[key] = (
+                        dict_of_interest[key]
+                        + str(metadata_dict[key][0])
+                    )
 
-
-            # if value in retrieved dict is a list containing multiple elements, extract that element using zero index
-            # and update the defined empty_valued dictionary (dict_of_interest)
-            elif isinstance(metadata_dict[key], list) and len(metadata_dict[key]) > 1:
-                dict_of_interest[key] = dict_of_interest[key] + merge_list_items(
-                    metadata_dict[key]
+            # CASE 2:
+            # If value in retrieved dict is a list containing more than one
+            # str elements, extract that element by merging joining listed
+            # items on a comma(','). Update dict_of_interest accordingly
+            elif (
+                isinstance(metadata_dict[key], list)
+                and len(metadata_dict[key]) > 1
+            ):
+                dict_of_interest[key] = (
+                    dict_of_interest[key]
+                    + merge_list_items(metadata_dict[key])
                 )
-            # if a dictionary if returned (containing two elements like the case of book thumbnail urls in googleapi)
-            elif isinstance(metadata_dict[key], dict) and len(metadata_dict[key]) >= 1:
+
+            # CASE: 3
+            # If a dictionary is returned (containing two elements like the
+            # case of book thumbnail urls in googleapi), get_cover_url function
+            # is used to fetch medium thumbnail 'thumbnail' and if not available
+            # a small thumbnail is used. If value is not available, it defaults
+            # to "NA"
+            elif (
+                isinstance(metadata_dict[key], dict)
+                and len(metadata_dict[key]) >= 1
+            ):
                 dict_of_interest[key] = get_cover_url_google(metadata_dict[key])
-                print(f"DICT OF INTEREST: {dict_of_interest[key]}")
+
+            # CASE 4:
             else:
-                # If value is a single value (string), simply assign the value to
-                # corresponding key in empty-valued dictionary
-                dict_of_interest[key] = metadata_dict[
-                    key
-                ]  # If the value is a str or int
+                # If value in retrieved metadata_dict is a single value (str or int),
+                # simply save the value to dict_of_interest using matching key from
+                # metadata_dict
+                dict_of_interest[key] = metadata_dict[key]
         else:
-            # absent values are market 'NA'
-            dict_of_interest[key] = "NA"  # if key not in metadata
+            # If key in dict_of_interest is not in API returned_metadata_dict,
+            # assign it a value "NA".
+            dict_of_interest[key] = "NA"
 
     return dict_of_interest
 
 
-# handle title, subtitle and derive subtitle from the former
-def get_title_subtitle(metadata_dict, dict_of_interest):
-    if ("title" in metadata_dict.keys()) and ("subtitle" not in metadata_dict.keys()):
+def get_subtitle_full_title(metadata_dict, dict_of_interest):
+    """Function to get books's subtitle, and full_title
+        from metadata_dict and save to dict_of_interest.
+
+    This is needed to handle the inconsistencies in data returned
+    by API. Some may contain title but not subtitle, and some may
+    contain full title and no title or subtitle.
+    """
+    if (
+        "title" in metadata_dict.keys()
+        and "subtitle" not in metadata_dict.keys()
+    ):
         subtitle = "NA"
         full_title = dict_of_interest["title"]
-    else:  # ("title" in metadata_dict.keys()) and ("subtitle" in metadata_dict.keys())
+
+    elif (
+        "title" in metadata_dict.keys()
+        and "subtitle" in metadata_dict.keys()
+    ):
         subtitle = dict_of_interest["subtitle"]
-        full_title = dict_of_interest["title"] + ": " + dict_of_interest["subtitle"]
+        full_title = (
+            dict_of_interest["title"]
+            + ": "
+            + dict_of_interest["subtitle"]
+        )
+    else:
+        subtitle = "NA"
+        full_title = "NA"
     return full_title, subtitle
 
 
-def get_isbns(metadee):  # noqa: C901
-    """fetches isbn10 and isbn13 from metadata via google and
-    returns 'NA' if isbn value is not available the result
-    is a list of two dictionaries each dict has two key:value
-    pairs (e.g. {'type':ISBN_10, 'identifier':'2382932220'})"""
-    if "industryIdentifiers" in metadee.keys():
-        # if index 0 in list is for ISBN_10 dictionary and index1 in list is for ISBN_13 dictionary
+def get_isbns_google(metadata_dict):  # noqa: C901
+    """Function to get isbn10 and isbn13 from metadata_dict from
+        Google BooksAPI.
+    Function returns 'NA' if isbn value is not available. The ISBN
+    result from metadata_dict is a list of two dictionaries with each
+    dict having two key:value pairs representing ISBN_10 and ISBN_13.
+    (e.g. [{'type':ISBN_10, 'identifier':'2382932220'},
+        {'type': ISBN_13, 'identifier':'9784525242123'}])
+    """
+    if "industryIdentifiers" in metadata_dict.keys():
+        # If index 0 in list is for ISBN_10 dictionary and index1 in list
+        # is for ISBN_13 dictionary
         if (
-            metadee["industryIdentifiers"][0]["type"] == "ISBN_10"
-            and ("ISBN_10" in metadee["industryIdentifiers"][0].values())
-            and metadee["industryIdentifiers"][1]["type"] == "ISBN_13"
-            and ("ISBN_13" in metadee["industryIdentifiers"][1].values())
+            metadata_dict["industryIdentifiers"][0]["type"] == "ISBN_10"
+            and ("ISBN_10" in metadata_dict["industryIdentifiers"][0].values())
+            and metadata_dict["industryIdentifiers"][1]["type"] == "ISBN_13"
+            and ("ISBN_13" in metadata_dict["industryIdentifiers"][1].values())
         ):
             try:
-                isbn_10 = metadee["industryIdentifiers"][0]["identifier"]
+                isbn_10 = metadata_dict["industryIdentifiers"][0]["identifier"]
             except (UnboundLocalError, IndexError):
                 isbn_10 = "NA"
             try:
-                isbn_13 = metadee["industryIdentifiers"][1]["identifier"]
+                isbn_13 = metadata_dict["industryIdentifiers"][1]["identifier"]
             except (UnboundLocalError, IndexError):
                 isbn_13 = "NA"
 
-        # if index 0 in list is for ISBN_13 dictionary and index1 in list is for ISBN_10 dictionary
+        # If index 0 in list is for ISBN_13 dictionary and index1 in list
+        # is for ISBN_10 dictionary
         elif (
-            metadee["industryIdentifiers"][0]["type"] == "ISBN_13"
-            and ("ISBN_13" in metadee["industryIdentifiers"][0].values())
-            and metadee["industryIdentifiers"][1]["type"] == "ISBN_10"
-            and ("ISBN_10" in metadee["industryIdentifiers"][1].values())
+            metadata_dict["industryIdentifiers"][0]["type"] == "ISBN_13"
+            and ("ISBN_13" in metadata_dict["industryIdentifiers"][0].values())
+            and metadata_dict["industryIdentifiers"][1]["type"] == "ISBN_10"
+            and ("ISBN_10" in metadata_dict["industryIdentifiers"][1].values())
         ):
             try:
-                isbn_13 = metadee["industryIdentifiers"][0]["identifier"]
+                isbn_13 = metadata_dict["industryIdentifiers"][0]["identifier"]
             except (UnboundLocalError, IndexError):
                 isbn_13 = "NA"
             try:
-                isbn_10 = metadee["industryIdentifiers"][1]["identifier"]
+                isbn_10 = metadata_dict["industryIdentifiers"][1]["identifier"]
             except (UnboundLocalError, IndexError):
                 isbn_10 = "NA"
         else:
-            # (metadee["industryIdentifiers"][0]["type"]== "OTHER") and len(metadee["industryIdentifiers"]==1)
-            # to handle cases like this:'industryIdentifiers': [{'type': 'OTHER', 'identifier': 'UOM:39015058578744'}]
+            # metadata_dict["industryIdentifiers"][0]["type"]== "OTHER"
+            # and len(metadata_dict["industryIdentifiers"]==1)
+            # to handle cases like this:'industryIdentifiers':
+            # [{'type': 'OTHER', 'identifier': 'UOM:39015058578744'}]
             isbn_10 = "NA"
             isbn_13 = "NA"
     else:
@@ -220,7 +337,7 @@ def get_isbns(metadee):  # noqa: C901
     return isbn_10, isbn_13
 
 
-def get_isbns2(metadata_dict):
+def get_isbns_openlibrary(metadata_dict):
     """Fetches ISBNS from openlibrary sourced
     metadata"""
     if "isbn_10" in metadata_dict.keys():
@@ -236,57 +353,129 @@ def get_isbns2(metadata_dict):
 
 
 def get_file_size(file_path):
-    # uses file path to obtain file size
+    """Function to get file size in MB.
+
+    File_size in bytes (obtained from st_size
+    is converted into MB by dividing by 1024**2.
+    """
     file_stats = os.stat(file_path)
-    # print(file_stats): returns an os.stat_result object(st_size in object is the filesize in bytes)
     file_size_bytes = file_stats.st_size
-    # print(file_size_bytes) returns size of file in bytes
     file_size_MB = file_size_bytes / (1024 * 1024)
     return f"{file_size_MB:.2f}"
-    # returns file_size in megabytes: 9.493844985961914
-    # .st_size returns filesize in bytes and this is divided
-    # by 1024 twice to get value in MB
-    # filesize = os.stat(file_src).st_size/(1024*1024
 
 
-# for use in main script
-def google_api(API_KEY, isbn=None, title=None):
-    print(f"For google_api, Title:{title} and ISBN={isbn}")
+def get_google_metadata_json(API_KEY, isbn=None, title=None):  # noqa: C901
+    """Function to fetch raw metadata from Google Books API"""
     if isbn:
         googleapi_metadata = (
-            "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn + "&key=" + API_KEY
+            "https://www.googleapis.com/books/v1/volumes?q=isbn:"
+            + isbn
+            + "&key="
+            + API_KEY
         )
     else:
         googleapi_metadata = (
-            'https://www.googleapis.com/books/v1/volumes?q=intitle:'+ title
+            "https://www.googleapis.com/books/v1/volumes?q=intitle:"
+            + title
+            + "&key="
+            + API_KEY
         )
-    print(f"GoogleAPI metadata url: {googleapi_metadata}, ISBN: {isbn}, Title: {title}")
-    # define function load metadata for both google and openlibrary api to return json_metadata
-    # check google api for book metadata
-    book_metadata = requests.get(
-    googleapi_metadata, headers=headers, timeout=60
-    )  # 300 works
-    book_metadata.raise_for_status()
-    json_metadata = json.loads(book_metadata.text)
-    return json_metadata
+    try:
+        response = requests.get(
+            googleapi_metadata,
+            headers=headers,
+            timeout=60
+        )
+        response.raise_for_status()
+        logger.info(f"Status code: {response.status_code}")
+        json_metadata = json.loads(response.text)
+        return json_metadata
+    except requests.exceptions.HTTPError as e:
+        logger.exception(f"Request HTTP error occurred: {e}")
+        return
+    except requests.exceptions.RequestException as e:
+        logger.exception(f"Request error occurred: {e}")
+        return
+
+    except requests.exceptions.ConnectTimeout:
+        logger.exception("Request ConnectTimeoutError")
+        return
+    except requests.exceptions.ConnectionError:
+        logger.exception(
+            "Request ConnectionError. Check your internet connection",
+            end="\n",
+        )
+        return
+    except requests.ReadTimeout:  # noqa: F821
+        logger.exception("ReadTimeoutError")
+        return
+    except ConnectionError:
+        logger.exception("Connection Error")
+        return
+    except TimeoutError:
+        logger.exception("Timeout Error")
+        return
+    except Exception as e:
+        logger.exception(f"An unexpected error occured: {e}")
+        return
 
 
 # For use in main script
-def openlibrary_api(isbn):
-    olibapi_metadata = "https://openlibrary.org/isbn/" + isbn + ".json"
-    book_metadata = requests.get(olibapi_metadata, headers=headers, timeout=60)
-    book_metadata.raise_for_status()
-    json_metadata = json.loads(book_metadata.text)
-    return json_metadata
+def get_openlibrary_metadata_json(isbn):
+    """Function to fetch raw metadata from Google Books API"""
+
+    try:
+        olibapi_metadata = (
+            "https://openlibrary.org/isbn/"
+            + isbn
+            + ".json"
+        )
+        response = requests.get(
+                        olibapi_metadata,
+                        headers=headers,
+                        timeout=60
+                    )
+        response.raise_for_status()
+        logger.info(f"Status code: {response.status_code}")
+        json_metadata = json.loads(response.text)
+        return json_metadata
+    except requests.exceptions.HTTPError as e:
+        logger.exception(f"Request HTTP error occurred: {e}")
+        return
+    except requests.exceptions.RequestException as e:
+        logger.exception(f"Request error occurred: {e}")
+        return
+
+    except requests.exceptions.ConnectTimeout:
+        logger.exception("Request ConnectTimeoutError")
+        return
+    except requests.exceptions.ConnectionError:
+        logger.exception(
+            "Request ConnectionError. Check your internet connection",
+            end="\n",
+        )
+        return
+    except requests.ReadTimeout:  # noqa: F821
+        logger.exception("ReadTimeoutError")
+        return
+    except ConnectionError:
+        logger.exception("Connection Error")
+        return
+    except TimeoutError:
+        logger.exception("Timeout Error")
+        return
+    except Exception as e:
+        logger.exception(f"An unexpected error occured: {e}")
+        return
 
 
-# Assign dict from extracted metadata to metadata_dict
 def google_metadata_dict(isbn=None, title=None):
-    print(f"google_metadata_dict, Title:{title}, ISBN: {isbn}")
+    """Function to extract metadata_dict from json_metadata"""
+
     if isbn:
-        json_metadata = google_api(API_KEY, isbn=isbn)
+        json_metadata = get_google_metadata_json(API_KEY, isbn=isbn)
     else:
-        json_metadata = google_api(API_KEY, title=title)
+        json_metadata = get_google_metadata_json(API_KEY, title=title)
 
     try:
         metadata_dict = json_metadata["items"][0]["volumeInfo"]
@@ -296,47 +485,69 @@ def google_metadata_dict(isbn=None, title=None):
 
 
 def openlibrary_metadata_dict(isbn):
-    json_metadata = openlibrary_api(isbn)
-    # values are directly avvailable in json_metadata without nesting, so we assign the extracted json to metadata_dict
+    """Function to extract metadata_dict from json_metadata.
+
+    The metadata_dict is directly avvailable in json_metadata.
+    Thefore, we assign the extracted json_metadata to metadata_dict
+    """
+    json_metadata = get_openlibrary_metadata_json(isbn)
+
     try:
-        openlibrary_metadata_dict = json_metadata
+        metadata_dict = json_metadata
     except KeyError:
-        openlibrary_metadata_dict = {
+        #
+        metadata_dict = {
             "error": "notfound",
-            "key": "/044482409x",
-        }  # this dict is that returned by openlib when metadata not available
-    return openlibrary_metadata_dict
+            "key": f"/{isbn}",
+        }
+    return metadata_dict
 
 
-# if there is an error fetching data from api, a dictionary with all values as 'NA' is returned.
-# the function below converts this into an empty dictionary
 def get_dictionary(dictionary):
-    # checks if all values in a dictionary are 'NA' and returns an empty dictionary in that case.
-    # some values in dict can be missing but not all!
+    """A function that formats dict_of_interest by converting
+    a dictionary with all values as "NA" into an empty dictionary.
+
+    If there is an error fetching a data from api, the corresponding
+    value of the key in dict_of_interest is "NA". This function ensures
+    that at least one non-"NA" value is present in dict_of_interest.
+
+    This function deletes all values in dict_of_interest If all values
+    in dict_of_interest are "NA", converting it into an empty dict.
+    The goal is to ensure that some values in dict_of_interest can be missing,
+    but not all. A book must have a title.
+    """
+
     empty_dict = {}
     final_dict = {}
     for key, value in dictionary.copy().items():
-        # if key == 'NA':
+        # if value == "NA", delete from dict_of_interest
         if dictionary[key] == "NA":
             dictionary.pop(key)
         else:
             final_dict[key] = value
-        # else append value to null_dict (of no use)
+
+    # If book does not have at least a title, final_dict will be empty
+    # else, dictionary contains other key:value pairs
     if len(final_dict) == 0:
         return empty_dict
     else:
         return final_dict
 
-# Function to format title to format allowed by windows os
-# Note that there are other reserved filenames e.g. "CON", "PRN"
+
 def modify_title(title):
+    """Function to format title to eliminate characters
+        not allowed in windows os file naming.
+
+    Note that there are other reserved filenames
+    e.g. "CON", "PRN"
+    """
     # remove leading and trailing white spaces
     title = title.strip()
 
     # replace invalid characters with underscore
     title = re.sub(r'[<>:"/\\|?*!]', "_", title)
 
-    # remove hyphen
+    # replace hyphen with underscore
     title = title.replace("-", "_")
 
     # remove trailing periods (at end of filename)
@@ -349,7 +560,6 @@ def modify_title(title):
     return title
 
 
-# prev: isbn, api, headers as input
 def get_metadata_google(
     file,
     isbn_of_book=None,
@@ -359,12 +569,13 @@ def get_metadata_google(
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     },
 ):
-    print(f"For get_metadata_google, title={title_of_book}, isbn={isbn_of_book}")
-    """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
-    # gets file metadata from google or openlibrary apis
-    # json_metadata = google_api(isbn)
-    # initialize dictionary with most important keys also present in json and values initialized to empty string
-    # keys are named according to keys in json from api source
+    """Function to get book metadata using extracted book isbn (or title),
+        and file (to estimate size). The source here is Google BooksAPI only.
+    """
+
+    # initialize dictionary dict_of_interest with keys representing the
+    # names of keys in json_metadata from Google Books API for values we
+    # are interested in. All values are set to empty string.
     dict_of_interest = {
         "title": "",
         "subtitle": "",
@@ -375,15 +586,13 @@ def get_metadata_google(
         "imageLinks": ""
     }
 
-    # dictionary["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
-    # Assign dict from extracted metadata to metadata_dict
+    # Get metadata_dict
     if isbn_of_book:
         metadata_dict = google_metadata_dict(isbn=isbn_of_book)
     else:
         metadata_dict = google_metadata_dict(title=title_of_book)
 
-
-    # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
+    # Populate dict_of_interest with metadata values
     available_metadata = metadata_handler(dict_of_interest, metadata_dict)
     dict_of_interest = get_dictionary(available_metadata)
 
@@ -396,11 +605,12 @@ def get_metadata_google(
     title = dict_of_interest.get("title", "NA")
 
     # fetch sub_title and full title
-    # full_title, subtitle = get_title_subtitle(metadata_dict, metadata_dict)
-    full_title, subtitle = get_title_subtitle(metadata_dict, dict_of_interest)
+    full_title, subtitle = get_subtitle_full_title(
+                               metadata_dict,
+                               dict_of_interest
+                           )
 
-    # assign values populated in dict_of_interest to variables
-    # (keys are: title, publishedDate, publisher, authors, pageCount)
+    # assign values in dict_of_interest to respective variables
     date_of_publication = dict_of_interest.get("publishedDate", "NA")
     publisher = dict_of_interest.get("publisher", "NA")
     authors = dict_of_interest.get("authors", "NA")
@@ -408,12 +618,10 @@ def get_metadata_google(
 
     image_link = dict_of_interest.get("imageLinks", "NA")
 
-    # GET OTHER VALUES
-    # get isbns from metadata
+    isbn_10, isbn_13 = get_isbns_google(metadata_dict)
 
-    isbn_10, isbn_13 = get_isbns(metadata_dict)
-
-    # get reference isbn (ref_isbn), the one used to retrieve the metadata
+    # get reference isbn (ref_isbn), the one used to retrieve
+    # the metadata. This will later serve in getting book covers
     ref_isbn = isbn_of_book
 
     source = "www.google.com"
@@ -421,10 +629,10 @@ def get_metadata_google(
     # get file size
     file_size = get_file_size(file)
 
-    # get date created
+    # Get date created
     date_created = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # update dict_of_interest
+    # Update dict_of_interest to include all the other values
     dict_of_interest["full_title"] = full_title
     dict_of_interest["isbn_10"] = isbn_10
     dict_of_interest["isbn_13"] = isbn_13
@@ -432,21 +640,8 @@ def get_metadata_google(
     dict_of_interest["source"] = source
     dict_of_interest["filesizes"] = file_size
 
-    # print(dict_of_interest)
+    logger.info(f"dict_of_interest: {dict_of_interest}")
 
-    # print(f"""
-    # title = {title},
-    # subtitle = {subtitle},
-    # full_title = {full_title},
-    # date_of_publication = {date_of_publication},
-    # publisher = {publisher},
-    # authors = {authors},
-    # page_count = {str(page_count)},
-    # isbn_10 = {isbn_10},
-    # isbn_13 = {isbn_13},
-    # ref_isbn = isbn,
-    # source = {source},
-    # filesize = {filesize:.2f} MB""")
     return (
         modify_title(title),
         subtitle,
@@ -469,13 +664,17 @@ def get_metadata_openlibrary(
     file,
     isbn,
     headers={
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
-            AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)\
+ AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     },
 ):
-    """Supply extracted isbn to fetch book metadata as a json from either google.com api or openlibrary.org api"""
-    # json_metadata = openlibrary_api(isbn)
-    # Initialize dictionary with most important keys also present in json and values initialized to empty string
+
+    """Function to get book metadata using extracted book isbn,
+        and file (to estimate size). The source here is Openlibrary API only.
+    """
+
+    # The cover ID is expected and this can be converterted into image_url
+    # this to image link by get_cover_url_openlibrary function
     dict_of_interest = {
         "title": "",
         "subtitle": "",
@@ -483,19 +682,20 @@ def get_metadata_openlibrary(
         "publishers": "",
         "by_statement": "",
         "number_of_pages": "",
-        "covers": "", # cover ID expected and function converts this to image link
-    }  # str by_statement rep authors in openlib api
-    # openlib also has "full_title" key in json
+        "covers": "",
+    }
 
-    # Values are directly available in json_metadata without nesting,
-    # so we assign the extracted json to metadata_dict
+    # Get metadata_dict using book ISBN
     metadata_dict = openlibrary_metadata_dict(isbn)
 
-    # populate dictionary with metadata values whose keys are initialized with empty_values are automatically added)
+    # Populate dict_of_interest with metadata values
+    # whose keys are initialized to empty strings
     dict_of_interest = metadata_handler(dict_of_interest, metadata_dict)
 
-    # Fetch title: the nested exception handles cases of inconsistencies in openlibrary json where
-    # title may be missing but full_title or subtitle only may be present in the json metadata
+    # Fetch title: the nested exception handles cases of
+    # inconsistencies in openlibrary json where title may
+    # be missing but full_title or subtitle only may be
+    # present in the json metadata
     try:
         title = dict_of_interest["title"]
     except KeyError:
@@ -504,11 +704,12 @@ def get_metadata_openlibrary(
         except KeyError:
             title = dict_of_interest.get("full_title", "NA")
 
-    # fetch sub_title and full title
-    full_title, subtitle = get_title_subtitle(metadata_dict, dict_of_interest)
+    full_title, subtitle = get_subtitle_full_title(
+                                metadata_dict,
+                                dict_of_interest
+                           )
 
-    # assign values populated in dict_of_interest to variables (keys are:
-    # title, publishedDate, publisher, authors, pageCount)
+    # Assign values in dict_of_interest to respective variables
     date_of_publication = dict_of_interest.get("publish_date", "NA")
     publisher = dict_of_interest.get("publishers", "NA")
     authors = dict_of_interest.get("by_statement", "NA")
@@ -519,13 +720,11 @@ def get_metadata_openlibrary(
 
     image_link = get_cover_url_openlibrary(image_id, isbn)
 
+    # Get the remaining values
+    isbn_10, isbn_13 = get_isbns_openlibrary(metadata_dict)
 
-    # GET OTHER VALUES
-    # get isbns from metadata
-
-    isbn_10, isbn_13 = get_isbns2(metadata_dict)
-
-    # get reference isbn (ref_isbn), the one used to retrieve the metadata
+    # get reference isbn (ref_isbn), the one used to
+    # retrieve the metadata
     ref_isbn = isbn
 
     source = "www.openlibrary.org"
@@ -544,22 +743,8 @@ def get_metadata_openlibrary(
     dict_of_interest["source"] = source
     dict_of_interest["filesizes"] = file_size
 
-    # print(dict_of_interest)
+    logger.info(f"dict_of_interest: {dict_of_interest}")
 
-    # print(f"""
-    # title = {title},
-    # subtitle = {subtitle},
-    # full_title = {full_title},
-    # date_of_publication = {date_of_publication},
-    # publisher = {publisher},
-    # authors = {authors},
-    # page_count = {str(page_count)},
-    # isbn_10 = {isbn_10},
-    # isbn_13 = {isbn_13},
-    # ref_isbn = "isbn",
-    # source = {source},
-    # file_size = {file_size:.2f} MB"""
-    #       )
     return (
         modify_title(title),
         subtitle,
@@ -578,277 +763,298 @@ def get_metadata_openlibrary(
     )
 
 
-# If metadata not recovered from both google and openlibrary apis,
-# Print file_name not found and move file to missing_metadata directory
-
 def move_to_missing_metadata(file_src, missing_metadata):
-    try:
-        shutil.move(file_src, missing_metadata)
-    # FileNotFoundError raised if file has a missing ISBN and is already moved to
-    # Missing_isbn directory. skip this whole process for file that raises this error
-    except FileNotFoundError:
-        # This is a case where file has already been moved to missing_isbn directory
-        pass
-        # continue
+    """Function to move file to missing_metadata directory if its
+    metadata is not recovered from both google and openlibrary
+    apis.
+    """
+    move_file_or_directory(file_src, missing_metadata)
+
+    return
 
 
-def get_metadata_from_api(api1_dict,
-                          api1_dict_key,
-                          api2_dict,
-                          api2_dict_key,
-                          isbn,
-                          file,
-                          headers,
-                          file_src,
-                          missing_metadata):
-    # call get_metadata_google or get_metadata_openlibrary
-    file_metadata = api1_dict[api1_dict_key](file, isbn, headers=headers)
+def get_metadata_from_api(
+    api1_dict,
+    api1_dict_key,
+    api2_dict,
+    api2_dict_key,
+    isbn,
+    file,
+    headers,
+    file_src,
+    missing_metadata
+):
+    """Function to search metadata using both openlibrary and
+        Google BooksAPI.
+
+        If first API is selected and API returns valid metadata
+        function returns metadata else it tries the second API
+        and does the same. If all else fail, None is returned.
+
+        The two API sources are selected randomly in practice.
+        See main forgy package (messyforg.py).
+
+        The format of api_dicts are as shown:
+        {"google": get_metadata_google},
+        {"openlibrary": get_metadata_openlibrary}
+
+        Keys are names of api source (google, and open library),
+        and values are functions to retrieve data from each API.
+    """
+
+    # Check API_1 for metadata (can be any of google or openlibrary)
+    # and selection is random
+    file_metadata = api1_dict[api1_dict_key](
+                        file,
+                        isbn,
+                        headers=headers
+                    )
     # time.sleep(5)
 
-    # If metadata from google is not empty, unpack tuple file_metadata into the various variables
+    # If metadata from API_1 is not empty, unpack tuple file_metadata
+    # into the various variables
     if file_metadata is not None:
         return file_metadata
 
     else:
-        file_metadata = api2_dict[api2_dict_key](file, isbn, headers=headers)
+        file_metadata = api2_dict[api2_dict_key](
+                            file,
+                            isbn,
+                            headers=headers
+                        )
         # time.sleep(5)
 
-        # If metadata from google is not empty, unpack tuple file_metadata into the various variables
         if file_metadata is not None:
             return file_metadata
 
         else:
-            print(f"ISBN metadata not found for {pdf_path.stem}")
+            logger.warning(
+                f"ISBN metadata not found for {Path(file).stem}"
+            )
             move_to_missing_metadata(file_src, missing_metadata)
+
             return None
 
 
+def get_single_book_metadata(
+    file,
+    book_isbn=None,
+    book_title=None
+):
+    """Function to fetch metadata of a single book from Google
+        Books API using title or isbn."""
 
+    values = ""
 
-
-
-def random_get_metadata_from_api():
-    """Function to randomly select google or openlibrary api first for
-    metadata search before selecting the other in case of unavailable metadata.
-
-    """
-    pass
-
-
-def download_book_covers(isbns):
-    """use ref isbn to fetch thumbnail cover image or medium cover image from google or openlibrary respectively.
-
-    Getting cover_page is only to be applied to books with successfully extracted metadata (those in database).
-    Search details in google api followed by openlibrary_api.
-
-    Openlib has covers api while google returns cover with metadata json.
-    1. If metadata found, download cover image using image link, save to book_covers folder and rename to book title
-
-
-    In both cases, update database to include link to coverpage on pc
-    """
-    pass
-
-
-def get_single_book_metadata(file, book_isbn=None, book_title=None):
-    """Function to fetch metadata of one book by title or isbn from google bookapi."""
-
-    values=""
-    # If title is supplied, in all function calls, title is assigned to supplied title
-    # while isbn is None. The converse is also true.
-    if title:
-            values = get_metadata_google(
+    if book_title:
+        values = get_metadata_google(
                         file,
                         title=book_title,
                      )
-    elif isbn:
-        if is_valid_isbn(isbn):
+    elif book_isbn:
+        if is_valid_isbn(book_isbn):
             values = get_metadata_google(
                         file,
                         isbn=book_isbn,
                      )
         else:
-            print(f"Invalid ISBN: {isbn}")
+            logger.error(f"Invalid ISBN: {book_isbn}")
     else:
-        print("Please provide a valid title or isbn")
-
-    print(f"""
-            Title: {title}
-            ISBN: {isbn}"""
-    )
-    print(f"VALUES: {values}")
+        logger.warning("Please provide a valid title or isbn")
 
     return values
 
 
-def download_image_bytes(image_url, no_of_retries=3, time_delay_before_retries=1.5):
+def download_image_bytes(
+    image_url,
+    no_of_retries=3,
+    time_delay_before_retries=1.5
+):
+    """Function to download image byte object using image_url
+        from either Google or Openlibrary API.
+    """
     for trial in range(no_of_retries):
         try:
-            # get image bytes object (in streams for memory efficiency downloading large files or many files) and handle errors
-            # Send get request to image url
-            response = requests.get(image_url, timeout=30, stream=True)
+            # Get image bytes object (in streams for memory
+            # efficiency) and handle errors
 
-            #Check if request is successful. raise HTTPError if any
+            response = requests.get(image_url, timeout=30, stream=True)
             response.raise_for_status()
+            logger.info(f"Status code {response.status_code}")
         except requests.exceptions.Timeout:
-            print("The request timed out.")
-            print(f"Attempt {trial + 1}")
+            logger.exception(
+                "The request timed out. Attempting trial {trial + 1}..."
+            )
             time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
-            #handle raised exception/HTTPError by raise_for_status
         except requests.exceptions.ReadTimeout:
-            print(f"ReadTimeout Error")
+            logger.exception(
+                f"ReadTimeout Error. Attempting trial {trial + 1}..."
+            )
             time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
-        except requests.exceptions.HTTPError as error:
-            print(f"HTTP error occurred: {error}")
-            print(f"Attempt {trial + 1}: HTTP error occurred: {error}")
-            print(f"Status code: {response.status_code}")
+        except requests.exceptions.HTTPError:
+            logger.exception(
+                f"HTTP error occurred. Attempting trial {trial + 1}..."
+            )
             time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
         except requests.exceptions.RequestException as e:
-            print(f"Error '{e}' occured")
-            print(f"Attempt {trial + 1}: An error occurred: {e}")
+            logger.exception(
+                f"Error '{e}' occured. Attempting trial {trial + 1}..."
+            )
             time.sleep(time_delay_before_retries)
             time_delay_before_retries *= 1.5
             continue
         else:
             # if no exception is raised
-            print("Request was successful")
-            print(f"Status code: {response.status_code}")
+            logger.info("Request was successful")
             return response
 
 
 def process_image_bytes(response, image_file):
-    # Check if the response was successful. response.ok returns True if success status code (2xx) or False otherwise(4xx, 5xx)
-    print(f"RESPONSE: {response}")
-    if not response.ok:
-        print(response)
-    else:
-        #retrieve Content-Length header from HTTP request
-        content_length = response.headers.get('content-length')
-        #print(response.headers)
-        #print(content_length)
+    """Function process image byte objects and write to file"""
 
-        # if server does not provide content length (size of content in bytes),
-        # download the tne entire image at once. Load the entire image into memory and write to file at once without monitoring progress
+    logger.info(f"Status response: {response}")
+    if not response.ok:
+        logger.info(response)
+        # return
+    else:
+        # Retrieve Content-Length header from HTTP request
+        content_length = response.headers.get('content-length')
+        logger.info(f"Content length: {content_length}")
+
+        # If server does not provide content length (size of content
+        # in bytes), download the tne entire image at once and write
+        # to file.
         if content_length is None:
-            image_file.write(response.content)    # response.content is the raw binary content of response body (image)
-            # print(f"{title} downloaded successfully")
+            image_file.write(response.content)
+            logger.info(f"{image_file} downloaded successfully")
         else:
-            # if server provides content length, download file size in 1kilobyte chunks.
+            # if server provides content length, download file size
+            # in 3 kilobytes chunks.
             downloaded_bytes = 0
             content_length = int(content_length)
-            # print(f"{title}")
+
             try:
                 for chunk in response.iter_content(chunk_size=3072):
-                    # If no chunk if received (such as when all chunks are fully downloaded, break the loop and move to next file
+                    # If no chunk if received (such as when all chunks
+                    # are fully downloaded, break the loop and move to
+                    # next file
                     if not chunk:
                         break
-                    #write each chunk to file as it is downloaded
+
+                    # Write each chunk to file as it is downloaded
                     image_file.write(chunk)
-                    #update total length of downloaded chunks
+                    logger.info(f"Successfully downloaded {image_file}")
+
+                    # Update total length of downloaded chunks
                     downloaded_bytes += len(chunk)
-                    print(f"Download Progress: {(downloaded_bytes / content_length) * 100:.2f}% of {content_length} bytes downloaded)")
-            except ChunkedEncodingError:
-                print("Chunked Encoding Error occured")
+
+                    logger.info(
+                        f"Progress: {(downloaded_bytes/content_length)*100:.2f}%"
+                    )
+            except requests.exceptions.ChunkedEncodingError:
+                logger.exception("Chunked Encoding Error occured")
             except Exception as e:
-                print(f"An unexpected exception occured: {e}")
+                logger.exception(f"An unexpected exception occured: {e}")
 
 
 def get_book_covers(cover_dir, database, table):
-    """Function to extract cover page for all books in library.db(those with successfully obtained metadata."""
-    
+    """Function to extract cover page for all books in library.db. These books
+        have all their metadata successfully downloaded.
+
+    Ref_isbn in database is used to fetch cover image from google or openlibrary.
+    Openlib has covers api while google returns cover with metadata json.
+    """
+
     # Confirm if cover_dir is a valid directory
     if not Path(cover_dir).is_dir():
-        print(f"Cover directory {cover_dir} is not a directory")
+        logger.warning(f"Cover directory {cover_dir} is not a directory")
         return None
 
     cover_dir_path = Path(cover_dir)
 
-    # get book_metadata from database. The format is [(title, image_url),...(title, image_url)]
-    book_metadata = get_database_columns(database, table, columns=["Title", "RefISBN", "Source", "ImageLink"])
+    # get book_metadata from database. The format is:
+    # [(title, ref_isbn, source, image_url),...(title, image_url...)]
+    book_metadata = get_database_columns(
+                        database,
+                        table,
+                        columns=["Title", "RefISBN", "Source", "ImageLink"]
+    )
 
-    # Iterate through "title, image_url" in book_metadata and download file
-     
     for val in book_metadata:
-        #enable matching of order of columns
+        # Enable matching of order of columns
         title, ref_isbn, source, image_url = val
-
-        # enable skipping already downloaded cover pages
 
         image_file_path = f"{cover_dir_path}/{title}.jpg"
 
-        if image_url== "NA":
-            if source == "www.google.com":
-                # new_source = "www.openlibrary.org"
-                image_url = get_cover_url_openlibrary("NA", ref_isbn)
-                print(f"New image_url extracted from OpenlibraryAPI: {image_url}")
-            elif source == "www.openlibrary.org":
-        #        new_source = "www.google.com"
+        if image_url == "NA":
 
-                # Since we do not need to extract the whole metadata in this case, the i
+            if source == "www.google.com":
+
+                # New source = "www.openlibrary.org"
+                image_url = get_cover_url_openlibrary("NA", ref_isbn)
+                logger.info(f"New image_url extracted from OpenlibraryAPI: {image_url}")
+            elif source == "www.openlibrary.org":
+
+                # New_source = "www.google.com"
+                # Since we do not need to extract the whole metadata in this case,
+                # We simple extract the imageLinks from json_metadata using the
+                # get_image_url_google function
                 image_url = get_image_url_google(
                     isbn_of_book=ref_isbn,
                 )
-                print(f"New image_url extracted from Google BooksAPI: {image_url}")
+                logger.info(f"New image_url extracted from Google BooksAPI: {image_url}")
             else:
-                print(f"Invalid image url in database: {image_url}")
+                logger.error(f"Invalid image url in database: {image_url}")
                 pass
 
         with open(image_file_path, 'wb') as image_file:
+
             # set number of api call requests before skipping iteration
             response = download_image_bytes(image_url)
             process_image_bytes(response, image_file)
 
-        # sleep for 5 seconds after each operation to meet the 20 request per minute api requirement by openlibrary
+        # sleep for 5 seconds after each operation to stay within the 20 request
+        # per minute api limit by openlibrary
         time.sleep(5)
 
         print()
 
+    # Take statistics of book cover downloads
     successful_image_downloads = 0
     unsuccessful_image_downloads = 0
 
-    # get_file_size function returns a str filesize as MB
-    # so we convert its returned value to float and kb
     with os.scandir(cover_dir_path) as entries:
         for entry in entries:
+
             if entry.is_file():
-                # file_size_kb = float(get_file_size(entry.path))*1024
                 file_size_bytes = entry.stat().st_size
+
                 if file_size_bytes <= 1000:
-                    print(f"UNSUCCESSFUL: {image_file_path}")
+                    logger.error(f"Invalid image: {image_file_path}")
                     unsuccessful_image_downloads += 1
+
                 elif file_size_bytes > 1000:
                     successful_image_downloads += 1
-                    print(f"Image file is valid: {image_file_path}")
+                    logger.error(f"Image file is valid: {image_file_path}")
+
                 else:
                     pass
-            else:
-                print(f"Entry is not a file {entry}")
 
-    print(f"""
+            else:
+                logger.error(f"Entry is not a file {entry}")
+
+    print(
+        f"""
     FOrgy Cover Image Download Statistics:
     Total no of images: {count_files_in_directory(cover_dir_path)}
     Successful image downloads: {successful_image_downloads}
     Unsuccessful image downloads: {unsuccessful_image_downloads}"""
     )
-    
+
     return None
-   
-
-# www.openlibrary.org/search/inside.json?q="what is life"
-
-# Search with title
-# https://www.googleapis.com/books/v1/volumes?q=intitle:"To Kill a Mockingbird"
-
-# if api = google and json values returned, use google api,
-# else: we use openlibrary api
-# case 1. api = openlibrary and json values returned; retrieve values
-# case 2. api = openlibrary  and json values not returned; set api as
-# google api and if values not returned,,, print values not found
-
-# Define a function to enable user check individual book for ISBN and automatically apply metadata to book
