@@ -39,7 +39,8 @@ logger.info("Google API key added")
 
 
 def merge_list_items(given_list):
-    """Convert elements in a list into a single string of the
+    """
+    Convert elements in a list into a single string of the
     list of values neatly separated by a comma.
 
     Function format the authors field in json metadata which may be
@@ -59,7 +60,8 @@ def merge_list_items(given_list):
 
 
 def get_cover_url_google(dictionary):
-    """Function to get book cover thumbnail (medium-sized)
+    """
+    Function to get book cover thumbnail (medium-sized)
         from googlebooks api.
 
     ImageLinks come with returned json_metadata
@@ -84,7 +86,8 @@ def get_cover_url_google(dictionary):
 
 
 def get_cover_url_openlibrary(cover_id, isbn):
-    """Funtion to get cover image from openlibrary api.
+    """
+    Funtion to get cover image from openlibrary api.
 
     The api may return cover_id or not (doesn't in most cases).
     The cover_id can be converted into the cover_url from covers
@@ -114,8 +117,9 @@ def get_image_url_google(
     headers=headers,
     title_of_book=None
 ):
-    """Function to get imageLinks for a book from Google BooksAPI using
-        Book ISBN or title.
+    """
+    Function to get imageLinks for a book from Google BooksAPI using
+    Book ISBN or title.
 
     Function filters out just the imageLinks dictionary from JSON metadata.
     """
@@ -147,8 +151,9 @@ def get_image_url_google(
 
 
 def metadata_handler(dict_of_interest, metadata_dict):
-    """Function to extract keys and values of interest from API's
-        JSON metadata_dict into FOrgy's dict_of_interest.
+    """
+    Function to extract keys and values of interest from API's
+    JSON metadata_dict into FOrgy's dict_of_interest.
 
     metadata_dict: a dictionary extracted from JSON API metadata
                     which contains all metadata values present in
@@ -249,8 +254,9 @@ def metadata_handler(dict_of_interest, metadata_dict):
 
 
 def get_subtitle_full_title(metadata_dict, dict_of_interest):
-    """Function to get books's subtitle, and full_title
-        from metadata_dict and save to dict_of_interest.
+    """
+    Function to get books's subtitle, and full_title
+    from metadata_dict and save to dict_of_interest.
 
     This is needed to handle the inconsistencies in data returned
     by API. Some may contain title but not subtitle, and some may
@@ -280,8 +286,10 @@ def get_subtitle_full_title(metadata_dict, dict_of_interest):
 
 
 def get_isbns_google(metadata_dict):  # noqa: C901
-    """Function to get isbn10 and isbn13 from metadata_dict from
-        Google BooksAPI.
+    """
+    Function to get isbn10 and isbn13 from metadata_dict from
+    Google BooksAPI.
+
     Function returns 'NA' if isbn value is not available. The ISBN
     result from metadata_dict is a list of two dictionaries with each
     dict having two key:value pairs representing ISBN_10 and ISBN_13.
@@ -337,8 +345,10 @@ def get_isbns_google(metadata_dict):  # noqa: C901
 
 
 def get_isbns_openlibrary(metadata_dict):
-    """Fetches ISBNS from openlibrary sourced
-    metadata"""
+    """
+    Fetches ISBNS from openlibrary sourced
+    metadata
+    """
     if "isbn_10" in metadata_dict.keys():
         isbn_10 = metadata_dict["isbn_10"][0]
     else:
@@ -484,7 +494,8 @@ def google_metadata_dict(isbn=None, title=None):
 
 
 def openlibrary_metadata_dict(isbn):
-    """Function to extract metadata_dict from json_metadata.
+    """
+    Function to extract metadata_dict from json_metadata.
 
     The metadata_dict is directly avvailable in json_metadata.
     Thefore, we assign the extracted json_metadata to metadata_dict
@@ -503,7 +514,8 @@ def openlibrary_metadata_dict(isbn):
 
 
 def get_dictionary(dictionary):
-    """A function that formats dict_of_interest by converting
+    """
+    A function that formats dict_of_interest by converting
     a dictionary with all values as "NA" into an empty dictionary.
 
     If there is an error fetching a data from api, the corresponding
@@ -534,8 +546,9 @@ def get_dictionary(dictionary):
 
 
 def modify_title(title):
-    """Function to format title to eliminate characters
-        not allowed in windows os file naming.
+    """
+    Function to format title to eliminate characters
+    not allowed in windows os file naming.
 
     Note that there are other reserved filenames
     e.g. "CON", "PRN"
@@ -568,8 +581,9 @@ def get_metadata_google(
             AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
     },
 ):
-    """Function to get book metadata using extracted book isbn (or title),
-        and file (to estimate size). The source here is Google BooksAPI only.
+    """
+    Function to get book metadata using extracted book isbn (or title),
+    and file (to estimate size). The source here is Google BooksAPI only.
     """
 
     # initialize dictionary dict_of_interest with keys representing the
@@ -668,8 +682,9 @@ def get_metadata_openlibrary(
     },
 ):
 
-    """Function to get book metadata using extracted book isbn,
-        and file (to estimate size). The source here is Openlibrary API only.
+    """
+    Function to get book metadata using extracted book isbn,
+    and file (to estimate size). The source here is Openlibrary API only.
     """
 
     # The cover ID is expected and this can be converterted into image_url
@@ -763,7 +778,8 @@ def get_metadata_openlibrary(
 
 
 def move_to_missing_metadata(file_src, missing_metadata):
-    """Function to move file to missing_metadata directory if its
+    """
+    Function to move file to missing_metadata directory if its
     metadata is not recovered from both google and openlibrary
     apis.
     """
@@ -783,22 +799,23 @@ def get_metadata_from_api(
     file_src,
     missing_metadata
 ):
-    """Function to search metadata using both openlibrary and
-        Google BooksAPI.
+    """
+    Function to search metadata using both openlibrary and
+    Google BooksAPI.
 
-        If first API is selected and API returns valid metadata
-        function returns metadata else it tries the second API
-        and does the same. If all else fail, None is returned.
+    If first API is selected and API returns valid metadata
+    function returns metadata else it tries the second API
+    and does the same. If all else fail, None is returned.
 
-        The two API sources are selected randomly in practice.
-        See main forgy package (messyforg.py).
+    The two API sources are selected randomly in practice.
+    See main forgy package (messyforg.py).
 
-        The format of api_dicts are as shown:
-        {"google": get_metadata_google},
-        {"openlibrary": get_metadata_openlibrary}
+    The format of api_dicts are as shown:
+    {"google": get_metadata_google},
+    {"openlibrary": get_metadata_openlibrary}
 
-        Keys are names of api source (google, and open library),
-        and values are functions to retrieve data from each API.
+    Keys are names of api source (google, and open library),
+    and values are functions to retrieve data from each API.
     """
 
     # Check API_1 for metadata (can be any of google or openlibrary)
@@ -840,8 +857,10 @@ def get_single_book_metadata(
     book_isbn=None,
     book_title=None
 ):
-    """Function to fetch metadata of a single book from Google
-        Books API using title or isbn."""
+    """
+    Function to fetch metadata of a single book from Google
+    Books API using title or isbn.
+    """
 
     values = ""
 
@@ -869,8 +888,9 @@ def download_image_bytes(
     no_of_retries=3,
     time_delay_before_retries=1.5
 ):
-    """Function to download image byte object using image_url
-        from either Google or Openlibrary API.
+    """
+    Function to download image byte object using image_url
+    from either Google or Openlibrary API.
     """
     for trial in range(no_of_retries):
         try:
@@ -948,13 +968,13 @@ def process_image_bytes(response, image_file):
 
                     # Write each chunk to file as it is downloaded
                     image_file.write(chunk)
-                    logger.info(f"Successfully downloaded {image_file}")
+                    logger.info(f"{image_file} downloaded successfully")
 
                     # Update total length of downloaded chunks
                     downloaded_bytes += len(chunk)
 
                     logger.info(
-                        f"Progress: {(downloaded_bytes/content_length)*100:.2f}%"
+                        f"Progress: {(downloaded_bytes/content_length)*100:.2f} % DONE"
                     )
             except requests.exceptions.ChunkedEncodingError:
                 logger.exception("Chunked Encoding Error occured")
@@ -963,8 +983,9 @@ def process_image_bytes(response, image_file):
 
 
 def get_book_covers(cover_dir, database, table):
-    """Function to extract cover page for all books in library.db. These books
-        have all their metadata successfully downloaded.
+    """
+    Function to extract cover page for all books in library.db. These books
+    have all their metadata successfully downloaded.
 
     Ref_isbn in database is used to fetch cover image from google or openlibrary.
     Openlib has covers api while google returns cover with metadata json.
@@ -1017,6 +1038,7 @@ def get_book_covers(cover_dir, database, table):
             # set number of api call requests before skipping iteration
             response = download_image_bytes(image_url)
             process_image_bytes(response, image_file)
+        print(f"Download successful: {Path(image_file_path).name}")
 
         # sleep for 5 seconds after each operation to stay within the 20 request
         # per minute api limit by openlibrary
