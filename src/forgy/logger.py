@@ -4,8 +4,15 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
-# Create and configure custom logger
 def create_logger(name=None):
+    """
+    Create and configure custom logger.
+
+    Default levels (may be modified during development)
+    Console handler: ERROR
+    Rotating file handler: INFO
+    """
+    
 
     # create logs directory if nonexistent
     logs_parent = Path(os.getcwd()).parent
@@ -31,7 +38,7 @@ def create_logger(name=None):
     # 1. Console handler
     console_handler = logging.StreamHandler()
 
-    console_handler.setLevel(logging.ERROR)
+    console_handler.setLevel(logging.CRITICAL)
 
     console_format = logging.Formatter(
                         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -44,7 +51,7 @@ def create_logger(name=None):
                                 maxBytes=5e6,
                                 backupCount=3
                             )
-    rotating_file_handler.setLevel(logging.INFO)
+    rotating_file_handler.setLevel(logging.ERROR)
 
     file_format = logging.Formatter(
                     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
