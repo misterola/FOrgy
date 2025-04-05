@@ -15,11 +15,11 @@ logger = create_logger("filesystem_utils")
 
 
 def count_files_in_directory(directory):
-    """This function counts the files within a directory.
+    """
+    This function counts the files within a directory.
 
     Files contained in sub-folders in directory are not
     counted.
-
     """
     file_count = sum(
         1 for entry in os.scandir(directory) if entry.is_file()
@@ -29,8 +29,9 @@ def count_files_in_directory(directory):
 
 
 def count_files_in_tree(directory):
-    """Function to count files in a directory containing other
-        directories.
+    """
+    Function to count files in a directory containing other
+    directories.
 
     This will serve if the folder containing PDF books contain
     many other sub-folders and files. The count_files_in_tree
@@ -56,7 +57,8 @@ def count_files_in_tree(directory):
 
 def move_folders(source_dir, destination_dir):
 
-    """This program takes a source folder and moves every
+    """
+    This program takes a source folder and moves every
     sub_folder into another directory.
 
     The non_directory files in the source_dir is not moved.
@@ -101,8 +103,9 @@ def move_folders(source_dir, destination_dir):
 
 
 def copy_directory_contents(user_pdfs_source, forgy_pdfs_copy):
-    """Function to copy content of user_pdfs_source directory
-        into forgy_pdfs_copy
+    """
+    Function to copy content of user_pdfs_source directory
+    into forgy_pdfs_copy
     """
 
     user_pdfs_source = Path(user_pdfs_source)
@@ -133,10 +136,11 @@ def get_files_from_directory(  # noqa:C901
     move=False,
     extension='pdf'
 ):
-    """Function to copy or move files from source directory to
-        destination directory.
+    """
+    Function to copy or move files from source directory to
+    destination directory.
 
-        Does not copy or move if file already exists in destination.
+    Does not copy or move if file already exists in destination.
     """
 
     if not Path(source_directory).is_dir():
@@ -196,9 +200,10 @@ def get_files_from_tree(
     extension='pdf',
     move=False
 ):
-    """Function copies or moves all files in a directory which
-        containing other sub-directories and files into a
-        different directory.
+    """
+    Function copies or moves all files in a directory which
+    containing other sub-directories and files into a
+    different directory.
 
     In this case, the directories are left behind with empty files
     as all files within them are moved to a new destination.
@@ -264,7 +269,8 @@ def get_files_from_directories(  # noqa: C901
     extension='pdf',
     move=False
 ):
-    """Function to copy or move .pdf files in a list of directories
+    """
+    Function to copy or move .pdf files in a list of directories
     to a destination.
 
     The default is copy, when move=False.
@@ -360,7 +366,8 @@ def get_files_from_sources(
     directory_tree_src=False,
     move_file=False
 ):
-    """Function to properly fetch pdf files from various sources to
+    """
+    Function to properly fetch pdf files from various sources to
     destination directory.
 
     Default operation is copy (when move_file=False). Files that already
@@ -396,8 +403,9 @@ def organize_files_in_directory(  # noqa:C901
     destination_directory,
     move=False
 ):
-    """This function organizes files in a directory using file extension
-        The default in this case is .pdf.
+    """
+    This function organizes files in a directory using file extension
+    The default in this case is .pdf.
 
     The function takes a directory (without a subdir) and creates a set
     containing all unique file extensions in folder. All files of the same
@@ -509,7 +517,8 @@ successfully."
 
 
 def delete_files_in_directory(directory, files=True, directories=False):
-    """Delete only files (default), directories or both from directory.
+    """
+    Delete only files (default), directories or both from directory.
 
     The shutil.rmtree(directory) deletes all content of directory which
     is not needed here
@@ -536,8 +545,9 @@ def delete_files_in_directory(directory, files=True, directories=False):
 
 
 def move_file_or_directory(source, destination):
-    """Function to move a file or directory from
-        source to destination directory.
+    """
+    Function to move a file or directory from
+    source to destination directory.
     """
     source = Path(source)
     destination = Path(destination)
@@ -564,6 +574,7 @@ def move_file_or_directory(source, destination):
 
 
 def rename_file_or_directory(source, destination):
+    """Rename a file or a directory"""
     source = Path(source)
     destination = Path(destination)
     try:
