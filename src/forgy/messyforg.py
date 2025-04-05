@@ -12,7 +12,6 @@ import requests
 import pypdf
 
 from .isbn_regex import (
-    is_isbn_in_db,
     get_valid_isbns,
 )
 from .text_extraction import extract_text
@@ -25,6 +24,7 @@ from .metadata_search import (
 from .database import (
     add_metadata_to_table,
     titles_in_db,
+    is_isbn_in_db,
 )
 from .process_stats import show_statistics
 from .filesystem_utils import (
@@ -41,7 +41,8 @@ logger.info("Logger created successfully")
 
 
 def check_internet_connection():
-    """Check user internet connection.
+    """
+    Check user internet connection.
 
     Return True if user is connected
     and False otherwise.
@@ -72,12 +73,14 @@ def create_directories(
     delete_content=True
 ):
 
-    """Create data directory and its subdirectories.
+    """
+    Create data directory and its subdirectories.
 
     These are needed to contain diffenrent categories of files
     and directories handled by FOrgy during operations of
     get_metadata subcommand or while fetch_book_metadata
-    function is working"""
+    function is working
+    """
 
     current_directory = Path(os.getcwd())
 
@@ -132,8 +135,9 @@ def create_directories(
 
 
 def estimate_process_duration(start_time):
-    """Function to estimate duration of get_metadata operation
-        on each file.
+    """
+    Function to estimate duration of get_metadata operation
+    on each file.
 
     Start time is predefined at the start of the loop that goes
     through file.
@@ -149,10 +153,12 @@ def estimate_process_duration(start_time):
 def save_process_duration(file_name,
                           process_duration,
                           duration_dictionary):
-    """Function adds the operation time for file to dictionary.
+    """
+    Function adds the operation time for file to dictionary.
 
     This ie eventually used in estimating total time taken in the
-    process_statistics module."""
+    process_statistics module.
+    """
     duration_dictionary[file_name] = process_duration
     return duration_dictionary
 
@@ -162,8 +168,9 @@ def estimate_and_save_process_duration(
     file_name,
     duration_dictionary
 ):
-    """Function to save duration of operation on each file to a
-        duration_dictionary which is maintained for the session.
+    """
+    Function to save duration of operation on each file to a
+    duration_dictionary which is maintained for the session.
 
     The key:alue pairs in duration dictionary represent
     file_name:process_duration.
@@ -184,7 +191,8 @@ def return_dict_key(dictionary):
 
 
 def choose_random_api(api_list):
-    """Function to choose an api(key) and its associated calling
+    """
+    Function to choose an api(key) and its associated calling
     function (value) from a list of dictionaries containing two apis.
 
     The format of the api_list containing dictionaries is:
@@ -218,7 +226,8 @@ def fetch_book_metadata(  # noqa: C901
     table_name,
     database_name
 ):
-    """Function to get book metadata from google BooksAPI and openlibrary
+    """
+    Function to get book metadata from google BooksAPI and openlibrary
     APIs, rename books using title from fetched metadata, save book
     metadata to database, and move files without isbn or with
     unsuccessful metadata request to missing_isbn and missing_metadata
@@ -312,7 +321,6 @@ def fetch_book_metadata(  # noqa: C901
                 # Use regex to match isbn in extracted text, into matched_isbn list
                 valid_isbn_list = get_valid_isbns(extracted_text)
 
-                # Extracted_text_list = extracted_text.split(' ')
 
                 # For files with missing isbn, save extracted text into file,
                 # and move file to missing_isbn directory
@@ -321,19 +329,20 @@ def fetch_book_metadata(  # noqa: C901
 
                     # For files with missing isbn, generate (empty) text files
                     # and save in extracted_texts_path directory in data/
-                    with open(
-                        f"{missing_isbn_path}/{extracted_texts_path.name}/{file_path.stem}.txt", "a"
-                    ) as page_new:
-                        try:
+
+                    try:
+                        with open(
+                            f"{missing_isbn_path}/{extracted_texts_path.name}/{file_path.stem}.txt", "a"
+                        ) as page_new:
                             page_new.write(extracted_text)
-                        except (FileNotFoundError, UnicodeEncodeError) as e:
-                            logger.exception(f"Error encountered: {e}")
-                            estimate_and_save_process_duration(
-                                start_time,
-                                file_name,
-                                duration_dictionary
-                            )
-                            continue
+                    except (FileNotFoundError, UnicodeEncodeError) as e:
+                        logger.exception(f"Error encountered: {e}")
+                        estimate_and_save_process_duration(
+                            start_time,
+                            file_name,
+                            duration_dictionary
+                        )
+                        continue
 
                 # Compare extracted valid_isbn_list with those in ref_isbn_set
                 # from from db RefISBN column. Skip iteration if file is already
@@ -345,7 +354,7 @@ def fetch_book_metadata(  # noqa: C901
                         duration_dictionary
                     )
                     continue
-
+                
                 # Use each isbn in int_isbn_list to search on openlibrary api
                 # and googlebookapi for book metadata and download in json
                 # Repeat same for every isbn in list. If metadata not found,
@@ -502,7 +511,8 @@ def get_isbns_from_texts(
     txt_destination_dir,
     text_filename="extracted_book_isbns.txt"
 ):
-    """Function to extract isbns for every book in a directory.
+    """
+    Function to extract isbns for every book in a directory.
 
     The result is a .txt file containing filenames as keys and
     extracted isbns as a list (containing valid isbn values).
