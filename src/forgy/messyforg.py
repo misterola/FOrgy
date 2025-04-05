@@ -55,10 +55,9 @@ def check_internet_connection():
 
         if response.status_code == 200:
             logger.info("Internet connection is active")
-            # logger.info("Internet connection is active")
             return True
     except requests.exceptions.ConnectionError:
-        logger.exception("No internet connection")
+        logger.error("No internet connection")
         return False
 
 
@@ -360,33 +359,31 @@ def fetch_book_metadata(  # noqa: C901
                 # Repeat same for every isbn in list. If metadata not found,
                 # move file to missing_metadata directory and continue to next isbn.
                 for isbn in valid_isbn_list:
-
-                    try:
                         # Select api randomly to avoid overworking any of the apis
                         # The other api will only be checked if the first returns
                         # no metadata
-                        api_list = [
-                            {"google": get_metadata_google},
-                            {"openlibrary": get_metadata_openlibrary},
-                        ]
+                    api_list = [
+                        {"google": get_metadata_google},
+                        {"openlibrary": get_metadata_openlibrary},
+                    ]
 
-                        (api1_dict,
-                         api1_dict_key,
-                         api2_dict,
-                         api2_dict_key) = choose_random_api(api_list)
+                    (api1_dict,
+                     api1_dict_key,
+                     api2_dict,
+                     api2_dict_key) = choose_random_api(api_list)
 
-                        # Case 1: The selected API = google and valid json_metadata values returned,
-                        # extract book metadata from Google API. If returned json metatada from
-                        # Google BooksAPI is invalid, set API = openlibary. Return value if valid
-                        # or return a NoneType if not.
-                        # Case 2: The selected API = openlibrary and valid json_metadata returned,
-                        # extract book metadata from Openlibrary API. if returned json metadata from
-                        # Openlibrary is invalid, set API = google. Return values from Google API
-                        # if valid, otherwise, return a NoneType.
-                        if api1_dict_key == "google":
+                    # Case 1: The selected API = google and valid json_metadata values returned,
+                    # extract book metadata from Google API. If returned json metatada from
+                    # Google BooksAPI is invalid, set API = openlibary. Return value if valid
+                    # or return a NoneType if not.
+                    # Case 2: The selected API = openlibrary and valid json_metadata returned,
+                    # extract book metadata from Openlibrary API. if returned json metadata from
+                    # Openlibrary is invalid, set API = google. Return values from Google API
+                    # if valid, otherwise, return a NoneType.
+                    if api1_dict_key == "google":
 
-                            # Update initialized empty tuple with the values from API
-                            values = get_metadata_from_api(
+                        # Update initialized empty tuple with the values from API
+                        values = get_metadata_from_api(
                                 api1_dict,
                                 api1_dict_key,
                                 api2_dict,
@@ -396,65 +393,39 @@ def fetch_book_metadata(  # noqa: C901
                                 headers,
                                 file_path,
                                 missing_metadata_path
-                            )
-                            # add the filename to raw_files_set to mark it as
-                            # processed
-                            raw_files_set.add(file_name)
-                            time.sleep(5)
-                            estimate_and_save_process_duration(
-                                start_time,
-                                file_name,
-                                duration_dictionary
-                            )
-                            continue
-
-                        else:
-                            values = get_metadata_from_api(
-                                api2_dict,
-                                api2_dict_key,
-                                api1_dict,
-                                api1_dict_key,
-                                isbn,
-                                file,
-                                headers,
-                                file_path,
-                                missing_metadata_path
-                            )
-                            raw_files_set.add(file_name)
-                            time.sleep(5)
-                            estimate_and_save_process_duration(
-                                start_time,
-                                file_name,
-                                duration_dictionary
-                            )
-                            continue
-
-                    except ConnectionError:
-                        logger.exception("Connection Error")
-                        continue
-                    except TimeoutError:
-                        logger.exception("Timeout Error")
-                        continue
-                    except requests.exceptions.ConnectTimeout:
-                        logger.exception("Request ConnectTimeoutError")
-                        continue
-                    except requests.exceptions.HTTPError:
-                        logger.exception("Request HTTPError")
-                        continue
-                    except requests.exceptions.ConnectionError:
-                        logger.exception(
-                            "Request ConnectionError. Check your internet connection",
-                            end="\n",
+                                )
+                        # add the filename to raw_files_set to mark it as
+                        # processed
+                        raw_files_set.add(file_name)
+                        time.sleep(5)
+                        estimate_and_save_process_duration(
+                            start_time,
+                            file_name,
+                            duration_dictionary
                         )
                         continue
-                    except requests.ReadTimeout:  # noqa: F821
-                        logger.exception("ReadTimeoutError")
-                        continue
-                    except requests.RequestException as e:
-                        logger.exception(f"Error '{e}' occured")
-                    except Exception as e:
-                        logger.exception(f"An unexpected error occured: {e}")
 
+                    else:
+                        values = get_metadata_from_api(
+                                    api2_dict,
+                                    api2_dict_key,
+                                    api1_dict,
+                                    api1_dict_key,
+                                    isbn,
+                                    file,
+                                    headers,
+                                    file_path,
+                                    missing_metadata_path
+                                 )
+                        raw_files_set.add(file_name)
+                        time.sleep(5)
+                        estimate_and_save_process_duration(
+                            start_time,
+                            file_name,
+                            duration_dictionary
+                        )
+                        continue
+            # Back to os.scandir() ops
             logger.info(f"Extracted metadata for {file_name}: {values}")
 
             # Extract all titles contained in database as a set 'db_titles'
