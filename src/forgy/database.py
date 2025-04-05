@@ -278,15 +278,14 @@ def get_all_metadata(database, table):
     return all_metadata
 
 
-def get_all_metadata(database, table):
+def show_all_database_content(database, table):
     """Function to get all metadata values from database."""
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT * FROM {table};")
         book_metadata = cursor.fetchall()
         for val in book_metadata:
-            logger.info(val)
-            # print()
+            print()
 
 
 def get_database_columns(database, table, columns=["Title", "ImageLink"]):
