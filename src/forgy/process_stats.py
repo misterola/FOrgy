@@ -31,7 +31,8 @@ from .database import (
 
 
 def number_of_dir_files(directory):
-    """Function to count the number of files  in a directory.
+    """
+    Function to count the number of files  in a directory.
 
     The function is used to estimate total number of files,
     no of files with missing isbn, number of files with missing
@@ -42,7 +43,8 @@ def number_of_dir_files(directory):
 
 
 def number_of_database_files(database, table):
-    """Function to count number of books added to database.
+    """
+    Function to count number of books added to database.
 
     This represents the number of books whose metadata retrieval
     from API was successful.
@@ -58,7 +60,8 @@ def number_of_processed_files(
     missing_isbn_dir,
     missing_metadata_dir
 ):
-    """A function to estimate no of processed files.
+    """
+    A function to estimate no of processed files.
 
     Processed files include: include those with valid metadata
     that have all been added to database, those with missing
@@ -91,7 +94,8 @@ def _number_of_files_remaining(
     missing_isbn_dir,
     missing_metadata_dir
 ):
-    """"Function to count the number of unprocessed files in directory.
+    """"
+    Function to count the number of unprocessed files in directory.
 
     This equals:
     no of books in original source directory - no of files processed
@@ -112,10 +116,11 @@ def _number_of_files_remaining(
 
 
 def percent_api_utilization(database, table):
-    """Function to estimate and track the percentage of total no of
-        metadata retrieved from each of Google BooksAPI and Openlibrary
-        API during each session of book metadata extraction and bulk
-        file-renaming.
+    """
+    Function to estimate and track the percentage of total no of
+    metadata retrieved from each of Google BooksAPI and Openlibrary
+    API during each session of book metadata extraction and bulk
+    file-renaming.
 
     The estimate is done by counting data from Books database "Source"
     column and estimating % of 'www.google.com' and % of 'www.openlibrary.org'
@@ -159,7 +164,8 @@ def file_processing_efficiency(
     table,
     missing_isbn_dir
 ):
-    """Estimates what percentage of total number of books, excluding those
+    """
+    Estimates what percentage of total number of books, excluding those
     with missing ISBN, whose metadata have been added to the Books table in
     database.
     """
@@ -182,7 +188,8 @@ def file_processing_efficiency(
 
 
 def _average_time_per_file(duration_dict):
-    """Measures average time it takes to process a file.
+    """
+    Measures average time it takes to process a file.
 
     Checks time at the beginning of process for a file and at
     the end of a process for file. The time per file is available
@@ -217,8 +224,9 @@ def total_time_remaining(
     missing_isbn_dir,
     missing_metadata_dir
 ):
-    """Estimates how much time remaining for get_metada and file
-        renaming operation.
+    """
+    Estimates how much time remaining for get_metada and file
+    renaming operation.
 
     Estimate this using:
         number of file remaining*average processing time per file
@@ -249,8 +257,9 @@ def total_time_remaining(
 
 
 def format_filename(filename):
-    """Function to wrap filename to keep it within the FOrgy
-        process statistics table.
+    """
+    Function to wrap filename to keep it within the FOrgy
+    process statistics table.
     """
     width = 36
     wraped_filename = textwrap.fill(filename, width)
@@ -267,8 +276,10 @@ def format_filename(filename):
 
 
 def format_time_remaining(time):
-    """Function to format time remaining into
-        minutes or hours"""
+    """
+    Function to format time remaining into
+    minutes or hours
+    """
 
     if time < 60:
         time = f"{time:.2f} minutes"
@@ -288,9 +299,10 @@ def show_statistics(
     missing_metadata,
     duration_dictionary
 ):
+    """A function to show progress of get_metadata operation"""
 
     # Define header and footer for table
-    table_header = """
+    table_header ="""
 =========================================================
                 FOrgy Process Statistics
 =========================================================
