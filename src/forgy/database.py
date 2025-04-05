@@ -8,6 +8,7 @@ import sqlite3
 from pathlib import Path
 
 from .logger import create_logger
+from .isbn_regex import add_to_ref_isbn_set, isbns_in_set
 
 
 logger = create_logger("database")
@@ -210,8 +211,9 @@ def delete_table(source, table_name):
 
 
 def titles_in_db(database, table):
-    """Check database for existence of a given title in Title
-        column of database.
+    """
+    Check database for existence of a given title in Title
+    column of database.
     """
     # Extract title from database as a set. Number of items in set
     # is number of items added to database
@@ -301,3 +303,24 @@ def get_database_columns(database, table, columns=["Title", "ImageLink"]):
         book_metadata = cursor.fetchall()
 
     return book_metadata
+
+
+def is_isbn_in_db(database, table, isbn_list):
+    """
+    Check database for existence of isbns in isbn_list in
+    the RefISBN column.
+    """
+    # Extract isbn from database as a set (for better performance)
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT RefISBN FROM {table};")
+
+        # existing_db_refisbns has the format:
+        # [('9780873897365',), ('9781636940274',)]
+        existing_db_refisbns = cursor.fetchall()
+        ref_isbn_set = set()
+        for isbn in existing_db_refisbns:
+            add_to_ref_isbn_set(isbn[0], ref_isbn_set)
+
+    # # Are extracted values in list present in set of db ref_isbns
+    return isbns_in_set(isbn_list, ref_isbn_set)
