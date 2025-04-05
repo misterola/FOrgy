@@ -48,7 +48,8 @@ def extract_text(pdf_path):
 
 
 def fetch_metadata_from_file(file):
-    """Function to fetch in-built metadata encoded with pdf book.
+    """
+    Function to fetch in-built metadata encoded with pdf book.
 
     Not every book has in-built metadata, so this will not
     always yield expected results. This unreliability is why
@@ -95,8 +96,10 @@ def fetch_metadata_from_file(file):
 
 
 def _extract_last_n_pages(file_path):
-    """Function to extract text from last 20 pages of a
-    pdf document."""
+    """
+    Function to extract text from last 20 pages of a
+    pdf document.
+    """
 
     reader = PdfReader(str(file_path), strict=False)
     extracted_text = ""
@@ -110,7 +113,8 @@ def _extract_last_n_pages(file_path):
 
 
 def _reverse_get_isbn(pdf_path):
-    """Function to extract text from last n pages of a
+    """
+    Function to extract text from last n pages of a
     pdf document.
 
     This is not a very reliable way of extracting ISBN from
