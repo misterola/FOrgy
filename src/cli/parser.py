@@ -37,7 +37,7 @@ def get_parser():
                 prog="FOrgy",
                 description="""A powerful file organizer, ebook manager,
                                 and book metadata extractor in python
-                                """,  
+                                """,
                 epilog="Welcome to %(prog)s v0.1.0!",
             )
     parser.add_argument(
@@ -71,7 +71,6 @@ def get_parser():
         help="move or copy file from source directory(default copy)",
     )
 
-
     # 2. delete_files_parser
     delete_files_parser = subparsers.add_parser(
                             "delete_files",
@@ -96,7 +95,6 @@ def get_parser():
         help="Delete sub-directories in source directory",
     )
 
-
     # 3. copy_directory
     copy_directory_parser = subparsers.add_parser(
                                 "copy_directory_contents",
@@ -113,7 +111,6 @@ def get_parser():
         help="Provide destination directory",
     )
 
-
     # 4. move_directories
     move_directories_parser = subparsers.add_parser(
                                   "move_directories",
@@ -127,7 +124,6 @@ def get_parser():
         'destination_directory',
         help="Provide destination for sub-directories moved",
     )
-
 
     # 5. get_files_from_dir_parser
     get_files_from_dir_parser = subparsers.add_parser(
@@ -197,16 +193,12 @@ def get_parser():
         help="Move files from directory (default is copy, when move_file=False)",
     )
 
-
-
     # 3. get_book_metadata parser
     get_metadata_parser = subparsers.add_parser(
                             "get_metadata",
                             help="Get pdf metadata and rename file",
                           )
 
-    
-    
     get_metadata_parser.add_argument(
         "--book_covers",
         action="store_true",
@@ -316,5 +308,4 @@ def get_parser():
         help="Provide destination for text file containing isbns",
     )
 
-    
     return parser
