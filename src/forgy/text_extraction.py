@@ -20,18 +20,23 @@ from .logger import create_logger
 logger = create_logger("text_extraction")
 
 
-def extract_text(pdf_path):
-    """A function to extract text from a PDF ebook
-        as a long string.
+def extract_text(pdf_path, no_of_pages=20):
+    """A function to extract a specific no of
+        pages of text from a PDF ebook into a
+        long string.
 
-    Only the first 20 pages are extracted here as
+    Only the first 20 pages are extracted here(default) as
     most book ISBNs can be found in this range.
     """
     extracted_text = ""
 
+    total_no_of_pages = 0
+
     # Extract the first n pages of text
     try:
-        reader = PdfReader(str(pdf_path), strict=False)
+        pdf_reader = PdfReader(str(pdf_path), strict=False)
+
+        total_no_of_pages = len(pdf_reader.pages)
     except ValueError as v:
         print(f"ValueError encountered: {v}")
         pass
@@ -39,10 +44,22 @@ def extract_text(pdf_path):
         logger.exception(f"An unexpected error occured: {e}")
         pass
 
-    for n in range(1, 20):
-        page = reader.pages[n]
-        prelim_pages_text = page.extract_text()
-        extracted_text = extracted_text + prelim_pages_text
+    if no_of_pages < total_no_of_pages:
+        for page_no in range(1, no_of_pages + 1):
+            page = pdf_reader.pages[page_no]
+            page_text = page.extract_text()
+            extracted_text = extracted_text + page_text
+
+    elif (
+        no_of_pages > total_no_of_pages
+        or no_of_pages == total_no_of_pages
+    ):
+        for page_no in range(0, total_no_of_pages):
+            page = pdf_reader.pages[page_no]
+            page_text = page.extract_text()
+            extracted_text = extracted_text + page_text
+    else:
+        logger.error(f"Text extraction not successful: {pdf_path}")
 
     return extracted_text
 
@@ -135,3 +152,7 @@ def _reverse_get_isbn(pdf_path):
     logger.info(
         f"Valid ISBNs from {Path(pdf_path).name}: {valid_isbn}"
     )
+
+
+if not __name__=='__main__':
+    pass
