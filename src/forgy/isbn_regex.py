@@ -357,7 +357,7 @@ def extract_valid_isbns(extracted_text):
     # Extract unique ISBN matches
     matched_isbn = list(set(isbn_pattern.findall(extracted_text)))
 
-    print(f"Matched ISBN: {matched_isbn}")
+    logger.info(f"Matched ISBN: {matched_isbn}")
 
     formatted_isbn = format_isbn(matched_isbn)
 
