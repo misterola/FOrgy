@@ -22,8 +22,6 @@ def create_logger(name=None):
 
     os.makedirs(logs_path, exist_ok=True)
 
-    print(f"Log directory created in path: {logs_path}")
-
     logger = logging.getLogger(name)
 
     # if handler exist, avoid duplicating it
@@ -65,3 +63,6 @@ def create_logger(name=None):
     logger.addHandler(rotating_file_handler)
 
     return logger
+
+if not __name__=='__main__':
+    pass
