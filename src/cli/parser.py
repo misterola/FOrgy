@@ -218,15 +218,18 @@ def get_parser():
     )
 
     get_metadata_parser.add_argument(
+        "--GOOGLE_API_KEY",
+        help="Provide Google BooksAPI KEY",
+        default=""  # doesn't affect string concatenation of api url
+    )
+
+    get_metadata_parser.add_argument(
         "--file",
         help="""Enable user to supply arguments as a text file one
               line for each argument (do not specify other arguments
               in the commandline""",
     )
-    get_metadata_parser.add_argument(
-        "--GOOGLE_API_KEY",
-        help="Provide Google BooksAPI KEY",
-    )
+
     get_metadata_parser.add_argument(
         "--database",
         default="library.db",
