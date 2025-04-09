@@ -7,12 +7,14 @@ import os
 import sys
 import unittest
 from pathlib import Path
+import textwrap
+
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.lib.units import cm
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-import textwrap
+
 
 
 sys.path.insert(
