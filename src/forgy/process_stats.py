@@ -302,7 +302,7 @@ def show_statistics(
     """A function to show progress of get_metadata operation"""
 
     # Define header and footer for table
-    table_header ="""
+    table_header = """
 =========================================================
                 FOrgy Process Statistics
 =========================================================
