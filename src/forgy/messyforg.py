@@ -320,7 +320,6 @@ def fetch_book_metadata(  # noqa: C901
                 # Use regex to match isbn in extracted text, into matched_isbn list
                 valid_isbn_list = extract_valid_isbns(extracted_text)
 
-
                 # For files with missing isbn, save extracted text into file,
                 # and move file to missing_isbn directory
                 if (missing_isbn_path.exists() and (not valid_isbn_list)):
@@ -353,15 +352,15 @@ def fetch_book_metadata(  # noqa: C901
                         duration_dictionary
                     )
                     continue
-                
+
                 # Use each isbn in int_isbn_list to search on openlibrary api
                 # and googlebookapi for book metadata and download in json
                 # Repeat same for every isbn in list. If metadata not found,
                 # move file to missing_metadata directory and continue to next isbn.
                 for isbn in valid_isbn_list:
-                        # Select api randomly to avoid overworking any of the apis
-                        # The other api will only be checked if the first returns
-                        # no metadata
+                    # Select api randomly to avoid overworking any of the apis
+                    # The other api will only be checked if the first returns
+                    # no metadata
                     api_list = [
                         {"google": get_metadata_google},
                         {"openlibrary": get_metadata_openlibrary},
@@ -522,7 +521,7 @@ def get_isbns_from_texts(
                     logger.exception(f"Error encountered: {e}")
                     continue
 
-                valid_isbn_list = get_valid_isbns(extracted_text)
+                valid_isbn_list = extract_valid_isbns(extracted_text)
                 logger.info(
                     f"Valid isbn(s) extracted from {file_name} successfully: {valid_isbn_list}"
                 )
