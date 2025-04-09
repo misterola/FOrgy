@@ -29,6 +29,8 @@ user_requirements.py
 #exclude .env file
 *.env
 
+# exclude pdf files
+*.pdf
 #exclude project resources
 forgy_resources/
 
