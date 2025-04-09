@@ -14,8 +14,7 @@ from .isbn_regex import add_to_ref_isbn_set, isbns_in_set
 logger = create_logger("database")
 
 
-
-def create_library_db(destination, library_name = 'library.db'):
+def create_library_db(destination, library_name='library.db'):
     """
     Create a library.db file to contain retrieved book metadata.
 
@@ -24,7 +23,7 @@ def create_library_db(destination, library_name = 'library.db'):
     directory path is provided, the database(.db file) is created
     inside it and if it is a database, a connection is made to it
     to ascertain it's suitability. The database is then closed.
-    """  
+    """
     if (
         not Path(destination).is_dir()
         and not Path(destination).name.endswith('.db')
@@ -65,8 +64,11 @@ path. Database connection unsuccessful"
                 logger.info("Database connection established")
                 return None
         except Exception as e:
-            logger.exception(f"Error {e} occured during operation. \
-Database connection not successful"
+            logger.exception(
+                f"""
+                Error {e} occured during operation.
+                Database connection not successful
+                """
             )
             return None
 
@@ -76,7 +78,6 @@ Database connection not successful"
             f"The specified database {destination} does not exist"
         )
     return None
-
 
 
 def create_db_and_table(
@@ -110,17 +111,17 @@ def create_db_and_table(
 
     db_path = Path(destination)/f"{db_name}"
     logger.info(f"The databaese path: {db_path}")
-    
+
     if Path(destination).exists() and db_path.name.endswith('.db'):
         logger.info("Database already exists")
-        
+
         with sqlite3.connect(db_path) as connection:
             cursor = connection.cursor()
 
             # To check if database contains "Books" table, we use parametric query
-            # to select tables from database. 
+            # to select tables from database.
             query = (
-                f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;"  #""
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
             )
             cursor.execute(query, (table_name,))
 
@@ -173,10 +174,13 @@ def create_db_and_table(
             )
     else:
         # If destination path does not exist
-        logger.info("Database table creation unsuccessfull. Use the\
-create_library_db function to create .db file"
+        logger.info(
+            """
+            Database table creation unsuccessfull. Use the
+            create_library_db function to create .db file
+            """
         )
-        return None      
+        return None
 
 
 def add_metadata_to_table(destination, table_name, values):
@@ -191,14 +195,12 @@ def add_metadata_to_table(destination, table_name, values):
         logger.info("Book details added successfully")
 
 
-
 def view_database_table(source, table_name):
     """Function to view titles of all books in database"""
     with sqlite3.connect(source) as connection:
         # connection.isolation_level = None
         cursor = connection.cursor()
-        for row in cursor.execute(
-            "SELECT Title FROM Books;").fetchall():
+        for row in cursor.execute("SELECT Title FROM Books;").fetchall():
             print(row)
 
 
@@ -298,7 +300,7 @@ def get_database_columns(database, table, columns=["Title", "ImageLink"]):
     with sqlite3.connect(database) as connection:
         cursor = connection.cursor()
         cursor.execute(f"SELECT {database_columns} FROM {table};")
-        # Get book metadata. The format is 
+        # Get book metadata. The format is
         book_metadata = cursor.fetchall()
 
     return book_metadata
@@ -321,5 +323,5 @@ def is_isbn_in_db(database, table, isbn_list):
         for isbn in existing_db_refisbns:
             add_to_ref_isbn_set(isbn[0], ref_isbn_set)
 
-    # # Are extracted values in list present in set of db ref_isbns
+    # Are extracted values in list present in set of db ref_isbns
     return isbns_in_set(isbn_list, ref_isbn_set)
