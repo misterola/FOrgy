@@ -178,7 +178,6 @@ def main():  # noqa: C901
                             )
 
         cli_options_in_file = [
-            args.GOOGLE_API_KEY,
             args.database,
             args.db_table,
             args.user_pdfs_source,
@@ -192,6 +191,7 @@ def main():  # noqa: C901
         book_covers = args.book_covers
         metadata_dict = args.metadata_dict
         move_metadata = args.move_metadata
+        GOOGLE_API_KEY = args.GOOGLE_API_KEY
         file = args.file
 
         if file:
@@ -214,8 +214,9 @@ def main():  # noqa: C901
 
             logger.info(f"Argument list: {argument_list}")
 
-            # Incomplete arguments will not be processed
-            # (google_api_key should not be added to text file)
+            # At least user_pdf_source and user_pdf_destination must
+            # be added to text file. database and table have default
+            # names and you may decide not to override it
             if len(argument_list) < 8:
                 print(
                     "Please add all arguments, excluding --book_covers, \
@@ -223,15 +224,15 @@ def main():  # noqa: C901
                 )
                 pass
 
-            # Fetch arguments from file
+            # Fetch arguments from file (all arguments below must be provided)
             try:
                 [_,
-                 GOOGLE_API_KEY,
-                 _,
                  database,
                  _,
                  db_table,
+                 _,
                  user_pdfs_source,
+                 _,
                  user_pdfs_destination] = argument_list
             except ValueError:
                 print(
@@ -438,7 +439,7 @@ to {user_pdfs_destination} successfully"
             print(
                 """
                 Error: please provide either '--book_covers
-                --metadata_dict --move_metadata --file'
+                --metadata_dict --move_metadata --GOOGLE_API_KEY --file'
                 or the other options
                 """
             )
@@ -495,4 +496,3 @@ to {user_pdfs_destination} successfully"
 
 if __name__ == '__main__':
     main()
-
