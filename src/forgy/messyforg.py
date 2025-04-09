@@ -12,7 +12,7 @@ import requests
 import pypdf
 
 from .isbn_regex import (
-    get_valid_isbns,
+    extract_valid_isbns,
 )
 from .text_extraction import extract_text
 from .metadata_search import (
@@ -318,7 +318,7 @@ def fetch_book_metadata(  # noqa: C901
                     continue
 
                 # Use regex to match isbn in extracted text, into matched_isbn list
-                valid_isbn_list = get_valid_isbns(extracted_text)
+                valid_isbn_list = extract_valid_isbns(extracted_text)
 
 
                 # For files with missing isbn, save extracted text into file,
