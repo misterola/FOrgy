@@ -1,0 +1,15 @@
+pypdf==5.0.1
+requests==2.32.3
+urllib3==2.2.2
+idna==3.8
+certifi==2024.7.4
+charset-normalizer==3.3.2
+reportlab==4.2.2
+pillow==10.4.0
+chardet==5.2.0
+dotenv==0.9.9
+python-dotenv==1.1.0
+flake8==7.1.1
+pyflakes==3.2.0
+pycodestyle==2.12.1
+mccabe==0.7.0
