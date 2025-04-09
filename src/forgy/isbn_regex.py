@@ -310,7 +310,7 @@ def format_isbn(matched_isbn):
     logger.info(f"Cleaned ISBN list: {formatted_isbn_list}")
 
     # extract only unique isbn into unique_isbn list
-    unique_isbn = []
+    unique_isbn_list = []
 
     for val in formatted_isbn_list:
         # Modify 9-digit SBNs by adding a zero as first digit
@@ -323,26 +323,32 @@ def format_isbn(matched_isbn):
 
         # isalnum() eliminates matches with  symbols such as
         # '\n, @$/.&' which are not valid ISBN digits
-        if (val not in unique_isbn) and val.isalnum():
-            unique_isbn.append(val)
+        if (val not in unique_isbn_list) and val.isalnum():
+            unique_isbn_list.append(val)
         else:
             del val
 
-    logger.info(f"Unique ISBN: {unique_isbn}")
+    logger.info(f"Unique ISBN: {unique_isbn_list}")
 
+    return unique_isbn_list    
+
+
+def validate_isbns(unique_isbn_list):
     # Validate isbn
-    valid_isbn = []
-    for val in unique_isbn:
+    valid_isbn_list = []
+
+    for val in unique_isbn_list:
         # print(f"VAL: {val}")
         if is_valid_isbn(val):
-            valid_isbn.append(val)
+            valid_isbn_list.append(val)
         else:
             del val
-        logger.info(f"Valid ISBNS: {valid_isbn}")
-    return valid_isbn
+    logger.info(f"Valid ISBNS: {valid_isbn_list}")
+
+    return valid_isbn_list
 
 
-def get_valid_isbns(extracted_text):
+def extract_valid_isbns(extracted_text):
     """
     Match ISBNs in an extracted text, format
     and validate ISBNS into matched_isbn list
@@ -353,7 +359,9 @@ def get_valid_isbns(extracted_text):
 
     print(f"Matched ISBN: {matched_isbn}")
 
-    valid_isbn = format_isbn(matched_isbn)
+    formatted_isbn = format_isbn(matched_isbn)
+
+    valid_isbn = validate_isbns(formatted_isbn)
 
     return valid_isbn
 
