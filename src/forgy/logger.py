@@ -12,7 +12,6 @@ def create_logger(name=None):
     Console handler: ERROR
     Rotating file handler: INFO
     """
-    
 
     # create logs directory if nonexistent
     logs_parent = Path(os.getcwd()).parent
@@ -64,5 +63,6 @@ def create_logger(name=None):
 
     return logger
 
-if not __name__=='__main__':
+
+if not __name__ == '__main__':
     pass
