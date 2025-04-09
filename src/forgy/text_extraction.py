@@ -154,5 +154,5 @@ def _reverse_get_isbn(pdf_path):
     )
 
 
-if not __name__=='__main__':
+if not __name__ == '__main__':
     pass
