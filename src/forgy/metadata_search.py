@@ -488,7 +488,8 @@ def google_metadata_dict(isbn=None, title=None):
 
     try:
         metadata_dict = json_metadata["items"][0]["volumeInfo"]
-    except KeyError:
+    except (KeyError, TypeError) as e:
+        logger.exception(f"Error encountered: {e}")
         metadata_dict = {"kind": "books#volumes", "totalItems": 0}
     return metadata_dict
 
@@ -504,7 +505,8 @@ def openlibrary_metadata_dict(isbn):
 
     try:
         metadata_dict = json_metadata
-    except KeyError:
+    except (KeyError, TypeError) as e:
+        logger.exception(f"Error encountered: {e}")
         #
         metadata_dict = {
             "error": "notfound",
