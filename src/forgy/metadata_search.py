@@ -262,26 +262,33 @@ def get_subtitle_full_title(metadata_dict, dict_of_interest):
     by API. Some may contain title but not subtitle, and some may
     contain full title and no title or subtitle.
     """
-    if (
-        "title" in metadata_dict.keys()
-        and "subtitle" not in metadata_dict.keys()
-    ):
-        subtitle = "NA"
-        full_title = dict_of_interest["title"]
 
-    elif (
-        "title" in metadata_dict.keys()
-        and "subtitle" in metadata_dict.keys()
-    ):
-        subtitle = dict_of_interest["subtitle"]
-        full_title = (
-            dict_of_interest["title"]
-            + ": "
-            + dict_of_interest["subtitle"]
-        )
-    else:
+    try:
+        if (
+            "title" in metadata_dict.keys()
+            and "subtitle" not in metadata_dict.keys()
+        ):
+            subtitle = "NA"
+            full_title = dict_of_interest["title"]
+
+        elif (
+            "title" in metadata_dict.keys()
+            and "subtitle" in metadata_dict.keys()
+        ):
+            subtitle = dict_of_interest["subtitle"]
+            full_title = (
+                dict_of_interest["title"]
+                + ": "
+                + dict_of_interest["subtitle"]
+            )
+        else:
+            subtitle = "NA"
+            full_title = "NA"
+    except AttributeError as a:
+        logger.exception(f"Attribute error: {a}")
         subtitle = "NA"
         full_title = "NA"
+
     return full_title, subtitle
 
 
@@ -375,20 +382,34 @@ def get_file_size(file_path):
 
 def get_google_metadata_json(API_KEY, isbn=None, title=None):  # noqa: C901
     """Function to fetch raw metadata from Google Books API"""
-    if isbn:
-        googleapi_metadata = (
-            "https://www.googleapis.com/books/v1/volumes?q=isbn:"
-            + isbn
-            + "&key="
-            + API_KEY
-        )
+
+    if API_KEY and len(API_KEY) > 20:
+        if isbn:
+            googleapi_metadata = (
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:"
+                + isbn
+                + "&key="
+                + API_KEY
+            )
+        else:
+            googleapi_metadata = (
+                "https://www.googleapis.com/books/v1/volumes?q=intitle:"
+                + title
+                + "&key="
+                + API_KEY
+            )
     else:
-        googleapi_metadata = (
-            "https://www.googleapis.com/books/v1/volumes?q=intitle:"
-            + title
-            + "&key="
-            + API_KEY
-        )
+        if isbn:
+            googleapi_metadata = (
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:"
+                + isbn
+            )
+        else:
+            googleapi_metadata = (
+                "https://www.googleapis.com/books/v1/volumes?q=intitle:"
+                + title
+            )
+
     try:
         response = requests.get(
             googleapi_metadata,
@@ -491,6 +512,9 @@ def google_metadata_dict(isbn=None, title=None):
     except (KeyError, TypeError) as e:
         logger.exception(f"Error encountered: {e}")
         metadata_dict = {"kind": "books#volumes", "totalItems": 0}
+    except Exception as e:
+        print(f"An unexpected error occured: {e}")
+        return
     return metadata_dict
 
 
@@ -505,13 +529,15 @@ def openlibrary_metadata_dict(isbn):
 
     try:
         metadata_dict = json_metadata
-    except (KeyError, TypeError) as e:
+    except (KeyError, TypeError, AttributeError) as e:
         logger.exception(f"Error encountered: {e}")
         #
         metadata_dict = {
             "error": "notfound",
             "key": f"/{isbn}",
         }
+    except Exception as e:
+        logger.exception(f"An unexpected error encountered: {e}")
     return metadata_dict
 
 
