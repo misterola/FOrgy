@@ -5,65 +5,68 @@
 ------------------------
 
 # forgy
-**forgy** is a powerful file organizer and ebook manager with a Command-Line Interface that enables you to retrieve e-book metadata, and rename or organize your pdf e-books with ease. 
-It can automatically extract valid ISBNs from a large number of e-books, automatically rename books using retrieved reliable metadata (including cover thumbnails!), organize your
-messy file collection into folders according to their formats, and much more. This project arose as a result of the need to reliably rename my ebooks with their correct names while
-keeping them organized on my computer without installing and depending on heavy software with busy interface. The goal is to easily create and maintain a decent personal PDF e-book 
-library for messy PDF e-book collection with ease, especially when the "by their names we shall know them" principle does not strictly apply. The name forgy is from its roots as a 
-file(f) organizer (org) in python (y).
+**forgy** is a powerful file organizer and e-book manager with a Command-Line Interface that enables users to retrieve e-book metadata, and rename PDF e-books with ease. 
+
+Forgy can automatically extract valid ISBNs from many e-books, rename 'unknown' books using retrieved metadata (including cover thumbnails!), organize a messy file collection into folders according to their formats, and much more. This project arose due to the perceived need to reliably rename e-books with their correct titles while keeping them organized on a computer, without installing and depending on heavy software with a busy interface. 
+
+The goal is to easily create and maintain a decent personal PDF e-book library, especially when identifying PDF e-books by their names becomes difficult. The name Forgy is from the project's roots as a file(f) organizer (org) in Python (y).
 <br/>
 <br/>
 ## Table of Contents
-- [Installation](#installation)
+- [Installation (tested on Windows 10)](#installation-tested-on-windows-10)
 - [Usage](#usage)
 - [Example](#example)
 - [License](#license)
 - [Dependencies](#dependencies)
+<br/>
 
-## Installation (Windows 10)
+## Installation (tested on Windows 10)
+1. Verify that you have python installed on your computer.
+   
+   Open windows command prompt (windows button + cmd + enter) and check python version using ```python --version```+ enter. You should see
+   your python version, which in this case is 3.12.4.
 
-1. Verify that you have python installed
-   Open windows command prompt (windows button + cmd + enter) and check python version. The version used here is  3.12.x.
-   ```cmd
-   python --version
-   ```
-   If you don't have python installed, you can download [here](https://www.python.org/downloads)
+   If you don't have python installed, you can download it [here](https://www.python.org/downloads)
    <br/>
-2. Navigate to directory where you want to download forgy into. To download into desktop (for example)
+2. Navigate to directory where you want to keep the cloned forgy that you are about to download.
+
+   To download into desktop directory, use the change directory command as shown below.
    ```cmd
    cd desktop
    ```
-   Alternatively, you can create a directory to contain forgy download using command prompt using ```mkdir new_directory_name```
+   Alternatively, you can create a directory to contain cloned forgy using ```mkdir new_directory_name``` at the command prompt.
    <br/>
-3. Clone the repository
-   You need git installed to achieve this on Windows. Download git for windows [here](https://git-scm.com/downloads/win) ,  Open the downloaded git bash,
-   navigate to the directory that will contain your forgy download (we use desktop in this case) and clone repository.
+3. Clone the repository.
+   You need git installed to clone a repo on Windows. If you don't already use git on your computer, download git for windows [here](https://git-scm.com/downloads/win) ,
+   open the downloaded git bash, navigate to the destination directory for the cloned forgy repo (desktop in this case) and clone repository using the clone command as shown below.
    ```bash
    cd desktop
+   ```
+   ```
    git clone https://github.com/misterola/forgy.git
    ```
    <br/>
-5. Open Windows command prompt (windows button + cmd + enter) and navigate into the project root directory (desktop/forgy). You use the commandline henceforth
+6. Open Windows command prompt (windows button + cmd + enter) and navigate into the project root directory (desktop/forgy). You use the commandline henceforth
    ```cmd
    cd forgy
    ```
    <br/>
-6. Create virtual environment
+7. Create virtual environment
    ```cmd
    python -m venv venv
    ```
    <br/>
-7. Activate virtual environment (You should see '(venv)' in front of your current path in command prompt after using this)
+8. Activate virtual environment (You should see '(venv)' in front of your current path in command prompt after using this)
     ```cmd
     venv\Scripts\activate
     ```
     <br/>
-8. Install dependencies
+9. Install dependencies
    ```cmd
    python -m pip install -r requirements.txt
    ```
    <br/>
-9. You can leave virtual environment at any point using ```deactivate``` command prompt
+10. You can leave virtual environment at any point using ```deactivate``` command prompt
     <br/>
    
 
@@ -133,9 +136,9 @@ Google BooksAPI key is important.
 Google BooksAPI key can be obtained via [Google Cloud Console](https://console.cloud.google.com/) . On the home page:
 
 ```text
-Select a project(if existing) or Create new (right beside Google Logo) > New Project > Create > Left hand menu > APIs and Services > Credentials
-> Create Credentials > API Key (API key created and displayed in dialog box. Copy it and use) > Close dialog > API key (optional) > API Restrictions> Restrict key
-> Google Cloud APIs > Ok
+Select a project(if existing) or Create new (right beside Google Logo) > New Project > Create > Left hand menu > APIs and Services > Credentials >
+> Create Credentials > API Key (API key created and displayed in dialog box. Copy it and use) > Close dialog > API key (optional) > API Restrictions >
+> Restrict key > Google Cloud APIs > Ok
 ```
 
 
