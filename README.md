@@ -112,15 +112,15 @@ The use of forgy is currently via its CLI.
    ```
    <br/>
 
-	From the above, there are eight major subcommands you can use to organize your files and these include: 		 
-	a. organize_extension
-	b. delete_files
-	c. copy_directory_contents
-	d. move_directories
-	e. get_files_from_dir
-	f. get_metadata
-	g. get_single_metadata
-	h. get_isbns_from_texts
+From the above, there are eight major subcommands you can use to organize your files and these include: 		 
+    a. organize_extension
+    b. delete_files
+    c. copy_directory_contents
+    d. move_directories
+    e. get_files_from_dir
+    f. get_metadata
+    g. get_single_metadata
+    h. get_isbns_from_texts
 
 The functions of each are as listed and you can always view usage of sub-command using: ```python -m forgy-app sub-command-name --help```.
 The get_metadata requires an optional GoogleBooks API key. **forgy** is built on two major books API (Google and Openlibrary) which are
