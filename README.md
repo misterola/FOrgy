@@ -37,42 +37,46 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
    Alternatively, you can create a directory to contain cloned forgy using ```mkdir new_directory_name``` at the command prompt.
    <br/>
 3. Clone the repository.
+   
    You need git installed to clone a repo on Windows. If you don't already use git on your computer, download git for windows [here](https://git-scm.com/downloads/win) ,
    open the downloaded git bash, navigate to the destination directory for the cloned forgy repo (desktop in this case) and clone repository using the clone command as shown below.
    ```bash
    cd desktop
    ```
+
    ```
    git clone https://github.com/misterola/forgy.git
    ```
    <br/>
-6. Open Windows command prompt (windows button + cmd + enter) and navigate into the project root directory (desktop/forgy). You use the commandline henceforth
+4. Open Windows command prompt (windows button + cmd + enter) and navigate to the project root directory (desktop/forgy).
+   You use the command prompt for the rest of the process.
    ```cmd
    cd forgy
    ```
    <br/>
-7. Create virtual environment
+5. Create virtual environment
+   
    ```cmd
    python -m venv venv
    ```
    <br/>
-8. Activate virtual environment (You should see '(venv)' in front of your current path in command prompt after using this)
+6. Activate virtual environment.
+   
+   You should see '(venv)' in front of your current path in command prompt after activating virtual environment.
     ```cmd
     venv\Scripts\activate
     ```
     <br/>
-9. Install dependencies
+7. Install dependencies
+    
    ```cmd
    python -m pip install -r requirements.txt
    ```
    <br/>
-10. You can leave virtual environment at any point using ```deactivate``` command prompt
-    <br/>
-   
-
+8. You can leave virtual environment at any point using ```deactivate``` command prompt
+   <br/>
 ## Usage
-The use of forgy is currently via its CLI.
-
+Sub-commands in forgy can be currently accessed via the CLI.
 1. Navigate to source directory which contains the CLI app
    ```cmd
    cd src
