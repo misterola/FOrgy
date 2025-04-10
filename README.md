@@ -114,21 +114,14 @@ The use of forgy is currently via its CLI.
 
 From the above, there are eight major subcommands you can use to organize your files and these include:
 <br/>
-a. organize_extension
-<br/>
-b. delete_files
-<br/>
-c. copy_directory_contents
-<br/>
-d. move_directories
-<br/>
-e. get_files_from_dir
-<br/>
-f. get_metadata
-<br/>
-g. get_single_metadata
-<br/>
-h. get_isbns_from_texts
+- organize_extension
+- delete_files
+- copy_directory_contents
+- move_directories
+- get_files_from_dir
+- get_metadata
+- get_single_metadata
+- get_isbns_from_texts
 <br/>
 
 The functions of each are as listed and you can always view usage of sub-command using: ```python -m forgy-app sub-command-name --help```.
@@ -143,7 +136,8 @@ Select a project(if existing) or Create new (right beside Google Logo) > New Pro
 > Google Cloud APIs > Ok
 
 
-## Example (extracting valid isbns from all PDF books in a directory)
+## Example
+Task: extracting valid isbns from all PDF books in a directory
 Here, we want to extract ISBNs from books located in a particular directory. First, we view CLI help to locate a subcommandS to do that.
 And looking at the sample output above (see usage), the get_isbns_from_texts subparser is the one that does this. For the sake of simplicity, we keep all
 PDF ebooks inside one folder and then we view help page for get_isbns_from_texts subcommand to understand how to use it.
@@ -152,7 +146,7 @@ python -m forgy-app get_isbns_from_texts -h
 ```
 Sample output:
 
-```
+	```
 	usage: forgy-app get_isbns_from_texts [-h] [--isbn_text_filename ISBN_TEXT_FILENAME] source_directory destination_directory
 
 	Extract ISBNs from PDF files as a dictionary with filename as key and valid ISBNs extracted as a list of values
@@ -167,7 +161,7 @@ Sample output:
   	--isbn_text_filename ISBN_TEXT_FILENAME
                         	Provide name of text file containing isbns
 	```
-   <br/>
+
 The usage of the subcommand is shown on the first line in the help screen above. Only two (postional) arguments are compulsory here while the
 the name of the text file containing extracted ISBNs is optional (the default is 'extracted_isbns.txt'). Therefore, to use the get_isbns_from_texts
 command, you need a source_directory containing the PDF files to extract ISBNs from, a destination_directory where you save file containing extracted isbns
