@@ -131,9 +131,12 @@ per month which can theoretically be increased. To avoid overwhelming a single A
 Google BooksAPI key is important.
 
 Google BooksAPI key can be obtained via [Google Cloud Console](https://console.cloud.google.com/) . On the home page:
+
+```text
 Select a project(if existing) or Create new (right beside Google Logo) > New Project > Create > Left hand menu > APIs and Services > Credentials
 > Create Credentials > API Key (API key created and displayed in dialog box. Copy it and use) > Close dialog > API key (optional) > API Restrictions> Restrict key
 > Google Cloud APIs > Ok
+```
 
 
 ## Example
