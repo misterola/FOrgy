@@ -34,7 +34,7 @@ def get_parser():
                             excludes the book covers
     """
     parser = argparse.ArgumentParser(
-                prog="FOrgy",
+                prog="forgy-app",
                 description="""A powerful file organizer, ebook manager,
                                 and book metadata extractor in python
                                 """,
@@ -291,11 +291,14 @@ def get_parser():
     # TODO: Enable user to rename file with ref_isbn
     get_isbns_from_texts_parser = subparsers.add_parser(
                                   "get_isbns_from_texts",
-                                  help="""Extract isbns from
-                                          source_directory pdf
-                                          files into a text file
-                                          (isbn_text_filename)
-                                          """,
+                                  description="""Extract ISBNs from PDF files
+                                  as a dictionary with filename as key and
+                                  valid ISBNs extracted as a list of values""",
+                                  help="Extract isbns from PDFs",
+                                          # source_directory pdf
+                                          # files into a text file
+                                          # (isbn_text_filename)
+                                          # """,
                                   )
     get_isbns_from_texts_parser.add_argument(
         'source_directory',
@@ -307,8 +310,8 @@ def get_parser():
     )
     get_isbns_from_texts_parser.add_argument(
         '--isbn_text_filename',
-        default="extracted_book_isbns.txt",
-        help="Provide destination for text file containing isbns",
+        default="extracted_isbns.txt",
+        help="Provide name of text file containing isbns",
     )
 
     return parser
