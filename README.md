@@ -112,15 +112,24 @@ The use of forgy is currently via its CLI.
    ```
    <br/>
 
-From the above, there are eight major subcommands you can use to organize your files and these include: 		 
-    a. organize_extension
-    b. delete_files
-    c. copy_directory_contents
-    d. move_directories
-    e. get_files_from_dir
-    f. get_metadata
-    g. get_single_metadata
-    h. get_isbns_from_texts
+From the above, there are eight major subcommands you can use to organize your files and these include:
+<br/>
+a. organize_extension
+<br/>
+b. delete_files
+<br/>
+c. copy_directory_contents
+<br/>
+d. move_directories
+<br/>
+e. get_files_from_dir
+<br/>
+f. get_metadata
+<br/>
+g. get_single_metadata
+<br/>
+h. get_isbns_from_texts
+<br/>
 
 The functions of each are as listed and you can always view usage of sub-command using: ```python -m forgy-app sub-command-name --help```.
 The get_metadata requires an optional GoogleBooks API key. **forgy** is built on two major books API (Google and Openlibrary) which are
@@ -182,7 +191,7 @@ The source and destination directories are in user desktop. And once you push th
 - [pypdf - extract text from PDF ebook](https://github.com/py-pdf/pypdf)
 - [dotenv - manage user Google BooksAPI key-value pairs as environment variables](https://github.com/theskumar/python-dotenv)
 - [reportlab - to create pdf file in some test](https://pypi.org/project/reportlab)
-- [flake8](https://flake8.pycqa.org/en/latest/)
+- [flake8 - format code](https://flake8.pycqa.org/en/latest/)
 
 ## TODO
 - Package and release version 0.1.0 of FOrgy version (with a CLI and/or GUI)
