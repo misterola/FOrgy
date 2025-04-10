@@ -75,6 +75,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
    <br/>
 8. You can leave virtual environment at any point using ```deactivate``` command prompt
    <br/>
+   <br/>
 ## Usage
 Sub-commands in forgy can be currently accessed via the CLI.
 1. Navigate to source directory which contains the CLI app
