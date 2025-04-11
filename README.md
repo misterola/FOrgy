@@ -144,7 +144,9 @@ From the above, there are eight major subcommands you can use to carryout variou
 The functions of sub-commands are as stated in the CLI help shown earlier. You can always view usage of sub-commands using: ```python -m forgy-app sub-command-name --help```.
 <br/>
 
-Note that the get_metadata sub-command requires an optional GoogleBooks API key. The get_metadata sub-command in **forgy** is built on two major books API (Google and Openlibrary) which are freely available. Openlibrary API is available for free with some api request per sec limit to enforce responsible usage. Google BooksAPI has a default quota of about 1000 api calls
+Note that the get_metadata sub-command requires an optional GoogleBooks API key. The get_metadata sub-command in **forgy** is built on two major books API (Google and Openlibrary) which are freely available. 
+
+Openlibrary API is available for free with some API request per sec limit to enforce responsible usage. Google BooksAPI has a default quota of about 1000 API calls
 per month which can theoretically be increased. 
 
 To avoid overwhelming a single API and provide access to more book metadata, providing Google BooksAPI key is important and forgy
