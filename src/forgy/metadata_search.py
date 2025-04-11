@@ -895,18 +895,20 @@ def get_single_book_metadata(
     if book_title:
         values = get_metadata_google(
                         file,
-                        title=book_title,
+                        title_of_book=book_title,
                      )
     elif book_isbn:
         if is_valid_isbn(book_isbn):
             values = get_metadata_google(
                         file,
-                        isbn=book_isbn,
+                        isbn_of_book=book_isbn,
                      )
         else:
             logger.error(f"Invalid ISBN: {book_isbn}")
     else:
         logger.warning("Please provide a valid title or isbn")
+
+    print(values)
 
     return values
 
