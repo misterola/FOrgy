@@ -13,20 +13,21 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
 <br/>
 <br/>
 ## Table of Contents
-- [Installation (tested on Windows 10)](#installation-tested-on-windows-10)
+- [Setting up forgy (Windows)](#setting-up-forgy-windows-10)
 - [Usage](#usage)
 - [Example](#example)
 - [License](#license)
 - [Dependencies](#dependencies)
 <br/>
 
-## Installation (tested on Windows 10)
+## Setting up forgy (Windows 10)
 1. Verify that you have python installed on your computer.
    
    Open windows command prompt (windows button + cmd + enter) and check python version using ```python --version```+ enter. You should see
    your python version, which in this case is 3.12.4.
 
    If you don't have python installed, you can download it [here](https://www.python.org/downloads)
+   <br/>
    <br/>
 2. Navigate to directory where you want to keep the cloned forgy that you are about to download.
 
@@ -35,6 +36,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
    cd desktop
    ```
    Alternatively, you can create a directory to contain cloned forgy using ```mkdir new_directory_name``` at the command prompt.
+   <br/>
    <br/>
 3. Clone the repository.
    
