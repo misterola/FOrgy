@@ -48,7 +48,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
    git clone https://github.com/misterola/forgy.git
    ```
    <br/>
-4. Open Windows command prompt (windows button + cmd + enter) and navigate to the project root directory (desktop/forgy).
+4. Re-open Windows command prompt and navigate to the project root directory (desktop/forgy).
    You use the command prompt for the rest of the process.
    ```cmd
    cd forgy
