@@ -80,7 +80,7 @@ def main():  # noqa: C901
             move=move_files
         )
 
-    elif args.subcommands == 'delete_files':
+    elif args.subcommands == 'delete_files_directories':
         source_directory = args.source_directory
         files = args.files
         directories = args.directories
