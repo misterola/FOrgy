@@ -5,22 +5,24 @@
 ------------------------
 
 # forgy
-**forgy** is a powerful file organizer and e-book manager with a Command-Line Interface that enables users to retrieve e-book metadata, and rename PDF e-books with ease. 
+**forgy** is a powerful file organizer and e-book manager with a command-line interface for reliable retrieval of e-book metadata and easy renaming of PDF e-books.
 
-Forgy can automatically extract valid ISBNs from many e-books, rename 'unknown' books using retrieved metadata (including cover thumbnails!), organize a messy file collection into folders according to their formats, and much more. This project arose due to the perceived need to reliably rename e-books with their correct titles while keeping them organized on a computer, without installing and depending on heavy software with a busy interface. 
+**forgy** can automatically extract valid ISBNs from many PDF e-books, get metadata for ebooks using extracted ISBNs, rename 'unknown' books using retrieved metadata, organize a messy file collection into folders according to their formats, and much more. This project arose due to the perceived need to reliably rename e-books with their correct titles while keeping them organized on a computer, without installing and depending on heavy software with a busy interface. 
 
-The goal is to easily create and maintain a decent personal PDF e-book library, especially when identifying PDF e-books by their names becomes difficult. The name Forgy is from the project's roots as a file(f) organizer (org) in Python (y).
+The goal is to easily create and maintain a decent personal PDF e-book library, especially when identifying PDF e-books by their names becomes difficult. The name **forgy** is from the project's roots as a file(f) organizer (org) in Python (y).
+
+Note: Development and testing was done on a Windows 10 PC with python 3.12.4 installed.
 <br/>
 <br/>
 ## Table of Contents
-- [Setting up forgy (Windows)](#setting-up-forgy-windows-10)
+- [Setting up forgy](#setting-up-forgy)
 - [Usage](#usage)
 - [Example](#example)
 - [License](#license)
 - [Dependencies](#dependencies)
 <br/>
 
-## Setting up forgy (Windows 10)
+## Setting up forgy
 1. Verify that you have python installed on your computer.
    
    Open windows command prompt (windows button + cmd + enter) and check python version using ```python --version```+ enter. You should see
@@ -41,7 +43,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
 3. Clone the repository.
    
    You need git installed to clone a repo on Windows. If you don't already use git on your computer, download git for windows [here](https://git-scm.com/downloads/win) ,
-   open the downloaded git bash, navigate to the destination directory for the cloned forgy repo (desktop in this case) and clone repository using the clone command as shown below.
+   open the downloaded git bash, navigate to the destination directory for the cloned forgy repo (desktop in this case) and clone repository using the clone command (in git) as shown below.
    ```bash
    cd desktop
    ```
@@ -51,7 +53,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
    ```
    <br/>
 4. Re-open Windows command prompt and navigate to the project root directory (desktop/forgy).
-   You use the command prompt for the rest of the process.
+   You may use the command prompt henceforth.
    ```cmd
    cd forgy
    ```
@@ -78,9 +80,10 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
 8. You can leave virtual environment at any point using ```deactivate``` command prompt
    <br/>
    <br/>
+   <br/>
+
 ## Usage
-Sub-commands in forgy can be currently accessed via the CLI.
-1. Navigate to source directory which contains the CLI app
+1. Navigate to source directory for forgy which contains the command-line interface named 'forgy-app'
    ```cmd
    cd src
    ```
@@ -141,13 +144,13 @@ From the above, there are eight major subcommands you can use to carryout variou
 - delete_files_directories
 <br/>
 
-The functions of sub-commands are as stated in the CLI help shown earlier. You can always view usage of sub-commands using: ```python -m forgy-app sub-command-name --help```.
+The function of the sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: ```python -m forgy-app sub-command-name --help```.
 <br/>
 
 Note that the get_metadata sub-command requires an optional GoogleBooks API key. The get_metadata sub-command in **forgy** is built on two major books API (Google and Openlibrary) which are freely available. 
 
-Openlibrary API is available for free with some API request per sec limit to enforce responsible usage. Google BooksAPI has a default quota of about 1000 API calls
-per month which can theoretically be increased. 
+Openlibrary API is available for free with some API request per minute per IP limit to enforce responsible usage. Google BooksAPI has a default quota of about 1000 free API calls
+per month per IP, which can theoretically be increased via the google cloud console.
 
 To avoid overwhelming a single API and provide access to more book metadata, providing Google BooksAPI key is important and forgy
 randomly selects between these two APIs for metadata retrieval.
@@ -161,10 +164,13 @@ Select a project if existing or Create new (right beside Google Console Logo) > 
 > Restrict key > Google Cloud APIs > OK
 ```
 
+<br/>
+<br/>
+
 ## Example
 Task: extracting valid isbns from all PDF books in a directory
 
-Here, we want to extract ISBNs from books located in a particular directory. First, we view CLI help to locate a subcommand to do that. Looking at the sample output above (see usage section), the get_isbns_from_texts subparser is the one that does this. For the sake of simplicity, we keep all PDF ebooks inside one folder and then we view help page for get_isbns_from_texts subcommand to understand how to use it.
+Here, we want to extract ISBNs from books located in a particular directory. First, we view command-line help to identify a subcommand for that. Looking at the sample output above (see usage section), the get_isbns_from_texts sub-command is the one that does this. For the sake of simplicity, we keep all PDF ebooks inside one folder and then we view help page for get_isbns_from_texts subcommand to understand how to use it.
 ```cmd
 python -m forgy-app get_isbns_from_texts -h
 ```
@@ -199,20 +205,31 @@ The command to extract ISBNs from texts, contained in source-directory into a te
 ```cmd
 python -m forgy-app get_isbns_from_texts C:\Users\User-name\Desktop\source-directory C:\Users\User-name\Desktop\destination-directory
 ```
+
 Once you press the enter key, ISBN extraction takes place on all PDF files in C:\Users\User-name\Desktop\source-directory
 <br/>
 <br/>
 <br/>
 
 ## License
-**forgy** is available under [AGPL3](https://www.gnu.org/licenses/agpl-3.0.txt) open-source license
+GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt))
+
+<br/>
+<br/>
 
 ## Dependencies
 - [requests - make HTTP request](https://github.com/psf/requests)
 - [pypdf - extract text from PDF ebook](https://github.com/py-pdf/pypdf)
 - [dotenv - manage user Google BooksAPI key-value pairs as environment variables](https://github.com/theskumar/python-dotenv)
-- [reportlab - to create pdf file in some test](https://pypi.org/project/reportlab)
 - [flake8 - format code](https://flake8.pycqa.org/en/latest/)
+- [reportlab - to create pdf file in some test](https://pypi.org/project/reportlab)
+<br/>
+<br/>
 
 ## TODO
+- More testing
 - Package and release version 0.1.0 of FOrgy version (with a CLI and/or GUI)
+- Separate get_metadata into two different sub-commands for parsing of arguments from the cmd and text file
+- Enable extraction of metadata without modifying e-book titles
+- More refactoring
+- Create GUI
