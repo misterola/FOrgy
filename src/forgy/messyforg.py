@@ -81,18 +81,19 @@ def create_directories(
     function is working
     """
 
-    current_directory = Path(os.getcwd())
+    # Forgy internal director path. This is located
+    # inside the home directory in user computer. The
+    # .forgy directory contains data and logs directories
+    # and is created at first invocation of the create_logger
+    # function in the logger module.
+    forgy_dir = Path.home()/".forgy"
 
-    # Get the parent directory for the data/ directory.
-    # If this module is run from main.py, the parent is
-    # one level above current directory in the directory
-    # tree. If this module runs on its own, the parent is
-    # even one steps further above.
-    data_parent_directory = current_directory.parent
-    logger.info(f"Data parent directory: {data_parent_directory}")
+    logger.info(f"Data parent director: {forgy_dir}")
 
     # Create path to data directory
-    data_path = data_parent_directory/data
+    data_path = forgy_dir/data
+
+    logger.info(f"Data parent directory: {forgy_dir}")
 
     # Create the paths to all sub_directories in data/
     forgy_pdfs_copy_path = data_path/forgy_pdfs_copy
@@ -123,7 +124,7 @@ def create_directories(
             )
             continue
         try:
-            directory.mkdir(exist_ok=True)
+            directory.mkdir(parents=True, exist_ok=True)
             logger.info(f"{directory} directory created successfully")
         except FileExistsError:
             # Delete all files inside directory
