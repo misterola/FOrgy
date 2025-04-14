@@ -15,6 +15,7 @@ setup(
     long_description=read_me,
     long_description_content_type='text/markdown',
     url="https://github.com/misterola/forgy",
+    license="AGPL-3.0",
     packages=find_packages(where='src'),
     package_dir={"": "src"},
     install_requires=[
