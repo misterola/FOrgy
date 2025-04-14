@@ -196,7 +196,9 @@ Once you press the enter key, ISBN extraction from all PDF files in ```C:\Users\
       get_isbns_from_texts(source_directory, txt_destination_dir)
    ```
 Note: API documentation for forgy is still in progress and the CLI option is much more documented at this point and is therefore recommended. Feel free to explore forgy internals. See next section on how to set up forgy on your local computer and explore workings of various modules and public APIs within them.
-   
+ <br/>
+ <br/>
+ 
 ## Setting up forgy locally
 1. Verify that you have python installed on your computer.
    
