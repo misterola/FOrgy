@@ -1,5 +1,8 @@
+"""
+A module to create and configure logger
+"""
+
 import logging
-import os
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
@@ -14,12 +17,10 @@ def create_logger(name=None):
     """
 
     # create logs directory if nonexistent
-    logs_parent = Path(os.getcwd()).parent
+    # logs_parent = Path(os.getcwd()).parent
+    logs_dir_path = Path.home()/".forgy"/"logs"
 
-    # print(logs_parent)
-    logs_path = logs_parent/"logs"
-
-    os.makedirs(logs_path, exist_ok=True)
+    logs_dir_path.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(name)
 
@@ -44,7 +45,7 @@ def create_logger(name=None):
 
     # 2. Rotating file handler (a max filesize of 5MB)
     rotating_file_handler = RotatingFileHandler(
-                                f'{logs_path}/app.log',
+                                f'{logs_dir_path}/app.log',
                                 maxBytes=5e6,
                                 backupCount=3
                             )
