@@ -135,9 +135,9 @@ Select a project if existing or Create new (right beside Google Console Logo) > 
 <br/>
 
 ## Example
-Task: extracting valid isbns from all PDF books in a directory
-
-Here, we want to extract ISBNs from books located in a particular directory. First, we view command-line help to identify a subcommand for that. Looking at the sample output above (see usage section), the get_isbns_from_texts sub-command is the one that does this. For the sake of simplicity, we keep all PDF ebooks inside one folder and then we view help page for get_isbns_from_texts subcommand to understand how to use it.
+**Task**: Extracting all valid ISBNs from all PDF books located in a directory
+### Using forgy CLI
+First, we view command-line help to identify a sub-command for ISBN extraction. Looking at the sample output above (see usage section), the get_isbns_from_texts sub-command is the one that _"extract isbns from several PDF e-books contained in source_directory"_. For the sake of simplicity, we keep all PDF ebooks inside one folder and then we view help page for get_isbns_from_texts subcommand to understand how to use it.
 ```cmd
 forgy get_isbns_from_texts -h
 ```
@@ -177,7 +177,23 @@ Once you press the enter key, ISBN extraction takes place on all PDF files in C:
 <br/>
 <br/>
 <br/>
-
+### Using forgy API
+1. Import the get_isbns_from_texts function to execute the current task and pathlib.Path from python standard library to properly handle the path to source and destination directories
+   ```cmd
+   from forgy.messyforg import get_isbns_from_texts
+   ```
+2. Define the source and destination directories
+   ```cmd
+   source_directory = Path(r'C:\Users\USER-NAME\Desktop\SOURCE-DIRECTORY')
+   txt_destination_dir = Path(r'C:\Users\USER-NAME\Desktop')
+   ```
+3. Get ISBNs from all PDF e-books in the source directory by calling the imported function.
+   ```cmd
+      get_isbns_from_texts(source_directory, txt_destination_dir)
+   ```
+Note: API documentation for forgy is still in progress and the CLI option is much more documented at this point. Feel free to explore forgy internals. See next section on how to set up forgy
+on your local computer and explore workings of various modules and their components.
+   
 ## Setting up forgy locally
 1. Verify that you have python installed on your computer.
    
@@ -237,9 +253,7 @@ Once you press the enter key, ISBN extraction takes place on all PDF files in C:
    <br/>
    <br/>
    <br/>
-
-## Usage_remove
-1. Navigate to source directory for forgy which contains the command-line interface named 'forgy-app'
+9. Navigate to source directory for forgy which contains the command-line interface na
    ```cmd
    cd src
    ```
