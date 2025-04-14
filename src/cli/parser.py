@@ -34,7 +34,7 @@ def get_parser():
                             excludes the book covers
     """
     parser = argparse.ArgumentParser(
-                prog="forgy-app",
+                prog="forgy",
                 description="""A powerful file organizer, ebook manager,
                                 and book metadata extractor in python
                                 """,
@@ -51,7 +51,6 @@ def get_parser():
                     description="Valid subcommands",
                     dest="subcommands",
                 )
-
 
     # 1. get_book_metadata parser
     get_metadata_parser = subparsers.add_parser(
