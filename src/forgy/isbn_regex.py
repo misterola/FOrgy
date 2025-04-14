@@ -330,7 +330,7 @@ def format_isbn(matched_isbn):
 
     logger.info(f"Unique ISBN: {unique_isbn_list}")
 
-    return unique_isbn_list    
+    return unique_isbn_list
 
 
 def validate_isbns(unique_isbn_list):
