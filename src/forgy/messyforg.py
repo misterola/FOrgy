@@ -531,7 +531,7 @@ def get_isbns_from_texts(
                 isbns_file_path = f"{txt_destination_dir}/{text_filename}.txt"
 
                 print(f"'{file_name}': {valid_isbn_list}")
-                
+
         with open(isbns_file_path, 'a') as isbn_file:
             isbn_file.write(str(isbn_dict))
             logger.exception(
