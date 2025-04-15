@@ -99,6 +99,9 @@ def move_folders(source_dir, destination_dir):
                     logger.exception(f"Error moving {src_path}: {e}")
             else:
                 logger.info(f"Skipped non-directory item: {entry.path}")
+
+    print(f"Folders moved from {src_dir} into {dst_dir}")
+
     return None
 
 
@@ -128,6 +131,7 @@ def copy_directory_contents(user_pdfs_source, forgy_pdfs_copy):
     except Exception as e:
         logger.exception(f"Exception {e} raised")
         pass
+    print(f"Files copied from {user_pdfs_source} to {forgy_pdfs_copy}")
 
 
 def get_files_from_directory(  # noqa:C901
@@ -352,7 +356,7 @@ def log_copy_or_move(source=None, destination=None, move=False):
     """Function to customize logged message"""
 
     if not move:
-        logger(
+        logger.info(
             f"Files in {source} directory copied into {destination}"
         )
     else:
@@ -379,12 +383,12 @@ def get_files_from_sources(
     # by the underlying funtions
 
     # The default: copy pdfs from a single source directory
-    if directory_src and isinstance(src, str):
+    if directory_src: # and isinstance(src, str):
         get_files_from_directory(src, dst, move=move_file)
         log_copy_or_move(source=src, destination=dst, move=move_file)
 
     # Copy pdf files from source directories (paths) in a list
-    elif directory_list_src and isinstance(src, list):
+    elif directory_list_src:  # and isinstance(src, list):
         get_files_from_directories(src, dst, move=move_file)
         return None
 
@@ -512,6 +516,7 @@ successfully."
             )
         else:
             logger.info(f"No {ext} files in directory {src_dir.name}.")
+    print(f"Organized files from {source_directory} saved to {destination_directory}")
 
     return extension_set
 
@@ -542,6 +547,8 @@ def delete_files_in_directory(directory, files=True, directories=False):
         logger.exception(f"Error {e} occured")
     except Exception as e:
         logger.exception(f"An unexpected error {e} encountered")
+
+    print(f"Contents deleted from {directory}")
 
 
 def move_file_or_directory(source, destination):
