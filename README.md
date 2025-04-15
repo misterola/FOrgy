@@ -200,11 +200,11 @@ Once you press the enter key, ISBN extraction from all PDF files in ```C:\Users\
 
 ### Using forgy public APIs
 1. Import the ```get_isbns_from_texts``` function to execute the current task and ```pathlib.Path``` from python standard library to properly handle the path to source and destination
-   directories
+   directories.
    ```cmd
    from forgy.messyforg import get_isbns_from_texts
    ```
-2. Define the source and destination directories
+2. Define the source and destination directories.
    ```cmd
    source_directory = Path(r'C:\Users\USER-NAME\Desktop\SOURCE-DIRECTORY')
    txt_destination_dir = Path(r'C:\Users\USER-NAME\Desktop')
@@ -258,7 +258,7 @@ In the next section, you will learn how to set up forgy locally on your computer
    cd forgy
    ```
    <br/>
-6. Create virtual environment
+6. Create virtual environment.
    
    ```cmd
    python -m venv venv
@@ -271,13 +271,13 @@ In the next section, you will learn how to set up forgy locally on your computer
     venv\Scripts\activate
     ```
     <br/>
-8. Install dependencies
+8. Install dependencies.
     
    ```cmd
    python -m pip install -r requirements.txt
    ```
    <br/>
-9. You can leave virtual environment at any point using ```deactivate``` command prompt
+9. You can leave virtual environment at any point using ```deactivate``` command prompt.
    <br/>
    <br/>
    <br/>
@@ -287,7 +287,7 @@ In the next section, you will learn how to set up forgy locally on your computer
    ```
    
    <br/>
-11. To view help page to understand all subcommands available
+11. To view help page to understand all subcommands available.
 
    ```cmd
    python -m main -h
