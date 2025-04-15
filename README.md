@@ -320,10 +320,8 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 
 ## TODO
 - More testing
-- Package and release version 0.1.0 of FOrgy version (with a CLI and/or GUI)
-- Separate get_metadata into two different sub-commands for parsing of arguments from the cmd and text file
 - Enable extraction of metadata without modifying e-book titles
 - More refactoring
-- Create a simple GUI
+- Create a simple, minimal GUI
 
 [Back to Top](#forgy)
