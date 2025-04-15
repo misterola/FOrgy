@@ -7,9 +7,6 @@ for forgy command-line interface
 from pathlib import Path
 import os
 import shutil
-# import pypdf
-
-# from dotenv import load_dotenv
 
 from forgy.messyforg import (
     check_internet_connection,
@@ -45,6 +42,8 @@ logger.info("Logger started in main module")
 
 def fetch_arguments_from_file(file_path):
     """Function to read commandline arguments from file"""
+    file_path = Path(file_path)
+
     with open(file_path, 'r') as arguments:
         argument_list = arguments.read().splitlines()
         print(argument_list)
@@ -113,7 +112,12 @@ def main():  # noqa: C901
 
     elif args.subcommands == 'get_files_from_dir':
         if args.directory_src:
-            source_directory = args.source_directory
+            try:
+                source_directory = args.source_directory[0]
+            except Exception as e:
+                parser.exit(1, message=f'Provide only one directory source:{e}')
+                return
+
             destination_directory = args.destination_directory
             directory_src = args.directory_src
             move = args.move
@@ -127,21 +131,26 @@ def main():  # noqa: C901
             )
 
         elif args.directory_list_src:
-            source_directory2 = args.source_directory2
+            source_directory = args.source_directory
             destination_directory = args.destination_directory
             directory_list_src = args.directory_list_src
             move = args.move
 
             # directory_src=False, directory_tree_src=False,
             get_files_from_sources(
-                source_directory2,
+                source_directory,
                 destination_directory,
                 directory_list_src=directory_list_src,
                 move_file=move,
             )
 
         elif args.directory_tree_src:
-            source_directory = args.source_directory
+            try:
+                source_directory = args.source_directory[0]
+            except Exception as e:
+                parser.exit(1, message=f'Provide only one directory source:{e}')
+                return
+
             destination_directory = args.destination_directory
             directory_tree_src = args.directory_tree_src
             move = args.move
@@ -162,7 +171,8 @@ def main():  # noqa: C901
         if check_internet_connection():
             print("Internet connection is available")
         else:
-            print("Internet is unavailable")
+            # print("Internet is unavailable")
+            parser.exit(1, message='Internet connection is unavailable')
             return
 
         # Set-up internal directories (in parent of current
@@ -174,288 +184,116 @@ def main():  # noqa: C901
             missing_metadata_path,
             book_metadata_path,
             extracted_texts_path,
-            cover_pics_path
+            cover_pics_path,
+
         ] = create_directories(
-                                data="data",
-                                forgy_pdfs_copy="pdfs",
-                                missing_isbn="missing_isbn",
-                                missing_metadata="missing_metadata",
-                                book_metadata="book_metadata",
-                                extracted_texts="extracted_texts",
-                                book_covers="book_covers",
-                            )
+                data="data",
+                forgy_pdfs_copy="pdfs",
+                missing_isbn="missing_isbn",
+                missing_metadata="missing_metadata",
+                book_metadata="book_metadata",
+                extracted_texts="extracted_texts",
+                book_covers="book_covers",
+            )
 
-        cli_options_in_file = [
-            args.database,
-            args.db_table,
-            args.user_pdfs_source,
-            args.user_pdfs_destination,
-        ]
-
-        # cli_options = [args.book_covers, args.metadata_dict,
-        # args.move_metadata, args.file]
-
-        # Specify options supplied from cli
         book_covers = args.book_covers
-        metadata_dict = args.metadata_dict
+        metadata_dict = args.get_metadata_dict
         move_metadata = args.move_metadata
         GOOGLE_API_KEY = args.GOOGLE_API_KEY
-        file = args.file
+        database = args.database
+        db_table = args.db_table
+        user_pdfs_source = args.user_pdfs_source
+        user_pdfs_destination = args.user_pdfs_destination
 
-        if file:
-            if not Path(file).is_file():
-                logger.info(
-                    f"The provided file does not exist: {file}"
-                )
-                return
+        if not Path(user_pdfs_source).is_dir():
+            logger.error(
+                f"Error, user_pdfs_source value is not a valid directory: {user_pdfs_source}"
+            )
+            parser.exit(1, message=f'source directory is not valid: {user_pdfs_source}')
+            return
 
-            logger.info(f"Processing arguments in {args.file}")
+        if not Path(user_pdfs_destination).is_dir():
+            logger.error(
+                f"Error, user_pdfs_destination value is not valid: {user_pdfs_source}"
+            )
+            parser.exit(1, message=f'destination directory is not valid: {user_pdfs_destination}')
+            return
 
-            # Elements in argument_list represent consecutive ones
-            # on each line of .txt file. We use fetch_arguments...
-            # function to extract arguments from file.
-            # We can unpack arguments from file into variables for
-            # use in get_metadata execution
-            # NOTE: each member of the argument_list must be specified
-            # on one line each in the file.txt
-            argument_list = fetch_arguments_from_file(file)
+        # Store GOOGLE_API_KEY as an environment variable
+        save_api_key_to_env(GOOGLE_API_KEY)
 
-            logger.info(f"Argument list: {argument_list}")
+        db_path = f"{book_metadata_path}/{database}"
 
-            # At least user_pdf_source and user_pdf_destination must
-            # be added to text file. database and table have default
-            # names and you may decide not to override it
-            if len(argument_list) < 8:
-                print(
-                    "Please add all arguments, excluding --book_covers, \
---metadata_dict, move_metadata, and --file FILEPATH"
-                )
-                pass
+        create_db_and_table(
+            book_metadata_path,
+            table_name=db_table,
+            db_name=database,
+            delete_table=True,
+        )
 
-            # Fetch arguments from file (all arguments below must be provided)
+        copy_directory_contents(user_pdfs_source, pdfs_path)
+
+        fetch_book_metadata(
+            user_pdfs_source,
+            pdfs_path,
+            user_pdfs_destination,
+            db_path,
+            missing_isbn_path,
+            missing_metadata_path,
+            extracted_texts_path,
+            db_table,
+            database,
+        )
+        logger.info(f"Files added to {db_table}:")
+
+        view_database_table(db_path, db_table)
+
+        if book_covers:
+            get_book_covers(cover_pics_path, db_path, db_table)
+
+        if metadata_dict:
+            # metadata_dictionary coverted to str to enable
+            # .write() work on it
+
+            metadata_dictionary = str(get_all_metadata(db_path, db_table))
+
+            with open(
+                f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w'
+            ) as metadata_dict_text:
+                metadata_dict_text.write(metadata_dictionary)
+                print("metadata_dictionary text created successfully")
+
+        if not move_metadata:
             try:
-                [_,
-                 database,
-                 _,
-                 db_table,
-                 _,
-                 user_pdfs_source,
-                 _,
-                 user_pdfs_destination] = argument_list
-            except ValueError:
-                print(
-                    """
-                    All the 5 arguments required inside commands
-                    text file must be provided. These include:
-                    GOOGLE_API_KEY, database (path), db_table,
-                    user_pdfs_source, user_pdfs_destination.
-                    """
+                shutil.copytree(
+                    data_path,
+                    user_pdfs_destination,
+                    dirs_exist_ok=True
                 )
-                return
-
-            if user_pdfs_source is None:
-                logger.error(
-                    f"Error, user_pdfs_source value is invalid: {user_pdfs_source}"
+                logger.info(
+                    f"""Source directory {data_path} copied to
+                    {user_pdfs_destination} successfully"""
                 )
-                return
-
-            if user_pdfs_destination is None:
-                logger.errors(
-                    f"Error, user_pdfs_destination value is invalid: {user_pdfs_source}"
-                )
-                return
-
-            db_path = f"{book_metadata_path}/{database}"
-
-            create_db_and_table(
-                book_metadata_path,
-                table_name=db_table,
-                db_name=database,
-                delete_table=True,
-            )
-
-            # store GOOGLE_API_KEY as an environment variable
-            save_api_key_to_env(GOOGLE_API_KEY)
-
-            # copy pdf files into FOrgy's pdfs_path
-            copy_directory_contents(user_pdfs_source, pdfs_path)
-
-            # get metadata function
-            fetch_book_metadata(
-                user_pdfs_source,
-                pdfs_path,
-                user_pdfs_destination,
-                db_path,
-                missing_isbn_path,
-                missing_metadata_path,
-                extracted_texts_path,
-                db_table,
-                database,
-            )
-
-            print(f"Files added to {db_table}:")
-            view_database_table(db_path, db_table)
-
-            if book_covers:
-                #  #db_table is table_name, db_path is full path
-                get_book_covers(cover_pics_path, db_path, db_table)
-
-            if metadata_dict:
-                # metadata_dictionary coverted to str to enable
-                # .write() work on it
-                metadata_dictionary = str(
-                    get_all_metadata(
-                        db_path,
-                        db_table,
-                    )
-                )
-                with open(
-                    f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w'
-                ) as metadata_dict_text:
-                    metadata_dict_text.write(metadata_dictionary)
-                    logger.info("metadata_dictionary text created successfully")
-
-            if not move_metadata:
-                try:
-                    shutil.copytree(
-                        data_path,
-                        user_pdfs_destination,
-                        dirs_exist_ok=True,
-                    )
-                    logger.info(
-                        f"Source directory {data_path} copied to \
-{user_pdfs_destination} successfully"
-                    )
-                except Exception as e:
-                    logger.exception(f"Exception {e} raised")
-                    pass
-            else:
-                # TODO: debug: move_metadata=True
-                try:
-                    shutil.copytree(
-                        data_path,
-                        user_pdfs_destination,
-                        dirs_exist_ok=True
-                    )
-                    os.rmdir(data_path)
-                    logger.info(
-                        f"Source directory {data_path} moved to \
-{user_pdfs_destination} successfully"
-                    )
-                except Exception as e:
-                    logger.exception(f"Exception {e} raised")
-                    pass
-
-        elif not file and any(cli_options_in_file):
-            book_covers = args.book_covers
-            metadata_dict = args.metadata_dict
-            move_metadata = args.move_metadata
-            GOOGLE_API_KEY = args.GOOGLE_API_KEY
-            database = args.database
-            db_table = args.db_table
-            user_pdfs_source = args.user_pdfs_source
-            user_pdfs_destination = args.user_pdfs_destination
-
-            if user_pdfs_source is None:
-                logger.error(
-                    f"Error, user_pdfs_source value is invalid: {user_pdfs_source}"
-                )
-                return
-
-            if user_pdfs_destination is None:
-                logger.error(
-                    f"Error, user_pdfs_destination value is invalid: {user_pdfs_source}"
-                )
-                return
-
-            # Store GOOGLE_API_KEY as an environment variable
-            save_api_key_to_env(GOOGLE_API_KEY)
-
-            db_path = f"{book_metadata_path}/{database}"
-
-            create_db_and_table(
-                book_metadata_path,
-                table_name=db_table,
-                db_name=database,
-                delete_table=True,
-            )
-
-            copy_directory_contents(user_pdfs_source, pdfs_path)
-
-            fetch_book_metadata(
-                user_pdfs_source,
-                pdfs_path,
-                user_pdfs_destination,
-                db_path,
-                missing_isbn_path,
-                missing_metadata_path,
-                extracted_texts_path,
-                db_table,
-                database,
-            )
-            logger.info(f"Files added to {db_table}:")
-
-            view_database_table(db_path, db_table)
-
-            if book_covers:
-                get_book_covers(cover_pics_path, db_path, db_table)
-
-            if metadata_dict:
-                # metadata_dictionary coverted to str to enable
-                # .write() work on it
-
-                metadata_dictionary = str(get_all_metadata(db_path, db_table))
-
-                with open(
-                    f"{Path(book_metadata_path)}/metadata_dictionary.txt", 'w'
-                ) as metadata_dict_text:
-                    metadata_dict_text.write(metadata_dictionary)
-                    print("metadata_dictionary text created successfully")
-
-            if not move_metadata:
-                try:
-                    shutil.copytree(
-                        data_path,
-                        user_pdfs_destination,
-                        dirs_exist_ok=True
-                    )
-                    logger.info(
-                        f"Source directory {data_path} copied to \
-{user_pdfs_destination} successfully"
-                    )
-                except Exception as e:
-                    logger.exception(f"Exception {e} raised")
-                    # print(f"Exception {e} raised")
-                    pass
-            else:
-                # TODO: debug: move_metadata=True
-                try:
-                    shutil.copytree(
-                        data_path,
-                        user_pdfs_destination,
-                        dirs_exist_ok=True
-                    )
-                    os.rmdir(data_path)
-                    logger.info(f"Source directory {data_path} moved \
-to {user_pdfs_destination} successfully"
-                    )
-                except Exception as e:
-                    logger.exception(f"Exception {e} raised")
-                    pass
-
-        elif file and all(cli_options_in_file):
-            print(
-                """
-                Error: please provide either '--book_covers
-                --metadata_dict --move_metadata --GOOGLE_API_KEY --file'
-                or the other options
-                """
-            )
-            pass
-
+            except Exception as e:
+                logger.exception(f"Exception {e} raised")
+                # print(f"Exception {e} raised")
+                pass
         else:
-            print("I'M PASSING")
-            pass
+            # TODO: debug: move_metadata=True
+            try:
+                shutil.copytree(
+                    data_path,
+                    user_pdfs_destination,
+                    dirs_exist_ok=True
+                )
+                os.rmdir(data_path)
+                logger.info(
+                    f"""Source directory {data_path} moved
+                    to {user_pdfs_destination} successfully"""
+                )
+            except Exception as e:
+                logger.exception(f"Exception {e} raised")
+                pass
 
     elif args.subcommands == 'get_single_metadata':
         # if user is not connected to internet exit
@@ -485,6 +323,7 @@ to {user_pdfs_destination} successfully"
 
         else:
             print("please enter a valid argument")
+            parser.exit(1, message='please provide a valid argument')
             return None
 
     elif args.subcommands == 'get_isbns_from_texts':
