@@ -534,9 +534,10 @@ def get_isbns_from_texts(
 
         with open(isbns_file_path, 'a') as isbn_file:
             isbn_file.write(str(isbn_dict))
-            logger.exception(
+            logger.info(
                 f"ISBNs from {file_name} saved to {isbns_file_path}: {valid_isbn_list}"
             )
+    print(f"Extracted ISBNs saved to: {txt_destination_dir}")
 
     return isbn_dict
 
