@@ -296,12 +296,14 @@ In the next section, you will learn how to set up forgy locally on your computer
 
 [🔝 Back to Table of Contents](#table-of-contents)
 <br/>
+<br/>
 
 ## License
 GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt))
 <br/>
 
 [🔝 Back to Table of Contents](#table-of-contents)
+<br/>
 <br/>
 
 ## Dependencies
@@ -313,6 +315,8 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 <br/>
 
 [🔝 Back to Table of Contents](#table-of-contents)
+<br/>
+<br>
 
 ## TODO
 - More testing
@@ -321,3 +325,5 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 - Enable extraction of metadata without modifying e-book titles
 - More refactoring
 - Create a simple GUI
+
+[Back to Top](#forgy)
