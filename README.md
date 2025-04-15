@@ -46,6 +46,9 @@ platforms.
    ```
    This installation includes forgy public APIs and its command-line interface. You can also include ```forgy>=0.1.0``` in your ```requirements.txt``` to install forgy as a dependency 
    in your project
+<br/>
+
+[🔝 Back to Table of Contents](#table-of-contents)
    <br/>
    <br/>
 
