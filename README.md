@@ -46,9 +46,9 @@ platforms.
    ```
    This installation includes forgy public APIs and its command-line interface. You can also include ```forgy>=0.1.0``` in your ```requirements.txt``` to install forgy as a dependency 
    in your project
-<br/>
+   <br/>
 
-[🔝 Back to Table of Contents](#table-of-contents)
+   [🔝 Back to Table of Contents](#table-of-contents)
    <br/>
    <br/>
 
@@ -143,6 +143,10 @@ Select a project if existing or Create new (right beside Google Console Logo) > 
 ```
 <br/>
 
+[🔝 Back to Table of Contents](#table-of-contents)
+<br/>
+<br/>
+
 ## Example
 **Task**: Extract all valid ISBNs from all PDF books located in a directory
 ### Using forgy CLI (recommended)
@@ -188,6 +192,10 @@ forgy get_isbns_from_texts C:\Users\User-name\Desktop\source-directory C:\Users\
 ```
 
 Once you press the enter key, ISBN extraction from all PDF files in ```C:\Users\User-name\Desktop\source-directory``` takes place.
+
+<br/>
+
+[🔝 Back to Table of Contents](#table-of-contents)
 <br/>
 
 ### Using forgy public APIs
@@ -208,6 +216,9 @@ Once you press the enter key, ISBN extraction from all PDF files in ```C:\Users\
 **Note:** API documentation for forgy is still in progress and the CLI option is much more documented at this point and is therefore recommended. Feel free to explore forgy internals.
 In the next section, you will learn how to set up forgy locally on your computer and explore the workings of its modules and the public APIs within them.
  <br/>
+ 
+ [🔝 Back to Table of Contents](#table-of-contents)
+ 
  <br/>
  
 ## Setting up forgy locally
@@ -277,15 +288,20 @@ In the next section, you will learn how to set up forgy locally on your computer
    
    <br/>
 11. To view help page to understand all subcommands available
+
    ```cmd
    python -m main -h
    ```
 <br/>
+
+[🔝 Back to Table of Contents](#table-of-contents)
 <br/>
 
 ## License
 GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt))
 <br/>
+
+[🔝 Back to Table of Contents](#table-of-contents)
 <br/>
 
 ## Dependencies
@@ -295,6 +311,8 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 - [flake8 - format code](https://flake8.pycqa.org/en/latest/)
 - [reportlab - to create pdf file in some test](https://pypi.org/project/reportlab)
 <br/>
+
+[🔝 Back to Table of Contents](#table-of-contents)
 
 ## TODO
 - More testing
