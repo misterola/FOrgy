@@ -33,12 +33,14 @@ def get_parser():
     - get_single_metadata: to get metadata for a single book. This
                             excludes the book covers
     """
+
     parser = argparse.ArgumentParser(
                 prog="forgy",
                 description="""A powerful file organizer, ebook manager,
                                 and book metadata extractor in python
                                 """,
                 epilog="Welcome to %(prog)s v0.1.0!",
+                fromfile_prefix_chars='@'
             )
     parser.add_argument(
         "--version",
@@ -52,13 +54,16 @@ def get_parser():
                     dest="subcommands",
                 )
 
-    # 1. get_book_metadata parser
+    # 1. get_book_metadata
     get_metadata_parser = subparsers.add_parser(
                             "get_metadata",
-                            description="""Get PDF e-book metadata and rename
+                            description=r"""Get PDF e-book metadata and rename
                             several files using valid titles from retrieved
                             metadata. Source and destination directories
-                            must be provided.
+                            must be provided. GOOGLE_API_KEY should be provided
+                            at the command line (although this is not enforced)
+                            while the others can be provided in file whose name
+                            is specified with prefix @ (e.g forgy @C:\Users\UN\args.txt)
                             """,
                             help="""retrieve PDF e-book metadata and rename
                             several PDF e-books with it"""
@@ -70,7 +75,7 @@ def get_parser():
         help="retrieve book covers? False(default)"
     )
     get_metadata_parser.add_argument(
-        "--metadata_dict",
+        "--get_metadata_dict",
         action="store_true",
         help="save extracted metadata as dictionary written to text file? False(default)",
     )
@@ -89,16 +94,6 @@ def get_parser():
     )
 
     get_metadata_parser.add_argument(
-        "--file",
-        help="""enable user to provide some arguments in a text file one
-              line for each argument. only --book_covers, --metadata_dict,
-              --move_metadata, --GOOGLE_API_KEY, should be provided at
-              the commandline. The other arguments will be contained inside
-              the text file whose path is specified after the --file argument.
-              """
-    )
-
-    get_metadata_parser.add_argument(
         "--database",
         default="library.db",
         help="provide link to .db file"
@@ -110,12 +105,14 @@ def get_parser():
     )
     get_metadata_parser.add_argument(
         "--user_pdfs_source",
-        type=str,
+        type=Path,
+        required=True,
         help="provide source directory of pdf files to fetch metadata for and rename",
     )
     get_metadata_parser.add_argument(
         "--user_pdfs_destination",
-        type=str,
+        type=Path,
+        required=True,
         help="""provide destination directory to move or copy extracted book metadata
         and renamed books to."""
     )
@@ -236,8 +233,8 @@ def get_parser():
         '--directory_list_src',
         action='store_true',
         help="""get PDF files from several directory paths.
-                source_directory is a list of raw strings of
-                paths to directories containing pdf files""",
+                source_directory is a list of paths to
+                directories containing pdf files""",
     )
     get_files_mutually_excl.add_argument(
         '--directory_tree_src',
@@ -250,18 +247,17 @@ def get_parser():
 
     get_files_from_dir_parser.add_argument(
         "--source_directory",
-        help="""provide source directory for PDF files. The source
-                can be a list of path to a directory containing only
-                PDF files or a directory containing other directories
-                any or all of which may contain pdf files""",
-        type=str,
-    )
-
-    get_files_from_dir_parser.add_argument(
-        "--source_directory2",
-        help="""provide path to source directories for directory_list_src.
-                The sources are directories (at least one) containing
-                PDF e-book files to be copied (default) or moved""",
+        help=""" The source_directory represent path to one or more
+                directories parsed as a list and containing PDF e-book
+                files to be copied(default) or moved. If the source
+                is a path to one directory containing PDF files
+                (directory_src) or a directory containing other
+                 directories and files(directory_tree_src), the first
+                 and only element in list is the source_directory.
+                 If the source_directory is a list of directories
+                 any or all of which may contain PDF files, all the
+                 elements are part of source_directory
+               """,
         nargs='+',
         type=Path,
     )
@@ -301,11 +297,11 @@ def get_parser():
 
     # 7. move_directories
     move_directories_parser = subparsers.add_parser(
-                                  "move_directories",
-                                  help="move directories to another destination",
-                                  description="""Move all directories in source directory
-                                  into destination directory"""
-                              )
+            "move_directories",
+            help="move directories to another destination",
+            description="""Move all directories in source directory
+            into destination directory"""
+    )
     move_directories_parser.add_argument(
         'source_directory',
         help="provide source directory containing sub-directories to be moved",
