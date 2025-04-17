@@ -39,13 +39,13 @@ def get_parser():
                 description="""A powerful file organizer, ebook manager,
                                 and book metadata extractor in python
                                 """,
-                epilog="Welcome to %(prog)s v0.1.0!",
+                epilog="Welcome to %(prog)s v0.1.4!",
                 fromfile_prefix_chars='@'
             )
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s v0.1.3",
+        version="%(prog)s v0.1.4",
     )
 
     subparsers = parser.add_subparsers(
