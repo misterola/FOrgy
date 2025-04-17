@@ -45,7 +45,7 @@ def get_parser():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s v0.1.2",
+        version="%(prog)s v0.1.3",
     )
 
     subparsers = parser.add_subparsers(

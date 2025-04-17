@@ -95,8 +95,8 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 	delete_files_directories
 	                        delete files or directo- ries in source directory. WARNING: permanent operation!
 
-  Welcome to forgy v0.1.0!
-
+  Welcome to forgy v0.1.3!
+  ```
   <br/>
 
 From the above, there are eight major sub-commands you can use to carryout various operations on your files and directories. These include:
