@@ -312,10 +312,4 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 <br/>
 <br>
 
-## TODO
-- More testing
-- Enable extraction of metadata without modifying e-book titles
-- More refactoring
-- Create a simple, minimal GUI
-
 [Back to Top](#forgy)
