@@ -9,7 +9,7 @@
 project = 'forgy'
 copyright = '2025, Lamide I. Ogundeji'
 author = 'Lamide I. Ogundeji'
-release = '0.1.0'
+release = '0.1.4'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
