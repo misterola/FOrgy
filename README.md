@@ -111,7 +111,10 @@ From the above, there are eight major sub-commands you can use to carryout vario
 - ```move_directories```
 - ```delete_files_directories```
 
-The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: ```forgy sub-command --help```.
+The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: 
+<br/>
+
+```forgy sub-command --help```.
 <br/>
 
 Note that the ```get_metadata``` sub-command requires an optional GoogleBooks API key. This ```get_metadata``` sub-command is built on two major books API (Google and Openlibrary) which 
