@@ -8,7 +8,7 @@ with open('README-pypi.md', 'r', encoding='utf-8') as read_me_file:
 
 setup(
     name='forgy',
-    version='0.1.0',
+    version='0.1.1',
     author='Lamide I. Ogundeji',
     author_email='midetobi@gmail.com',
     description="A powerful file organizer and ebook manager for e-book metadata retrieval and renaming with ease",
@@ -36,5 +36,5 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.10",
     ],
-    python_requires='>=3.10',
+    python_requires='>3.10',
 )
