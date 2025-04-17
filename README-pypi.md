@@ -61,13 +61,14 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
    CLI.
    <br/>
    <br/>
-3. To view help page to understand all sub-commands available in **forgy**, pass the **h***elp argument to forgy.
+2. To view help page to understand all sub-commands available in **forgy**, pass the **h***elp argument to forgy.
    
    ```forgy -h```
 
    
    Sample output:
-   ```
+   
+   ```cmd
    usage: forgy [-h] [--version]
              {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
              ...
@@ -94,13 +95,9 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 	move_directories    move directories to another destination
 	delete_files_directories
 	                        delete files or directo- ries in source directory. WARNING: permanent operation!
-
-  Welcome to forgy v0.1.3!
-  ```
-  <br/>
+     ```
 
 From the above, there are eight major sub-commands you can use to carryout various operations on your files and directories. These include:
-<br/>
 - ```get_metadata```
 - ```get_isbns_from_texts```
 - ```get_single_metadata```
@@ -109,19 +106,19 @@ From the above, there are eight major sub-commands you can use to carryout vario
 - ```copy_directory_contents```
 - ```move_directories```
 - ```delete_files_directories```
+
 <br/>
 
-The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: ```forgy sub-command --help```.
+The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: `
+<br/>
 
-See project GitHub page [here](https://github.com/misterola/forgy) for more details.
-<br/>
-<br/>
+```forgy sub-command --help```
 
 
 [🔝 Back to Table of Contents](#table-of-contents)
 <br/>
 <br/>
-
+ 
 ## License
 GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.txt))
 <br/>
@@ -137,6 +134,5 @@ GNU Affero General Public License ([AGPL-3.0](https://www.gnu.org/licenses/agpl-
 - [flake8 - format code](https://flake8.pycqa.org/en/latest/)
 - [reportlab - to create pdf file in some test](https://pypi.org/project/reportlab)
 <br/>
-<br>
 
 [Back to Top](#forgy)
