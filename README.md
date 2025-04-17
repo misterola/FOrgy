@@ -71,7 +71,8 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 
    
    Sample output:
-   ```
+   
+   ```cmd
    usage: forgy [-h] [--version]
              {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
              ...
@@ -98,13 +99,9 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 	move_directories    move directories to another destination
 	delete_files_directories
 	                        delete files or directo- ries in source directory. WARNING: permanent operation!
-
-  Welcome to forgy v0.1.3!
-
-  <br/>
+     ```
 
 From the above, there are eight major sub-commands you can use to carryout various operations on your files and directories. These include:
-<br/>
 - ```get_metadata```
 - ```get_isbns_from_texts```
 - ```get_single_metadata```
@@ -113,7 +110,6 @@ From the above, there are eight major sub-commands you can use to carryout vario
 - ```copy_directory_contents```
 - ```move_directories```
 - ```delete_files_directories```
-<br/>
 
 The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: ```forgy sub-command --help```.
 <br/>
@@ -135,6 +131,7 @@ Select a project if existing or Create new (right beside Google Console Logo) > 
 > Create Credentials > API Key (API key created and displayed in dialog box. Copy it and use) > Close dialog > API key (optional) > API Restrictions >
 > Restrict key > Google Cloud APIs > OK
 ```
+
 <br/>
 
 [🔝 Back to Table of Contents](#table-of-contents)
