@@ -1,5 +1,10 @@
-# forgy
+<p align="center">
+    <img alt="forgy_logo" src="https://github.com/misterola/forgy/blob/dev/forgy_logo.png">
+</p>
 
+------------------------
+
+# forgy
 **forgy** is a powerful file organizer and e-book manager with a command-line interface for reliable retrieval of e-book metadata and easy renaming of PDF e-books.
 
 With **forgy**, you can automatically extract valid ISBNs from many PDF e-books, get metadata for ebooks using extracted ISBNs, rename 'unknown' books using retrieved metadata, organize
@@ -66,7 +71,8 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 
    
    Sample output:
-   ```
+   
+   ```cmd
    usage: forgy [-h] [--version]
              {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
              ...
@@ -93,13 +99,9 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
 	move_directories    move directories to another destination
 	delete_files_directories
 	                        delete files or directo- ries in source directory. WARNING: permanent operation!
-
-  Welcome to forgy v0.1.0!
-
-  <br/>
+     ```
 
 From the above, there are eight major sub-commands you can use to carryout various operations on your files and directories. These include:
-<br/>
 - ```get_metadata```
 - ```get_isbns_from_texts```
 - ```get_single_metadata```
@@ -108,9 +110,11 @@ From the above, there are eight major sub-commands you can use to carryout vario
 - ```copy_directory_contents```
 - ```move_directories```
 - ```delete_files_directories```
+
+The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: 
 <br/>
 
-The function of the above sub-commands are as stated in the command-line help shown earlier. You can view usage of sub-commands using: ```forgy sub-command --help```.
+```forgy sub-command --help```.
 <br/>
 
 Note that the ```get_metadata``` sub-command requires an optional GoogleBooks API key. This ```get_metadata``` sub-command is built on two major books API (Google and Openlibrary) which 
@@ -130,6 +134,7 @@ Select a project if existing or Create new (right beside Google Console Logo) > 
 > Create Credentials > API Key (API key created and displayed in dialog box. Copy it and use) > Close dialog > API key (optional) > API Restrictions >
 > Restrict key > Google Cloud APIs > OK
 ```
+
 <br/>
 
 [🔝 Back to Table of Contents](#table-of-contents)
