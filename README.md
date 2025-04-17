@@ -33,7 +33,7 @@ platforms.
 1. Verify that you have python installed on your computer.
    
    Open windows command prompt (```windows button + cmd + enter```) and check python version using ```python --version```+ ```enter```. You should see
-   your python version, which in this case is ```3.12.4```.
+   your python version, which in this case is ```3.12```.
 
    If you don't have python installed, you can download it [here](https://www.python.org/downloads)
    <br/>
