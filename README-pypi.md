@@ -16,6 +16,7 @@ The goal is to easily create and maintain a decent personal PDF e-book library, 
 **Note:** Development and testing was done on a Windows 10 PC, with python ```3.12``` installed, in such a way as to ensure platform independence. Feel free to try forgy out on other
 platforms.
 <br/>
+<br/>
 
 ## Table of Contents
 - [Installation](#installation)
