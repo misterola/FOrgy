@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 
-with open('README.md', 'r') as read_me_file:
+with open('README.md', 'r', encoding='utf-8') as read_me_file:
     read_me = read_me_file.read()
 
 
