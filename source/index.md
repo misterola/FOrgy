@@ -1,4 +1,5 @@
 # forgy
+
 **forgy** is a powerful file organizer and e-book manager with a command-line interface for reliable retrieval of e-book metadata and easy renaming of PDF e-books.
 
 With **forgy**, you can automatically extract valid ISBNs from many PDF e-books, get metadata for ebooks using extracted ISBNs, rename 'unknown' books using retrieved metadata, organize
@@ -7,7 +8,7 @@ keeping them organized on a computer, without installing and depending on bloate
 
 The goal is to easily create and maintain a decent personal PDF e-book library, especially when identifying PDF e-books by their names becomes difficult. The name **forgy** is from the project's roots as a **f**ile **org**anizer in P**y**thon.
 
-**Note:** Development and testing was done on a Windows 10 PC, with python ```3.12.4``` installed, in such a way as to ensure platform independence. Feel free to try forgy out on other
+**Note:** Development and testing was done on a Windows 10 PC, with python ```3.12``` installed, in such a way as to ensure platform independence. Feel free to try forgy out on other
 platforms.
 <br/>
 <br/>
@@ -27,7 +28,7 @@ platforms.
 1. Verify that you have python installed on your computer.
    
    Open windows command prompt (```windows button + cmd + enter```) and check python version using ```python --version```+ ```enter```. You should see
-   your python version, which in this case is ```3.12.4```.
+   your python version, which in this case is ```3.12```.
 
    If you don't have python installed, you can download it [here](https://www.python.org/downloads)
    <br/>
@@ -67,39 +68,33 @@ This section assumes that you have installed forgy via ```pip``` as earlier expl
    Sample output:
    ```
    usage: forgy [-h] [--version]
-                 {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
-                 ...
+             {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
+             ...
 
-    A powerful file organizer, ebook manager, and book metadata extractor in
-    python
-	
-    options:
-      -h, --help            show this help message and exit
-      --version             show program's version number and exit
-	
-    forgy Operations:
-	Valid subcommands
-	
-	{get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
-	    get_metadata        retrieve PDF e-book metadata and rename several PDF
-	                        e-books with it
-	    get_isbns_from_texts
-	                        extract isbns from several PDF e-books contained in
-	                        source_directory
-	    get_single_metadata
-	                        get metatada for a single book using file path and
-	                        title or isbn
-	    organize_extension  organize files by extension or format
-	    get_files_from_dir  aggregate pdf files from various directories/sources
-	    copy_directory_contents
-	                        copy contents of source directory into destination
-	                        directory (files and directories included)
-	    move_directories    move directories to another destination
-	    delete_files_directories
-	                        delete files or directo- ries in source directory.
-	                        WARNING: permanent operation!
-	
-   Welcome to forgy v0.1.0!
+   A powerful file organizer, ebook manager, and book metadata extractor in python
+
+   options:
+     -h, --help            show this help message and exit
+     --version             show program's version number and exit
+
+   forgy Operations:
+     Valid subcommands
+
+     {get_metadata,get_isbns_from_texts,get_single_metadata,organize_extension,get_files_from_dir,copy_directory_contents,move_directories,delete_files_directories}
+	get_metadata    retrieve PDF e-book metadata and rename several PDF e-books with it
+	get_isbns_from_texts
+	                    extract isbns from several PDF e-books contained in source_directory
+	get_single_metadata
+	                    get metatada for a single book using file path and title or isbn
+	organize_extension  organize files by extension or format
+	get_files_from_dir  aggregate pdf files from various directories/sources
+	copy_directory_contents
+	                       copy contents of source directory into destination directory (files and directories included)
+	move_directories    move directories to another destination
+	delete_files_directories
+	                        delete files or directo- ries in source directory. WARNING: permanent operation!
+
+  Welcome to forgy v0.1.0!
 
   <br/>
 
@@ -153,23 +148,18 @@ forgy get_isbns_from_texts -h
 Sample output:
 
 ```
-usage: forgy get_isbns_from_texts [-h]
-                                      [--isbn_text_filename ISBN_TEXT_FILENAME]
-                                      source_directory destination_directory
+usage: forgy get_isbns_from_texts [-h] [--isbn_text_filename ISBN_TEXT_FILENAME] source_directory destination_directory
 
-Extract valid ISBNs from PDF files as a dictionary with filenames as keys and
-valid ISBNs as a list of values
+Extract valid ISBNs from PDF files as a dictionary with filenames as keys and valid ISBNs as a list of values
 
 positional arguments:
   source_directory      provide source directory for input pdf files
   destination_directory
-                        provide destination for text file containing book
-                        titles and extracted isbns
-
+                        provide destination for text file containing book titles and extracted isbns
 options:
   -h, --help            show this help message and exit
   --isbn_text_filename ISBN_TEXT_FILENAME
-                        provide name of text file containing extracted e-book
+                        provide name of text file containing extracted e-book isbns
 ```
 
 The usage of the sub-command is shown on the first line in the help screen above. Only two postional arguments (```source_directory``` and ```destination_directory```) are mandatory 
@@ -196,16 +186,16 @@ Once you press the enter key, ISBN extraction from all PDF files in ```C:\Users\
 1. Import the ```get_isbns_from_texts``` function to execute the current task and ```pathlib.Path``` from python standard library to properly handle the path to source and destination
    directories.
    ```cmd
-   from forgy.messyforg import get_isbns_from_texts
+   >>> from forgy.messyforg import get_isbns_from_texts
    ```
 2. Define the source and destination directories.
    ```cmd
-   source_directory = Path(r'C:\Users\USER-NAME\Desktop\SOURCE-DIRECTORY')
-   txt_destination_dir = Path(r'C:\Users\USER-NAME\Desktop')
+   >>> source_directory = Path(r'C:\Users\USER-NAME\Desktop\SOURCE-DIRECTORY')
+   >>> txt_destination_dir = Path(r'C:\Users\USER-NAME\Desktop')
    ```
 3. Get ISBNs from all PDF e-books in the source directory by calling the imported function.
    ```cmd
-      get_isbns_from_texts(source_directory, txt_destination_dir)
+   >>> get_isbns_from_texts(source_directory, txt_destination_dir)
    ```
 **Note:** API documentation for forgy is still in progress and the CLI option is much more documented at this point and is therefore recommended. Feel free to explore forgy internals.
 In the next section, you will learn how to set up forgy locally on your computer and explore the workings of its modules and the public APIs within them.
@@ -219,7 +209,7 @@ In the next section, you will learn how to set up forgy locally on your computer
 1. Verify that you have python installed on your computer.
    
    Open windows command prompt (```windows button + cmd + enter```) and check python version using ```python --version```+ ```enter```. You should see
-   your python version, which in this case is ```3.12.4```.
+   your python version, which in this case is ```3.12```.
 
    If you don't have python installed, you can download it [here](https://www.python.org/downloads)
    <br/>
