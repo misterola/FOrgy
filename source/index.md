@@ -1,10 +1,5 @@
-<p align="center">
-    <img alt="forgy_logo" src="https://github.com/misterola/forgy/blob/dev/forgy_logo.png">
-</p>
-
-------------------------
-
 # forgy
+
 **forgy** is a powerful file organizer and e-book manager with a command-line interface for reliable retrieval of e-book metadata and easy renaming of PDF e-books.
 
 With **forgy**, you can automatically extract valid ISBNs from many PDF e-books, get metadata for ebooks using extracted ISBNs, rename 'unknown' books using retrieved metadata, organize
