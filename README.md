@@ -13,7 +13,7 @@ keeping them organized on a computer, without installing and depending on bloate
 
 The goal is to easily create and maintain a decent personal PDF e-book library, especially when identifying PDF e-books by their names becomes difficult. The name **forgy** is from the project's roots as a **f**ile **org**anizer in P**y**thon.
 
-**Note:** Development and testing was done on a Windows 10 PC, with python ```3.12.4``` installed, in such a way as to ensure platform independence. Feel free to try forgy out on other
+**Note:** Development and testing was done on a Windows 10 PC, with python ```3.12``` installed, in such a way as to ensure platform independence. Feel free to try forgy out on other
 platforms.
 <br/>
 <br/>
